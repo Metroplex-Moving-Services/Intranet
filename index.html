@@ -181,6 +181,7 @@ function error()
 		var notValidToken
 		if (sessionToken) {
 			notValidToken = sdk.isJwtExpired(sessionToken)
+			alert ('good');
 		}
 		if (!sessionToken || notValidToken) {
 			var container = document.getElementById('container');
