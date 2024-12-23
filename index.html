@@ -3,9 +3,9 @@
 <html>
 
 <head>
-	 	<script src="https://unpkg.com/@descope/web-component@3.21.0/dist/index.js"></script>
+	<script src="https://unpkg.com/@descope/web-component@3.21.0/dist/index.js"></script>
 	<script src="https://unpkg.com/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{
   font-family: 'Noto Sans', sans-serif;
@@ -179,21 +179,10 @@ function error()
  
 		const sessionToken = sdk.getSessionToken()
 		var notValidToken
+	 var container = document.getElementById('container');
 		if (sessionToken) {
 			notValidToken = sdk.isJwtExpired(sessionToken)
-			alert ('good');
-		}
-		if (!sessionToken || notValidToken) {
-			var container = document.getElementById('container');
-			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
-			const onSuccess = (e) => {
-				sdk.refresh()
-			};
- 
-		}
-	</script>
-	
-<header>
+			container.innerHTML = '<header>
 	<h3><span style="display: flex;justify-content: center;"><a onclick="javascript:HomeSelected();" style="color: white;">Metroplex Moving Services<br>INTRANET</a></span></h3>
 	<button class="hamburger">&#9776;</button>
 	<button class="cross">&#735;</button>
@@ -214,5 +203,17 @@ function error()
 
 <div id='imgholderdiv' style="display: flex;justify-content: center;padding-top:200px;">
 	<img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600">
-</img></div>
+</img></div>';
+		}
+		if (!sessionToken || notValidToken) {
+			
+			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
+			const onSuccess = (e) => {
+				sdk.refresh()
+			};
+ 
+		}
+	</script>
+	
+
 </body>
