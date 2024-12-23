@@ -184,7 +184,7 @@ function error()
 		}
 		if (!sessionToken || notValidToken) {
 			var container = document.getElementById('container');
-			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-up-or-in"></descope-wc>';
+			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
 			const onSuccess = (e) => {
 				sdk.refresh()
 			};
