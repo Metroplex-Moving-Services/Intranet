@@ -182,7 +182,18 @@ function error()
 	 var container = document.getElementById('container');
 		if (sessionToken) {
 			notValidToken = sdk.isJwtExpired(sessionToken)
-			container.innerHTML = '<header>	<h3><span style="display: flex;justify-content: center;"><a onclick="javascript:HomeSelected();" style="color: white;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button></header><div class="menu"><ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul></div><div id='imgholderdiv' style="display: flex;justify-content: center;padding-top:200px;"><img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600"></img></div>';
+			container.innerHTML = 
+				'<header><h3><span style="display: flex;justify-content: center;">
+				<a onclick="javascript:HomeSelected();" style="color: white;">Metroplex Moving Services
+				<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button>
+				<button class="cross">&#735;</button></header><div class="menu">
+				<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm">
+				<li>Accounts Payable</li></a>
+				<a href="https://metroplex-moving-services.github.io/Intranet/movers.htm">
+				<li>Movers</li></a></ul></div>
+				<div id='imgholderdiv' style="display: flex;justify-content: center;padding-top:200px;">
+				<img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600">
+				</img></div>';
 		}
 		if (!sessionToken || notValidToken) {
 			
