@@ -170,26 +170,18 @@ function error()
 </script>
 <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
-
-<style>
-    .borderexample {
-        border-width:3px;
-        border-style:solid;
-        border-color:black;
-        max-width: 500px;
-        min-width: 100px;
-        word-wrap:break-word;
-    }
-</style>
 </head>
 <body>
-   <h1>Successfully logged in</h1>
-   <br>
-   <h2>Welcome <span id="userName">Loading...</span></h2>
-   
-   <header><h3><span style="display: flex;justify-content: center;">
-      <a onclick="javascript:HomeSelected();" style="color: white;">Metroplex Moving Services
-         <br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button>
+     <header>
+      <h3>
+         <span style="display: flex;justify-content: center;">
+            <span id="userName">Loading...</span>
+            <a onclick="javascript:HomeSelected();" style="color: white;">
+            Metroplex Moving Services
+            <br>INTRANET</a>
+         </span>
+      </h3>
+      <button class="hamburger">&#9776;</button>
          <button class="cross">&#735;</button></header><div class="menu">
             <ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm">
                <li>Accounts Payable</li></a>
@@ -203,6 +195,7 @@ function error()
            let sdk = Descope({projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d'});
            const user = await sdk.me(localStorage.getItem("DSR"));
            const userId = user.data.name;
+           const userRole = user.data.userRole
            document.getElementById('userName').textContent = userId;
            document.getElementById('sessionJwt').textContent = localStorage.getItem("DS");
        })();
