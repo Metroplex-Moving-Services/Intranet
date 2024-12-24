@@ -198,10 +198,10 @@ function error()
            let sdk = Descope({projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d'});
            const user = await sdk.me(localStorage.getItem("DSR"));
            const userId = user.data.name;
-           const userRole = user.data.roleNames[0];
+           const userRole = user.data.roleNames;
            const theMenu = document.getElementById('theMenu');
            document.getElementById('userName').textContent = userId;
-           document.getElementById('userRoles').textContent = userRole;
+           document.getElementById('userRoles').textContent = userRole[0] + "&nbsp;" + userRole[1];
            if (userRole == "Hubastank"){
             theMenu.append('<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>');
            }
