@@ -182,11 +182,8 @@ function error()
       </h3>
       <button class="hamburger">&#9776;</button>
          <button class="cross">&#735;</button></header>
-         <div class="menu">
-            <ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm">
-               <li>Accounts Payable</li></a>
-               <a href="https://metroplex-moving-services.github.io/Intranet/movers.htm">
-                  <li>Movers</li></a></ul>
+         <div class="menu" id="theMenu">
+            
          </div>
          <div>
             <span style="display: flex;justify-content: center;">Ay yo</span>
@@ -202,9 +199,15 @@ function error()
            const user = await sdk.me(localStorage.getItem("DSR"));
            const userId = user.data.name;
            const userRole = user.data.roleNames[0];
+           const theMenu = document.getElementById('theMenu');
            document.getElementById('userName').textContent = userId;
            document.getElementById('userRoles').textContent = userRole;
-           
+           if (userRole == "Hubastank"){
+            theMenu.innerHTML= '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+           }
+           if (userRole == "Phish"){
+            theMenu.innerHTML= '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+           }
        })();
    </script>
 </body>
