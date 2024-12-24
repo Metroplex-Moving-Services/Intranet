@@ -194,39 +194,38 @@ function error()
             <img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600"></img>
          </div>
    <script>
-      let sdk = Descope({projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d'});
-      const sessionToken = sdk.getSessionToken();
-      
-		var notValidToken
-	 var container = document.getElementById('container');
-		if (sessionToken) {
-			notValidToken = sdk.isJwtExpired(sessionToken)
+   
        (async () => {
-           
-           const user = await sdk.me(localStorage.getItem("DSR"));
-           const userId = user.data.name;
-           const userRole = user.data.roleNames;
-           const theMenu = document.getElementById('theMenu');
-           document.getElementById('userName').textContent = userId;
-           document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
-           theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
-           if (userRole.includes("Hoobastank")){
+         let sdk = Descope({projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d'});
+         const sessionToken = sdk.getSessionToken();
+         var notValidToken;	 
+		   if (sessionToken) {
+            notValidToken = sdk.isJwtExpired(sessionToken)
+         
+            const user = await sdk.me(localStorage.getItem("DSR"));
+            const userId = user.data.name;
+            const userRole = user.data.roleNames;
+            const theMenu = document.getElementById('theMenu');
+            document.getElementById('userName').textContent = userId;
+            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
+            if (userRole.includes("Hoobastank")){
             theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
-           }
-           if (userRole.includes("Phish")){
+            }
+            if (userRole.includes("Phish")){
             theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
-           }
-           theMenu.innerHTML = theMenuInnerHTML;
-       });
-      }
-      if (!sessionToken || notValidToken) {
+            }
+            theMenu.innerHTML = theMenuInnerHTML;
+         }
+         if (!sessionToken || notValidToken) {
 			
 			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
 			const onSuccess = (e) => {
 				sdk.refresh()
 			};
- 
-		}
+       };
+      });
+     
    </script>
 </body>
 
@@ -236,9 +235,10 @@ function error()
 		const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });
       
 		const sessionToken = sdk.getSessionToken()
-      
-		var notValidToken
-	 var container = document.getElementById('container');
+      var container = document.getElementById('container');
+
+		var notValidToken;
+	 
 		if (sessionToken) {
 			notValidToken = sdk.isJwtExpired(sessionToken)
 			container.innerHTML = '<header><h3><span style="display: flex;justify-content: center;"><a onclick="javascript:HomeSelected();" style="color: white;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button></header><div class="menu"><ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul></div><div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;"><img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600"></img></div>';
