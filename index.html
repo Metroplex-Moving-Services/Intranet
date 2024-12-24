@@ -169,10 +169,42 @@ function error()
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
-
+<script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
+<script src="javascriptVars.js"></script>
+<style>
+    .borderexample {
+        border-width:3px;
+        border-style:solid;
+        border-color:black;
+        max-width: 500px;
+        min-width: 100px;
+        word-wrap:break-word;
+    }
+</style>
 </head>
-
 <body>
+   <h1>Successfully logged in</h1>
+   <br>
+   <h2>Welcome <span id="userName">Loading...</span></h2>
+   
+   <h3>Your sessionJwt is:
+       <p class="borderexample" id="sessionJwt"></p>
+   </h3>
+   <br>
+   <button onclick="location.href = './index.html';" id="home" class="float-left submit-button">Home</button>
+
+   <script>
+       (async () => {
+           let sdk = Descope({projectId: projectId});
+           const user = await sdk.me(localStorage.getItem("DSR"));
+           const userId = user.data.name;
+           document.getElementById('userName').textContent = userId;
+           document.getElementById('sessionJwt').textContent = localStorage.getItem("DS");
+       })();
+   </script>
+</body>
+
+<!--body>
 	    <p id="container"></p>
  <script>
 		const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });
@@ -183,7 +215,7 @@ function error()
 	 var container = document.getElementById('container');
 		if (sessionToken) {
 			notValidToken = sdk.isJwtExpired(sessionToken)
-			container.innerHTML = ' <h1>Successfully logged in</h1><br><h2>Welcome <span id="userName">Loading...</span></h2><h3>Your sessionJwt is:<p class="borderexample" id="sessionJwt"></p></h3><br><header><h3><span style="display: flex;justify-content: center;"><a onclick="javascript:HomeSelected();" style="color: white;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button></header><div class="menu"><ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul></div><div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;"><img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600"></img></div>';
+			container.innerHTML = '<header><h3><span style="display: flex;justify-content: center;"><a onclick="javascript:HomeSelected();" style="color: white;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button></header><div class="menu"><ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul></div><div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;"><img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600"></img></div>';
 		}
 		if (!sessionToken || notValidToken) {
 			
@@ -196,4 +228,5 @@ function error()
 	</script>
 	
 
-</body>
+</body-->
+
