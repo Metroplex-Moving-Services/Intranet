@@ -188,7 +188,7 @@ function error()
                <a href="https://metroplex-moving-services.github.io/Intranet/movers.htm">
                   <li>Movers</li></a></ul>
          </div>
-         <div>Hi <span id="userName" style="display: flex;justify-content: center;">Loading...</span></div>
+         <div><span style="display: flex;justify-content: center;">Hi</span><span id="userName" style="display: flex;justify-content: center;">Loading...</span></div>
          <div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;">
             <img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600"></img>
          </div>
@@ -199,7 +199,7 @@ function error()
            const userId = user.data.name;
            const userRole = user.data.userRole
            document.getElementById('userName').textContent = userId;
-           document.getElementById('sessionJwt').textContent = localStorage.getItem("DS");
+           
        })();
    </script>
 </body>
