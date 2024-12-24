@@ -202,6 +202,7 @@ function error()
            const theMenu = document.getElementById('theMenu');
            document.getElementById('userName').textContent = userId;
            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
+           theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
            if (userRole == "Hubastank"){
             theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
            }
