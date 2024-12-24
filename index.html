@@ -195,7 +195,7 @@ function error()
 
    <script>
        (async () => {
-           let sdk = Descope({projectId: projectId});
+           let sdk = Descope({projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d'});
            const user = await sdk.me(localStorage.getItem("DSR"));
            const userId = user.data.name;
            document.getElementById('userName').textContent = userId;
