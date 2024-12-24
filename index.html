@@ -196,6 +196,13 @@ function error()
    <script>
        (async () => {
            let sdk = Descope({projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d'});
+           const sessionToken = sdk.getSessionToken()
+      
+		var notValidToken
+	 var container = document.getElementById('container');
+		if (sessionToken) {
+			notValidToken = sdk.isJwtExpired(sessionToken)
+
            const user = await sdk.me(localStorage.getItem("DSR"));
            const userId = user.data.name;
            const userRole = user.data.roleNames;
@@ -210,7 +217,15 @@ function error()
             theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
            }
            theMenu.innerHTML = theMenuInnerHTML;
-       })();
+         }
+         if (!sessionToken || notValidToken) {
+			
+			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
+			const onSuccess = (e) => {
+				sdk.refresh()
+			};
+
+       }});
    </script>
 </body>
 
