@@ -203,11 +203,12 @@ function error()
            document.getElementById('userName').textContent = userId;
            document.getElementById('userRoles').textContent = userRole[0] + "&nbsp;" + userRole[1];
            if (userRole == "Hubastank"){
-            theMenu.append('<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>');
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
            }
            if (userRole == "Phish"){
-            theMenu.append('<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>');
+            theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
            }
+           theMenu.innerHTML = theMenuInnerHTML;
        })();
    </script>
 </body>
