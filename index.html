@@ -254,13 +254,14 @@ var   notValidToken;
 
 if (!sessionToken) {
    container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
-   const onSuccess = (e) => {
-   sdk.refresh()
-}}else {
+  }else {
    notValidToken = sdk.isJwtExpired(sessionToken);
    if (notValidToken){
       container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
    }else{
+      const onSuccess = (e) => {
+   sdk.refresh()
+}
    DoIt();
   
    }
