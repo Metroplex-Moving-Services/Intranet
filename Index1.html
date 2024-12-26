@@ -6,8 +6,8 @@
   </head>
  
   <body>
-	<h1>Log In With Descope Flows</h1>
-    <p id="container"></p>
+	
+    <p id="container"><h1>Log In With Descope Flows</h1></p>
  
 	<script>
 		const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });
@@ -19,12 +19,15 @@
 		}
 		if (!sessionToken || notValidToken) {
 			var container = document.getElementById('container');
-			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-up-or-in"></descope-wc>';
+			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
 			const onSuccess = (e) => {
 				sdk.refresh(),
 			};
- 
 		}
+		if (sessionToken) {
+			container.innerHTML = '';
+		}
+		
 	</script>
   </body>
 </html>
