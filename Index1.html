@@ -4,11 +4,17 @@
 	<script src="https://unpkg.com/@descope/web-component@latest/dist/index.js"></script>
 	<script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
 	<link rel="stylesheet" href="mmsstyle.css">
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/smoothness/jquery-ui.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	
+	<title>MMS INTRANET</title>
+	<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
   </head>
  
   <body>
 	
-    <p id="container"><h1>Log In With Descope Flows</h1></p>
+    <div id="container"></div>
  
 	<script>
 		const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });
