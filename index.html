@@ -272,7 +272,18 @@ async function DoIt (){
 const user =  await sdk.me(localStorage.getItem("DSR"));
 const userId = user.data.name;
 const userRole = user.data.roleNames;
-BuildMenu();
+//BuildMenu(); or ...
+const theMenu = document.getElementById('theMenu');
+            document.getElementById('userName').textContent = userId;
+            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
+            if (userRole.includes("Hoobastank")){
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+            }
+            if (userRole.includes("Phish")){
+            theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+            }
+            theMenu.innerHTML = theMenuInnerHTML;
 
 }
 function BuildMenu (){
