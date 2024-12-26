@@ -262,7 +262,7 @@ if (!sessionToken) {
       container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
    }else{
    DoIt();
-   BuildMenu();
+  
    }
 }
 
@@ -272,6 +272,7 @@ async function DoIt (){
 const user =  await sdk.me(localStorage.getItem("DSR"));
 const userId = user.data.name;
 const userRole = user.data.roleNames;
+BuildMenu();
 
 }
 function BuildMenu (){
