@@ -33,11 +33,9 @@
 			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
 			
 		}else if (sessionToken) {
-
 			const onSuccess = (e) => {sdk.refresh()}
    			DoIt();
 		}
-
 
 		async function DoIt (){
 			const user =  await sdk.me(localStorage.getItem("DSR"));
@@ -45,31 +43,16 @@
 			const userRole = user.data.roleNames;
 			//BuildMenu(); or ...
 			const theMenu = document.getElementById('theMenu');
-            document.getElementById('userName').textContent = userId;
-            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
-            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>No roles found..</li></a></ul>';
-            if (userRole.includes("Hoobastank")){
-            	theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
-            }
-            if (userRole.includes("Phish")){
-            	theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
-            }
-            theMenu.innerHTML = theMenuInnerHTML;
-
-		}
-
-		function BuildMenu (){
-   			const theMenu = document.getElementById('theMenu');
-            document.getElementById('userName').textContent = userId;
-            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
-            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
-            if (userRole.includes("Hoobastank")){
-            	theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
-            }
-            if (userRole.includes("Phish")){
-            	theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
-            }
-            	theMenu.innerHTML = theMenuInnerHTML;
+			document.getElementById('userName').textContent = userId;
+			document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
+			theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>No roles found..</li></a></ul>';
+			if (userRole.includes("Hoobastank")){
+			theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+			}
+			if (userRole.includes("Phish")){
+			theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.html"><li>Accounts Payable</li></a>';
+			}
+			theMenu.innerHTML = theMenuInnerHTML;
 		}
 
 		function foc()	{
