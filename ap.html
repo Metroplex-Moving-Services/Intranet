@@ -51,7 +51,7 @@
               document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
               theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Intranet</li></a></ul>';
               if (userRole.includes("Hoobastank")){
-              theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+              theMenuInnerHTML  = theMenuInnerHTML +  '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
               }
               if (userRole.includes("Phish")){
               theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.html"><li>Accounts Payable</li></a><a href="javascript:CreateInvoiceSelected();"><li>Create Invoice</li></a>';
