@@ -1,0 +1,307 @@
+
+
+<html>
+
+<head>
+	<script src="https://unpkg.com/@descope/web-component@latest/dist/index.js"></script>
+	<script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
+   	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+  font-family: 'Noto Sans', sans-serif;
+	margin:0;
+	width:100%;
+	height:100vh;
+  	background:#ffffff;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+header{
+	width:100%;
+	background:#0C419A;
+	height:80px;
+	line-height:30px;
+	border-bottom:1px solid #dddddd;
+}
+.hamburger{
+  background:none;
+  position:absolute;
+  top:0;
+  right:0;
+  line-height:45px;
+  padding:5px 15px 0px 15px;
+  color:#999;
+  border:0;
+  font-size:1.4em;
+  font-weight:bold;
+  cursor:pointer;
+  outline:none;
+  z-index:10000000000000;
+}
+.cross{
+  background:none;
+  position:absolute;
+  top:0px;
+  right:0;
+  padding:7px 15px 0px 15px;
+  color:#999;
+  border:0;
+  font-size:3em;
+  line-height:65px;
+  font-weight:bold;
+  cursor:pointer;
+  outline:none;
+  z-index:10000000000000;
+}
+.menu{z-index:1000000; font-weight:bold; font-size:0.8em; width:33%; background:#0C419A;  position:absolute; text-align:center; font-size:12px; right : 0px ;}
+.menu ul {margin: 0; padding: 0; list-style-type: none; list-style-image: none;}
+.menu li {display: block;   padding:15px 0 15px 0; border-bottom:#dddddd 1px solid;}
+.menu li:hover{display: block;    background:#0C419A; padding:15px 0 15px 0; border-bottom:#dddddd 1px solid;}
+.menu ul li a { text-decoration:none;  margin: 0px; color:white;}
+.menu ul li a:hover {  color: #666; text-decoration:none;}
+.menu a{text-decoration:none; color:white;}
+.menu a:hover{text-decoration:none; color:#666;}
+
+.glyphicon-home{
+  color:white;
+  font-size:1.5em;
+  margin-top:5px;
+  margin:0 auto;
+}
+header{display:inline-block; font-size:12px; color:white}
+span{padding-left:20px;}
+a{color:#336699;}
+</style>
+ <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/smoothness/jquery-ui.css">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title></title>
+<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
+
+
+<script>
+
+$(document).ready(foc);
+
+function foc()
+{
+
+   $( ".cross" ).hide();
+   $( ".menu" ).hide();
+   $( ".hamburger" ).click(function()
+   {
+      $( ".menu" ).slideToggle( "fast", function()
+      {
+         $( ".hamburger" ).hide();
+         $( ".cross" ).show();	      
+      }
+      );
+   }
+   );
+
+   $( ".cross" ).click(function()
+   {
+      $( ".menu" ).slideToggle( "fast", function()
+      {
+         $( ".cross" ).hide();
+         $( ".hamburger" ).show();
+      }
+      );
+   }
+   );
+
+}
+
+function HomeSelected()
+{
+	$('#createinvoiceframe').remove();
+	 $('#imgholderdiv').show();
+   $( ".menu" ).slideToggle( "fast", function()
+   {
+      $( ".cross" ).hide();
+      $( ".hamburger" ).show();
+   }
+   )
+}
+
+
+function CreateInvoiceSelected()
+{
+	$('#createinvoiceframe').remove();	 
+	
+	
+   $.LoadingOverlay("show",
+   {
+      imageColor : "#0C419a",
+      imageAnimation : "8000ms pulse"
+   }
+   );
+   setTimeout(function()
+   {
+      $.LoadingOverlay("hide");
+   }
+   , 2000);
+
+   $( ".menu" ).slideToggle( "fast", function()
+   {
+      $( ".cross" ).hide();
+      $( ".hamburger" ).show();
+   }
+   );
+   
+   const iframe0 = document.createElement("iframe");
+   iframe0.style = 'border:none';
+   iframe0.id = 'createinvoiceframe';
+   iframe0.width = '100%';
+   iframe0.height = '3000px';
+   document.body.appendChild(iframe0);
+   iframe0.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
+   $('#imgholderdiv').hide()
+  
+function error()
+{
+}
+
+}
+
+
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
+<!--script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script-->
+</head>
+<!--body>
+     <header>
+      <h3>
+         <span style="display: flex;justify-content: center;">            
+            <a onclick="javascript:HomeSelected();" style="color: white;">
+            Metroplex Moving Services
+            <br>INTRANET</a>
+         </span>
+      </h3>
+      <button class="hamburger">&#9776;</button>
+         <button class="cross">&#735;</button></header>
+         <div class="menu" id="theMenu">
+            
+         </div>
+         <div>
+            <span style="display: flex;justify-content: center;">Ay yo</span>
+            <span id="userName" style="display: flex;justify-content: center;">Loading your name..</span>
+            <span id="userRoles" style="display: flex;justify-content: center;">Loading Roles...</span>
+         </div>
+         <div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;">
+            <img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=600w" width="600"></img>
+         </div>
+   <script>
+   
+      async function DoIt (){
+         let sdk = Descope({projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d'});
+         const sessionToken = sdk.getSessionToken();
+         var notValidToken;	 
+		   if (sessionToken) {
+            notValidToken = sdk.isJwtExpired(sessionToken)
+         
+            const user = await sdk.me(localStorage.getItem("DSR"));
+            const userId = user.data.name;
+            const userRole = user.data.roleNames;
+            const theMenu = document.getElementById('theMenu');
+            document.getElementById('userName').textContent = userId;
+            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
+            if (userRole.includes("Hoobastank")){
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+            }
+            if (userRole.includes("Phish")){
+            theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+            }
+            theMenu.innerHTML = theMenuInnerHTML;
+         }
+         if (!sessionToken || notValidToken) {
+			
+			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
+			const onSuccess = (e) => {
+				sdk.refresh()
+			};
+       }
+      };
+      
+       DoIt();
+     
+   </script>
+</body-->
+
+
+
+
+<!-- Build Frame of screen, top banner, image, User Name and Role Names place holders.
+// Init Descope sdk, session.
+// If Session expired, Display Login screen
+// else
+// Dispaly User Name, Roles, Build menu 
+-->
+
+
+<body>
+<p id="container"></p>
+
+<script>
+var   container = document.getElementById('container');
+container.innerHTML = '<header><h3><span style="display: flex;justify-content: center;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button> <div class="menu" id="theMenu"></div><div><span style="display: flex;justify-content: center;color: #0c419a">Ay yo</span><span id="userName" style="display: flex;justify-content: center;color: #0c419a">Loading your name..</span><span id="userRoles" style="display: flex;justify-content: center;color: #0c419a">Loading Roles...</span></div></header><div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;"><img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=400w" width="400"></img></div>';
+const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });      
+const sessionToken = sdk.getSessionToken()
+var   notValidToken;
+
+if (!sessionToken) {
+   container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
+  }else {
+   notValidToken = sdk.isJwtExpired(sessionToken);
+   if (notValidToken){
+      container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
+   }else{
+      const onSuccess = (e) => {
+   sdk.refresh()
+}
+   DoIt();
+  
+   }
+}
+
+
+
+async function DoIt (){
+const user =  await sdk.me(localStorage.getItem("DSR"));
+const userId = user.data.name;
+const userRole = user.data.roleNames;
+//BuildMenu(); or ...
+const theMenu = document.getElementById('theMenu');
+            document.getElementById('userName').textContent = userId;
+            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
+            if (userRole.includes("Hoobastank")){
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+            }
+            if (userRole.includes("Phish")){
+            theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+            }
+            theMenu.innerHTML = theMenuInnerHTML;
+
+}
+function BuildMenu (){
+   const theMenu = document.getElementById('theMenu');
+            document.getElementById('userName').textContent = userId;
+            document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
+            if (userRole.includes("Hoobastank")){
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+            }
+            if (userRole.includes("Phish")){
+            theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+            }
+            theMenu.innerHTML = theMenuInnerHTML;
+}
+</script>
+
+
+</body>
+
