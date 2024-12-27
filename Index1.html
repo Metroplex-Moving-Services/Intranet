@@ -17,6 +17,8 @@
     <div id="container"></div>
  
 	<script>
+		$(document).ready(foc);
+
 		const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });
  
 		const sessionToken = sdk.getSessionToken()
@@ -32,44 +34,70 @@
 			
 		}else if (sessionToken) {
 
-			const onSuccess = (e) => {
-   sdk.refresh()
-}
-   DoIt();
+			const onSuccess = (e) => {sdk.refresh()}
+   			DoIt();
 		}
 
 
 		async function DoIt (){
-const user =  await sdk.me(localStorage.getItem("DSR"));
-const userId = user.data.name;
-const userRole = user.data.roleNames;
-//BuildMenu(); or ...
-const theMenu = document.getElementById('theMenu');
+			const user =  await sdk.me(localStorage.getItem("DSR"));
+			const userId = user.data.name;
+			const userRole = user.data.roleNames;
+			//BuildMenu(); or ...
+			const theMenu = document.getElementById('theMenu');
             document.getElementById('userName').textContent = userId;
             document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
-            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
+            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>No roles found..</li></a></ul>';
             if (userRole.includes("Hoobastank")){
-            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+            	theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
             }
             if (userRole.includes("Phish")){
-            theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+            	theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
             }
             theMenu.innerHTML = theMenuInnerHTML;
 
-}
-function BuildMenu (){
-   const theMenu = document.getElementById('theMenu');
+		}
+
+		function BuildMenu (){
+   			const theMenu = document.getElementById('theMenu');
             document.getElementById('userName').textContent = userId;
             document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
             theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>Error...</li></a></ul>';
             if (userRole.includes("Hoobastank")){
-            theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
+            	theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
             }
             if (userRole.includes("Phish")){
-            theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+            	theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
             }
-            theMenu.innerHTML = theMenuInnerHTML;
-}
+            	theMenu.innerHTML = theMenuInnerHTML;
+		}
+
+		function foc()
+		{
+
+		$( ".cross" ).hide();
+		$( ".menu" ).hide();
+		$( ".hamburger" ).click(function()
+		{
+			$( ".menu" ).slideToggle( "fast", function()
+			{
+				$( ".hamburger" ).hide();
+				$( ".cross" ).show();	      
+			}
+			);
+		}
+		);
+
+		$( ".cross" ).click(function()
+		{
+			$( ".menu" ).slideToggle( "fast", function()
+			{
+				$( ".cross" ).hide();
+				$( ".hamburger" ).show();
+			}
+			);
+		}
+		);
 		
 	</script>
   </body>
