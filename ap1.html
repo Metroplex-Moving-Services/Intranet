@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://unpkg.com/@descope/web-component@latest/dist/index.js"></script>
+  <script src="https://unpkg.com/@descope/web-component@latest/dist/index.js"></script>
 	<script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
 	<link rel="stylesheet" href="mmsstyle.css">
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/smoothness/jquery-ui.css">
@@ -20,6 +20,7 @@
 <!-- Add below lines to all your authenticated pages -->
 <script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
 <script>
+  $(document).ready(foc);
       var container = document.getElementById('container');
       container.innerHTML = '<header><h3><span style="display: flex;justify-content: center;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button> <div class="menu" id="theMenu"></div><div><span style="display: flex;justify-content: center;color: #0c419a">Ay yo</span><span id="userName" style="display: flex;justify-content: center;color: #0c419a">Loading your name..</span><span id="userRoles" style="display: flex;justify-content: center;color: #0c419a">Loading Roles...</span></div></header><div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;"><img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=400w" width="400"></img></div>';
       const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });      
@@ -56,5 +57,31 @@
               }
               theMenu.innerHTML = theMenuInnerHTML;
 
+}
+function foc()	{
+
+$( ".cross" ).hide();
+$( ".menu" ).hide();
+$( ".hamburger" ).click(function()
+{
+  $( ".menu" ).slideToggle( "fast", function()
+  {
+    $( ".hamburger" ).hide();
+    $( ".cross" ).show();	      
+  }
+  );
+}
+);
+
+$( ".cross" ).click(function()
+{
+  $( ".menu" ).slideToggle( "fast", function()
+  {
+    $( ".cross" ).hide();
+    $( ".hamburger" ).show();
+  }
+  );
+}
+);
 }
 </script>
