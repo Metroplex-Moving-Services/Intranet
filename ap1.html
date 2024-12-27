@@ -53,35 +53,82 @@
               theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
               }
               if (userRole.includes("Phish")){
-              theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
+              theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a><a href="javascript:CreateInvoiceSelected();"><li>Create Invoice</li></a>';
               }
               theMenu.innerHTML = theMenuInnerHTML;
 
 }
 function foc()	{
 
-$( ".cross" ).hide();
-$( ".menu" ).hide();
-$( ".hamburger" ).click(function()
-{
-  $( ".menu" ).slideToggle( "fast", function()
+  $( ".cross" ).hide();
+  $( ".menu" ).hide();
+  $( ".hamburger" ).click(function()
   {
-    $( ".hamburger" ).hide();
-    $( ".cross" ).show();	      
+    $( ".menu" ).slideToggle( "fast", function()
+    {
+      $( ".hamburger" ).hide();
+      $( ".cross" ).show();	      
+    }
+    );
   }
   );
-}
-);
 
-$( ".cross" ).click(function()
-{
-  $( ".menu" ).slideToggle( "fast", function()
+  $( ".cross" ).click(function()
   {
-    $( ".cross" ).hide();
-    $( ".hamburger" ).show();
+    $( ".menu" ).slideToggle( "fast", function()
+    {
+      $( ".cross" ).hide();
+      $( ".hamburger" ).show();
+    }
+    );
   }
   );
+  }
+
+  function HomeSelected()
+{
+	$('#createinvoiceframe').remove();
+	 $('#imgholderdiv').show();
+   $( ".menu" ).slideToggle( "fast", function()
+   {
+      $( ".cross" ).hide();
+      $( ".hamburger" ).show();
+   }
+   )
 }
-);
+
+
+function CreateInvoiceSelected()
+{
+	$('#createinvoiceframe').remove();	 
+	
+	
+   $.LoadingOverlay("show",
+   {
+      imageColor : "#0C419a",
+      imageAnimation : "8000ms pulse"
+   }
+   );
+   setTimeout(function()
+   {
+      $.LoadingOverlay("hide");
+   }
+   , 2000);
+
+   $( ".menu" ).slideToggle( "fast", function()
+   {
+      $( ".cross" ).hide();
+      $( ".hamburger" ).show();
+   }
+   );
+   
+   const iframe0 = document.createElement("iframe");
+   iframe0.style = 'border:none';
+   iframe0.id = 'createinvoiceframe';
+   iframe0.width = '100%';
+   iframe0.height = '3000px';
+   document.body.appendChild(iframe0);
+   iframe0.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
+   $('#imgholderdiv').hide()
 }
 </script>
