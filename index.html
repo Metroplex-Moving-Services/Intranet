@@ -60,18 +60,19 @@
 		function foc()	{
 
 			if (sessionToken && !notValidToken) {
-			const minWidth = 768; // Minimum width for desktop devices
-			var isMobile 
-			
-
-			if (window.innerWidth < minWidth || screen.width < minWidth){				
-					if(navigator.maxTouchPoints > 1){}			
-					else{
-						$("#container").width('50%')}
+				$("#container").width('100%');
 			}else{
-					$("#container").width('50%');
-			}
-		}
+			const minWidth = 768; // Minimum width for desktop devices
+				var isMobile 
+				if (window.innerWidth < minWidth || screen.width < minWidth){				
+						if(navigator.maxTouchPoints > 1){}			
+						else{
+							$("#container").width('50%')}
+				}else{
+						$("#container").width('50%');
+				}
+			}			
+		
 			$( ".cross" ).hide();
 			$( ".menu" ).hide();
 			$( ".hamburger" ).click(function()
