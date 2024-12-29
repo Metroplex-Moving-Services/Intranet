@@ -39,6 +39,7 @@
 		}
 
 		async function DisplayEverything (){
+			$("#container").width('100%');
 			const user =  await sdk.me(localStorage.getItem("DSR"));
 			const userId = user.data.name;
 			const userRole = user.data.roleNames;
