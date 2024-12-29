@@ -87,12 +87,8 @@
 
 		function isMobile() {
 			const minWidth = 768; // Minimum width for desktop devices
-			if (window.innerWidth < minWidth || screen.width < minWidth){
-				function isTouchDevice() {
-					return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-					}else{
-						return false;
-					}
+			if (window.innerWidth < minWidth || screen.width < minWidth){				
+					return ('ontouchstart' in window || navigator.maxTouchPoints > 0);					
 			}			
 		}
 
