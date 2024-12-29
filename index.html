@@ -14,7 +14,7 @@
  
   <body>
 	
-    <div id="container"></div>
+    <div id="container" style=""></div>
  
 	<script>
 		$(document).ready(foc);
@@ -29,7 +29,11 @@
 			notValidToken = sdk.isJwtExpired(sessionToken)
 		}
 		if (!sessionToken || notValidToken) {
-			window.open('logincontainer.html')			
+			container.innerHTML = 'descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in">';
+			if (isMobile){
+				container.style = 'width: 50%';
+			}
+			//window.open('logincontainer.html')			
 			
 		}else if (sessionToken) {
 			const onSuccess = (e) => {sdk.refresh()}
@@ -79,6 +83,17 @@
 			);
 		}
 		);
+		}
+
+		function isMobile() {
+			const minWidth = 768; // Minimum width for desktop devices
+			return window.innerWidth < minWidth || screen.width < minWidth;
+		}
+
+		if (isMobile()) {
+			//console.log("Mobile device detected");
+		} else {
+			//console.log("Desktop device detected");
 		}
 			
 	</script>
