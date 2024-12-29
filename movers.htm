@@ -1,20 +1,17 @@
 <html>
 
 <head>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <title>MMS INTRANET</title>
    <script src="https://unpkg.com/@descope/web-component@latest/dist/index.js"></script>
-    <script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
-    <link rel="stylesheet" href="mmsstyle.css">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/smoothness/jquery-ui.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    
-    <title>MMS INTRANET</title>
-    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
+   <script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
+   <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+   <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
-
-
-   </head>
+   <link rel="stylesheet" href="mmsstyle.css">
+   <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/smoothness/jquery-ui.css">
+</head>
 <script>
     
 
@@ -137,8 +134,6 @@ function ClockIn()
    }
    );
 
-   //$('#addmoverdialog').dialog('close');
-   
    $('#calendarframe').remove();
 	 $('#addmoverframe').remove();
 	$('#clockinframe').remove();
@@ -195,14 +190,10 @@ async function successLocation(position)
 function error()
 {
 }
-
-
-
-
 </script>
 
 <body>
-<p id="container"><img src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/1541527700433-S4HHDFVF4H53SPNPYVQO/metroplex+moving-min.jpg"></p>
+<p id="container"><img src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/1541527700433-S4HHDFVF4H53SPNPYVQO/metroplex+moving-min.jpg"></img></p>
 <script>
 var container = document.getElementById('container');
       container.innerHTML = '<header><h3><span style="display: flex;justify-content: center;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button> <div class="menu" id="theMenu"></div><div><span id="userName" style="display: flex;justify-content: center;color: #0c419a">Loading your name..</span><span id="userRoles" style="display: flex;justify-content: center;color: #0c419a">Loading Roles...</span></div></header>';
