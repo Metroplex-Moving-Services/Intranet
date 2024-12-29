@@ -56,13 +56,16 @@
 		}
 
 		function foc()	{
-			if (isMobile){
-				$("#container").width = '90%';
+			const minWidth = 768; // Minimum width for desktop devices
+			var isMobile 
+			if (window.innerWidth < minWidth || screen.width < minWidth){				
+					if('ontouchstart' in window || navigator.maxTouchPoints > 0){
+						$("#container").width = '90%';
 			}
 			else{
 				$("#container").width = '50%';
 			}
-
+		}
 		$( ".cross" ).hide();
 		$( ".menu" ).hide();
 		$( ".hamburger" ).click(function()
