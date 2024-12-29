@@ -28,13 +28,7 @@
 		if (sessionToken) {
 			notValidToken = sdk.isJwtExpired(sessionToken)
 		}
-		if (!sessionToken || notValidToken) {
-			if (!isMobile){
-				container.style = 'width: 50%';
-			}
-			else{
-				container.style = 'width: 80%';
-			}
+		if (!sessionToken || notValidToken) {			
 			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in">';
 			
 			
@@ -62,6 +56,12 @@
 		}
 
 		function foc()	{
+			if (!isMobile){
+				$("#container").width = '90%';
+			}
+			else{
+				$("#container").width = '90%';
+			}
 
 		$( ".cross" ).hide();
 		$( ".menu" ).hide();
@@ -94,12 +94,6 @@
 					return ('ontouchstart' in window || navigator.maxTouchPoints > 0);					
 			}
 			return false;		
-		}
-
-		if (isMobile()) {
-			//console.log("Mobile device detected");
-		} else {
-			//console.log("Desktop device detected");
 		}
 			
 	</script>
