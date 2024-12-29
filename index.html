@@ -66,37 +66,29 @@
 			}else{
 					$("#container").width('50%');
 			}
-		$( ".cross" ).hide();
-		$( ".menu" ).hide();
-		$( ".hamburger" ).click(function()
-		{
-			$( ".menu" ).slideToggle( "fast", function()
+			$( ".cross" ).hide();
+			$( ".menu" ).hide();
+			$( ".hamburger" ).click(function()
 			{
-				$( ".hamburger" ).hide();
-				$( ".cross" ).show();	      
+				$( ".menu" ).slideToggle( "fast", function()
+				{
+					$( ".hamburger" ).hide();
+					$( ".cross" ).show();	      
+				}
+				);
 			}
 			);
-		}
-		);
 
-		$( ".cross" ).click(function()
-		{
-			$( ".menu" ).slideToggle( "fast", function()
+			$( ".cross" ).click(function()
 			{
-				$( ".cross" ).hide();
-				$( ".hamburger" ).show();
+				$( ".menu" ).slideToggle( "fast", function()
+				{
+					$( ".cross" ).hide();
+					$( ".hamburger" ).show();
+				}
+				);
 			}
 			);
-		}
-		);
-		}
-
-		function isMobile() {
-			const minWidth = 768; // Minimum width for desktop devices
-			if (window.innerWidth < minWidth || screen.width < minWidth){				
-					return ('ontouchstart' in window || navigator.maxTouchPoints > 0);					
-			}
-			return false;		
 		}
 			
 	</script>
