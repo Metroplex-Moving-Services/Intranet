@@ -32,15 +32,13 @@
 			container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in">';
 				const onSuccess = (e) => {
 				sdk.refresh()
-			}
-			
-			
+			}		
 		}else if (sessionToken) {
 			const onSuccess = (e) => {sdk.refresh()}
-   			DoIt();
+   			DisplayEverything();
 		}
 
-		async function DoIt (){
+		async function DisplayEverything (){
 			const user =  await sdk.me(localStorage.getItem("DSR"));
 			const userId = user.data.name;
 			const userRole = user.data.roleNames;
