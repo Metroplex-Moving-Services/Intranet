@@ -14,7 +14,7 @@
  
   <body>
 	
-    <div id="container" style=""></div>
+    <div id="container"></div>
  
 	<script>
 		$(document).ready(foc);
@@ -37,6 +37,7 @@
 		}
 
 		async function DoIt (){
+            $("#container").width('100%');
 			const user =  await sdk.me(localStorage.getItem("DSR"));
 			const userId = user.data.name;
 			const userRole = user.data.roleNames;
