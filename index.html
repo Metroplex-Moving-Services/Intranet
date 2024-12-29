@@ -58,14 +58,15 @@
 		function foc()	{
 			const minWidth = 768; // Minimum width for desktop devices
 			var isMobile 
+
 			if (window.innerWidth < minWidth || screen.width < minWidth){				
 					if(navigator.maxTouchPoints > 1){
 						$("#container").width('90')}
 					else{
-						$("#container").width('90');			
+						$("#container").width('90')}
 			}else{
 					$("#container").width('90');
-				}
+			}
 		$( ".cross" ).hide();
 		$( ".menu" ).hide();
 		$( ".hamburger" ).click(function()
