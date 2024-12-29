@@ -60,11 +60,11 @@
 			var isMobile 
 			if (window.innerWidth < minWidth || screen.width < minWidth){				
 					if(navigator.maxTouchPoints > 1){
-						$("#container").style.width = '90%';}
+						$("#container").width('90')}
 					else{
-						$("#container").style.width = '50%';}			
+						$("#container").width('90');			
 			}else{
-					$("#container").style.width = '50%';
+					$("#container").width('90');
 				}
 		$( ".cross" ).hide();
 		$( ".menu" ).hide();
