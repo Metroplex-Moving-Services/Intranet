@@ -39,7 +39,7 @@
 		}
 
 		async function DisplayEverything (){
-			$("#container").width('100%');
+			const thecontainer = document.getElementById('theMenu');
 			const user =  await sdk.me(localStorage.getItem("DSR"));
 			const userId = user.data.name;
 			const userRole = user.data.roleNames;
@@ -58,8 +58,11 @@
 		}
 
 		function foc()	{
+
+			if (!sessionToken || (notValidToken == false)){
 			const minWidth = 768; // Minimum width for desktop devices
 			var isMobile 
+			
 
 			if (window.innerWidth < minWidth || screen.width < minWidth){				
 					if(navigator.maxTouchPoints > 1){}			
@@ -68,6 +71,7 @@
 			}else{
 					$("#container").width('50%');
 			}
+		}
 			$( ".cross" ).hide();
 			$( ".menu" ).hide();
 			$( ".hamburger" ).click(function()
