@@ -216,11 +216,11 @@ var container = document.getElementById('container');
       var notValidToken;
 
       if (!sessionToken) {
-        window.location.href = "index.html";
+        window.location.href = "index.htm";
       }else {
       notValidToken = sdk.isJwtExpired(sessionToken);
       if (notValidToken){
-        window.location.href = "index.html";
+        window.location.href = "index.htm";
       }else{
         const onSuccess = (e) => {sdk.refresh()}
       DoIt();
@@ -243,7 +243,7 @@ var container = document.getElementById('container');
               theMenuInnerHTML  = theMenuInnerHTML +  '<ul><a onclick="ClockIn()"><li>Clock In</li></a></ul>';
               }
               if (userRole.includes("Phish")){
-              theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.html"><li>Accounts Payable</li></a><a href="javascript:CreateInvoiceSelected();"><li>Create Invoice</li></a>';
+              theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a><a href="javascript:CreateInvoiceSelected();"><li>Create Invoice</li></a>';
               }
               theMenu.innerHTML = theMenuInnerHTML;
 

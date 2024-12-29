@@ -28,12 +28,12 @@
       var notValidToken;
 
       if (!sessionToken) {
-        window.location.href = "index.html";
+        window.location.href = "index.htm";
        // container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
       }else {
       notValidToken = sdk.isJwtExpired(sessionToken);
       if (notValidToken){
-        window.location.href = "index.html";
+        window.location.href = "index.htm";
        // container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
       }else{
         const onSuccess = (e) => {sdk.refresh()}
@@ -55,7 +55,7 @@
               theMenuInnerHTML  = theMenuInnerHTML +  '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
               }
               if (userRole.includes("Phish")){
-              theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.html"><li>Accounts Payable</li></a><a href="javascript:CreateInvoiceSelected();"><li>Create Invoice</li></a>';
+              theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a><a href="javascript:CreateInvoiceSelected();"><li>Create Invoice</li></a>';
               }
               theMenu.innerHTML = theMenuInnerHTML;
 
