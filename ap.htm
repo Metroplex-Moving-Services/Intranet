@@ -28,12 +28,12 @@
       var notValidToken;
 
       if (!sessionToken) {
-        window.location.href = "index.htm";
+        window.location.href = "index.html";
        // container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
       }else {
       notValidToken = sdk.isJwtExpired(sessionToken);
       if (notValidToken){
-        window.location.href = "index.htm";
+        window.location.href = "index.html";
        // container.innerHTML = '<descope-wc project-id="P2qXQxJA4H4hvSu2AnDB5VjKnh1d" flow-id="sign-in"></descope-wc>';
       }else{
         const onSuccess = (e) => {sdk.refresh()}

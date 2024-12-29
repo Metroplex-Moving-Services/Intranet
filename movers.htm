@@ -211,11 +211,11 @@ var container = document.getElementById('container');
       var notValidToken;
 
       if (!sessionToken) {
-        window.location.href = "index.htm";
+        window.location.href = "index.html";
       }else {
       notValidToken = sdk.isJwtExpired(sessionToken);
       if (notValidToken){
-        window.location.href = "index.htm";
+        window.location.href = "index.html";
       }else{
         const onSuccess = (e) => {sdk.refresh()}
       DoIt();
