@@ -29,7 +29,7 @@
 			notValidToken = sdk.isJwtExpired(sessionToken)
 		}
 		if (!sessionToken || notValidToken) {			
-			window.open('index.html')			
+			//window.open('index.html')			
 			
 		}else if (sessionToken) {
 			const onSuccess = (e) => {sdk.refresh()}
