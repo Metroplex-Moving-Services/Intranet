@@ -1,0 +1,26 @@
+
+    <h1 class="title">Home </h1>
+
+    <div class="layout row">
+        <a class="link" href="">Home</a>
+        <a id="loginOrProfile" class="link" href=""></a>
+    </div>
+    <script src=""></script>
+    <script>
+        const loginOrProfile = document.getElementById('loginOrProfile');
+
+        const refresh = Promise.resolve(sdk.refresh())
+        refresh.then((res) => {
+            if (res.ok) { 
+                loginOrProfile.href = ""
+                loginOrProfile.innerHTML = "Profile"
+            } else {
+                return Promise.reject(res); 
+            }
+        }).catch((error) => {
+            loginOrProfile.href = ""
+            loginOrProfile.innerHTML = "Login"
+            console.log("Error: ", error); 
+        });
+
+    </script>
