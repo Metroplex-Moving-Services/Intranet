@@ -197,27 +197,27 @@ function error()
 <script>
 var container = document.getElementById('container');
       container.innerHTML = '<header><h3><span style="display: flex;justify-content: center;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button> <div class="menu" id="theMenu"></div><div>User Name: <span id="userName" style="display: flex;justify-content: center;color: #0c419a">Loading your name..</span>User Role Names: <span id="userRoles" style="display: flex;justify-content: center;color: #0c419a">Loading Roles...</span></div></header>';
-      const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });      
-      const sessionToken = sdk.getSessionToken()
-      var notValidToken;
+      //const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });      
+      //const sessionToken = sdk.getSessionToken()
+      //var notValidToken;
 
-      if (!sessionToken) {
-        window.location.href = "index.html";
-      }else {
-      notValidToken = sdk.isJwtExpired(sessionToken);
-      if (notValidToken){
-        window.location.href = "index.html";
-      }else{
-        const onSuccess = (e) => {sdk.refresh()}
+      //if (!sessionToken) {
+        //window.location.href = "index.html";
+      //}else {
+      //notValidToken = sdk.isJwtExpired(sessionToken);
+      //if (notValidToken){
+        //window.location.href = "index.html";
+      //}else{
+        //const onSuccess = (e) => {sdk.refresh()}
       DoIt();
       CalendarSelected()
-      }
-      }
+     // }
+     // }
 
       async function DoIt (){
-      const user =  await sdk.me(localStorage.getItem("DSR"));
-      const userId = user.data.name;
-      const userRole = user.data.roleNames;
+      //const user =  await sdk.me(localStorage.getItem("DSR"));
+      //const userId = user.data.name;
+      //const userRole = user.data.roleNames;
       //BuildMenu(); or ...
       const theMenu = document.getElementById('theMenu');
               document.getElementById('userName').textContent = userId;
