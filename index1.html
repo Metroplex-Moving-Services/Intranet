@@ -9,6 +9,7 @@
   <body>    
       <div class="layout">
           <h1 class="title">MMS BASIC DESCOPE</h1>
+          <p id="container"></p>
       </div>
       <script>
 
@@ -16,13 +17,14 @@
     
         const sessionToken = sdk.getSessionToken()
         const currentPath = window.location.pathname;
+        container = document.getElementById("container");
         if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
-             //User is logged in
+             container.innerHTML = "logged in";
         } else {
-        if (currentPath != '/login') {
+       // if (currentPath != '/login') {
             // Redirect to login page
           window.location.replace('/login1.html');
-        }
+       // }
 }
 </script>
     </script>
