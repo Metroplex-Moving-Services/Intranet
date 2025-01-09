@@ -2,40 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title></title>
-    
     <script src="https://unpkg.com/@descope/web-js-sdk@1.12.1/dist/index.umd.js"></script>
     <a class="link" href="">Home</a>
-    <a id="loginOrProfile" class="link" href=""></a>
   </head>
     
   <body>    
       <div class="layout">
-          <h1 class="title">Descope-Flask Demo</h1>
+          <h1 class="title">MMS BASIC DESCOPE</h1>
       </div>
       <script>
-        const loginOrProfile = document.getElementById('loginOrProfile');
-        const projectId = "P2qXQxJA4H4hvSu2AnDB5VjKnh1d";
-        const sdk = Descope({
-          projectId: projectId,
-          persistTokens: true,
-          autoRefresh: true
-        });
-        const sessionToken = sdk.getSessionToken();
-        const refresh = Promise.resolve(sdk.refresh())
-          refresh.then((res) => {
-          if (res.ok) { 
-            loginOrProfile.href = ""
-            loginOrProfile.innerHTML = "Profile"
-          } else {
-            return Promise.reject(res); 
-          }
-          }).catch((error) => {
-            window.location.href ="login1.html"
-            loginOrProfile.href = ""
-            loginOrProfile.innerHTML = "Login"
-            console.log("Error: ", error); 
-          });
+
+        const sdk = Descope({ projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d", persistTokens: true });
+    
+        const sessionToken = sdk.getSessionToken()
+        const currentPath = window.location.pathname;
+        if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
+             //User is logged in
+        } else {
+        if (currentPath != '/login') {
+            // Redirect to login page
+          window.location.replace('/login1.html');
+        }
+}
+</script>
     </script>
   </body>
 </html>
