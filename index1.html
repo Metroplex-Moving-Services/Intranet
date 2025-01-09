@@ -27,7 +27,13 @@
       </div>
       <script>
         const loginOrProfile = document.getElementById('loginOrProfile');
-
+const projectId = "";
+const sdk = Descope({
+  projectId: projectId,
+  persistTokens: true,
+  autoRefresh: true,
+});
+const sessionToken = sdk.getSessionToken();
         const refresh = Promise.resolve(sdk.refresh())
         refresh.then((res) => {
             if (res.ok) { 
