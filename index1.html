@@ -9,92 +9,42 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   </head>
     
-  <body>  
-    <nav class="navbar bg-light ">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-            <span class="icon-bar" style="background-color: #0c419a"></span>
-            <span class="icon-bar" style="background-color: #0c419a"></span>
-            <span class="icon-bar" style="background-color: #0c419a"></span>                        
-          </button>
-          <a class="navbar-brand" href="#">MMS INTRANET</a>
-        </div>
-        <div class="collapse navbar-collapse navbar-right" id="myNavbar">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Home Stagers<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li ><a href="#">Calendar</a></li> 
-                <li  ><a href="#"></a></li>
-                <li  ><a href="#"></a></li>
-              </ul>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Movers<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="" >Add Mover to Job</a></li>
-                <li><a href="#" ><span onclick="setiFrame('calendar')">Calendar</span></a></li>
-                <li><a href="#" >Clock-In</a></li>
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Accounts Payable <span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="#" >Create Invoice</a></li>
-              </ul>
-            </li>          
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Human Resources<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="#" >My Profile</a></li>
-                <li><a href="#" >Job Timesheets</a></li>
-              </ul>
-            </li>   
-          </ul>
-        </div>
-      </div>
-    </nav>
-            <p id="container"></p>
+  <body>
+    <p id="container"></p>
 
       <script>
+        container = document.getElementById("container");
+        const theMenue = '<nav class="navbar bg-light "><div class="container-fluid"><div class="navbar-header"><button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar"><span class="icon-bar" style="background-color: #0c419a"></span><span class="icon-bar" style="background-color: #0c419a"></span><span class="icon-bar" style="background-color: #0c419a"></span></button><a class="navbar-brand" href="#">MMS INTRANET</a></div><div class="collapse navbar-collapse navbar-right" id="myNavbar"><ul class="nav navbar-nav"><li class="active"><a href="#">Home</a></li><li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Home Stagers<span class="caret"></span></a><ul class="dropdown-menu"><li ><a href="#">Calendar</a></li> <li  ><a href="#"></a></li><li  ><a href="#"></a></li></ul><li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Movers<span class="caret"></span></a><ul class="dropdown-menu"><li><a href="" >Add Mover to Job</a></li><li><a href="#" ><span onclick="setiFrame('calendar')">Calendar</span></a></li><li><a href="#" >Clock-In</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Accounts Payable <span class="caret"></span></a><ul class="dropdown-menu"><li><a href="#" >Create Invoice</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Human Resources<span class="caret"></span></a><ul class="dropdown-menu"><li><a href="#" >My Profile</a></li><li><a href="#" >Job Timesheets</a></li></ul></li></ul></div></div></nav>';
+        container = theMenue;
 
         const sdk = Descope({ projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d", persistTokens: true });
     
         const sessionToken = sdk.getSessionToken()
-        container = document.getElementById("container");
+
         if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
-             container.innerHTML = "logged in";
+           //  container.innerHTML = "logged in";
         } else {
-          container.html = "<a href='/Intranet/login1.html'>Login</a>";
-          //window.location.replace('/Intranet/login1.html');
-       // }
+         // container.html = "<a href='/Intranet/login1.html'>Login</a>";
         }
-</script>
-<script>
-  //const logoutButton = document.getElementById('logoutButton');
-  //logoutButton.onclick = function() {
-     // sdk.logout();
-     // window.location.replace('/Intranet/index1.html');
-  //};
-  const iframe0 = document.createElement("iframe");
-  iframe0.style = 'border:none';
-  iframe0.id = 'MMSframe';
-  iframe0.width = '100%';
-  iframe0.height = '800px';
-  document.body.appendChild(iframe0);
+
+        const iframe0 = document.createElement("iframe");
+        iframe0.style = 'border:none';
+        iframe0.id = 'MMSframe';
+        iframe0.width = '100%';
+        iframe0.height = '800px';
+        document.body.appendChild(iframe0);
 
 
-  function setiFrame(purpose){
-    const menuToggle = document.getElementById('myNavbar')
-    menuToggle.toggle();
-    iframe0.removeAttribute("src");    
-    
-    if (purpose == 'calendar'){
-      iframe0.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
-    }
-  }
-</script>
+        function setiFrame(purpose){
+          container = theMenue;
+
+          iframe0.removeAttribute("src");    
+          
+          if (purpose == 'calendar'){
+            iframe0.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
+          }
+        }
+      </script>
     
   </body>
 </html>
