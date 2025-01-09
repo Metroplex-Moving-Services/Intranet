@@ -77,6 +77,18 @@
       sdk.logout();
      // window.location.replace('/Intranet/index1.html');
   };
+
+  function setiFrame(purpose){
+    const iframe0 = document.createElement("iframe");
+    iframe0.style = 'border:none';
+    iframe0.id = 'calendarframe';
+    iframe0.width = '100%';
+    iframe0.height = '800px';
+    document.body.appendChild(iframe0);
+    if (purpose == 'calendar'){
+      iframe0.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
+    }
+ 
 </script>
     
   </body>
