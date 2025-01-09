@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <script src="https://unpkg.com/@descope/web-js-sdk@1.12.1/dist/index.umd.js"></script>
     <a class="link" href="">Home</a>
+    <button id="logoutButton"></button>
   </head>
     
   <body>    
@@ -24,6 +25,13 @@
        // }
         }
 </script>
-    </script>
+<script>
+  const logoutButton = document.getElementById('logoutButton');
+  logoutButton.onclick = function() {
+      sdk.logout();
+      window.location.replace('/Intranet/index1.html');
+  };
+</script>
+    
   </body>
 </html>
