@@ -16,13 +16,10 @@
         const sdk = Descope({ projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d", persistTokens: true });
     
         const sessionToken = sdk.getSessionToken()
-        const currentPath = window.location.pathname;
         container = document.getElementById("container");
         if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
              container.innerHTML = "logged in";
         } else {
-       // if (currentPath != '/login') {
-            // Redirect to login page
           window.location.replace('/Intranet/login1.html');
        // }
         }
