@@ -134,7 +134,7 @@ function url_redirect(url){
         return true;
     },300);
 
-    if( window.location = url ){
+    if( window.location.pathname = url ){
         clearTimeout(X);
         return true;
     } else {
