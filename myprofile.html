@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
+           
+
+    </head>
+    <body>
+        <div id="container"></div>
+<script>
+     async function DoIt() {
+    $("#container").width('100%');
+    user = await sdk.me(localStorage.getItem("DSR"));
+    userId = user.data.name;
+    userRole = user.data.roleNames;
+    userEmail = user.data.userEmail;
+    userPhone = user.data.userPhone;
+    userPicture = user.data.userPicture;
+
+    container.innerHTML = user + " " + userId + " " + UserRole[0] + " " + userEmail + " " + userPhone + " " + userPicture;
+
+}
+DoIt()
+</script>
+
+    </body>
+</html>

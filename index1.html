@@ -19,7 +19,7 @@
 <body>
 <p id="menuContainer"></p>
 <div class="h_iframe">
-<iframe id="MMSiFrame" style="border:none; frameborder="0" allowfullscreen "></iframe>
+<iframe id="MMSiFrame" style="border:none;" allowfullscreen "></iframe>
 </div>
 	
 <script>
@@ -30,6 +30,7 @@ var theMenuHtml;
 
 const MMSiFrame = document.getElementById("MMSiFrame");
 MMSiFrame.src = "splash.html";
+
 
 const sdk = Descope({
     projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
@@ -123,27 +124,7 @@ function setiFrame(purpose) {
     }
 }
 
-function url_redirect(url){
-    var X = setTimeout(function(){
-        window.location.replace(url);
-        return true;
-    },300);
 
-    if( window.location.pathname == url ){
-        clearTimeout(X);
-        return true;
-    } else {
-        if( window.location.href == url ){
-            clearTimeout(X);
-            return true;
-        }else{
-            clearTimeout(X);
-            window.location.replace(url);
-            return true;
-        }
-    }
-    return false;
-};
 
 
 
