@@ -39,19 +39,17 @@
 
         if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
            //  container.innerHTML = "logged in";
-          const user =  sdk.me(localStorage.getItem("DSR"));
-			const userId = user.data.name;
-			const userRole = user.data.roleNames;
+   
         } else {
          // container.html = "<a href='/Intranet/login1.html'>Login</a>";
           window.location.href="/Intranet/login1.html";
         }
-	      async function DoIt (){
-            $("#container").width('100%');
-			const user =  await sdk.me(localStorage.getItem("DSR"));
-			const userId = user.data.name;
-			const userRole = user.data.roleNames;
-	      }
+	async function DoIt (){
+		$("#container").width('100%');
+		const user =  await sdk.me(localStorage.getItem("DSR"));
+		const userId = user.data.name;
+		const userRole = user.data.roleNames;
+	}
 
         function setiFrame(purpose){
 
