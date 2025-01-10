@@ -64,17 +64,9 @@
 	}
 
         function setiFrame(purpose){
-		 $.LoadingOverlay("show",
-   {
-      imageColor : "#0C419a",
-      imageAnimation : "8000ms pulse"
-   }
-   );
-   setTimeout(function()
-   {
-      $.LoadingOverlay("hide");
-   }
-   , 2000);
+		 $.LoadingOverlay("show",  { imageColor : "#0C419a",		      imageAnimation : "8000ms pulse"});}
+	      
+   setTimeout(function()   {      $.LoadingOverlay("hide");}, 2000);
 
           menuContainer.innerHTML = theMenuHtml;
 
