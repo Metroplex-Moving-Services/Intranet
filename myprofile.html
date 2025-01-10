@@ -13,8 +13,9 @@
     projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
     persistTokens: true
 });
+container = document.getElementById("#container");
+    
      async function DoIt() {
-    container = document.getElementById("#container");
     
     user = await sdk.me(localStorage.getItem("DSR"));
     userId = user.data.name;
@@ -23,7 +24,7 @@
     userPhone = user.data.userPhone;
     userPicture = user.data.userPicture;
    
-    container.innerHTML = user + " " + userId + " " + userRole[0][1][2] + " " + userEmail + " " + userPhone + " " + userPicture;
+    container.innerHTML = user + "<br>" + userId + "<br>" + userRole[0][1][2] + "<br>" + userEmail + "<br>" + userPhone + "<br>" + userPicture;
 
 }
 DoIt()
