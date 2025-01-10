@@ -19,10 +19,18 @@ container = document.getElementById("container");
     
     user = await sdk.me(localStorage.getItem("DSR"));
     userName = user.data.name;
-    userRole = user.data.roleNames;
+    userRoles = user.data.roleNames;
     userEmail = user.data.email;
     userPhone = user.data.phone;
     userPicture = user.data.picture;
+
+    const roles = userRoles.keys();
+
+// List the Keys
+let text = "";
+for (let x of roles) {
+  text += x + "<br>";
+}
    
     container.innerHTML = "Name: " + userName + "<br>" + "In Roles: " + userRole[0][1][2] + "<br>" + "eMail Address: " + userEmail + "<br>" + "Phone Number: " + userPhone + "<br>" + "Picture: <img src='" + userPicture +"'></img>";
 
