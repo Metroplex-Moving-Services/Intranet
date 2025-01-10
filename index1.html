@@ -31,6 +31,7 @@
 	      var user;
 	      var userId;
 	      var userRole;
+	      var theMenuHtml;
        
         const MMSiFrame =  document.getElementById("MMSiFrame");
        
@@ -38,7 +39,7 @@
   .then(response => response.text())
   .then(html => {
     // Insert the HTML into an element
-	  const theMenuHtml = html;
+	   theMenuHtml = html;
     document.getElementById('menuContainer').innerHTML = theMenuHtml;
   });
       
