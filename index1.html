@@ -36,10 +36,6 @@ var userRole;
 var theMenuHtml;
 
 const MMSiFrame = document.getElementById("MMSiFrame");
-
-
-
-
 const sdk = Descope({
     projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
     persistTokens: true
@@ -48,12 +44,11 @@ const sdk = Descope({
 const sessionToken = sdk.getSessionToken()
 
 if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))) {
-    //  container.innerHTML = "logged in";
     DoIt()
 } else {
-    // container.html = "<a href='/Intranet/login1.html'>Login</a>";
     window.location.href = "/Intranet/login1.html";
 }
+
 async function DoIt() {
     $("#container").width('100%');
     user = await sdk.me(localStorage.getItem("DSR"));
@@ -73,20 +68,23 @@ function setiFrame(purpose) {
         imageColor: "#0C419a",
         imageAnimation: "8000ms pulse"
     });
-    setTimeout(function() {
-        $.LoadingOverlay("hide");
-    }, 1000);
-
+    
     menuContainer.innerHTML = theMenuHtml;
+
     MMSiFrame.removeAttribute("src");
+
     if (purpose == 'calendar') {
         MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
         MMSiFrame.height = 1200;
+        setTimeout(function() {
+            $.LoadingOverlay("hide");}, 2000);
     }
     if (purpose == 'addmovertojob') {
         if (userRole.includes("Hoobastank")) {
             MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Add_Mover_To_Job/K94Pj9Q02ZQxseasgKf3RRvjqk8A5rC6CREEXtMW14vx3rhJx78x8JFxuke5XTgv1RDEjXm5Qv9AY9bD0rCC6wdAfvhnRTH4GVF4";
             MMSiFrame.height = 800;
+            setTimeout(function() {
+                $.LoadingOverlay("hide");}, 1000);
         } else {
             MMSiFrame.src = "needmoreprivileges.html";
         }
@@ -95,6 +93,8 @@ function setiFrame(purpose) {
         if (userRole.includes("Phish")) {
             MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
             MMSiFrame.height = 1400;
+            setTimeout(function() {
+                $.LoadingOverlay("hide");}, 1000);
         } else {
             MMSiFrame.src = "needmoreprivileges.html";
         }
@@ -104,7 +104,8 @@ function setiFrame(purpose) {
         MMSiFrame.src = "splash.html";
     }
     if (purpose == 'clock-in') {
-        if (userRole.includes("Hoobastank")) {
+        if (userRole.includes("Hoobastank")) {                
+
             const options = {
                 enableHighAccuracy: true,
                 timeout: 10000,
