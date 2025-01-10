@@ -95,6 +95,11 @@ function setiFrame(purpose) {
             MMSiFrame.src = "needmoreprivileges.html";
         }
     }
+    if (purpose == 'myprofile') {
+        setTimeout(function() {
+            $.LoadingOverlay("hide");}, 500);
+        MMSiFrame.src = "myprofile.html";
+    }
 
     if (purpose == 'empty') {
         setTimeout(function() {
