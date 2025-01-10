@@ -10,44 +10,44 @@
         <p id="menuContainer"></p>
         <div id="container"></div>
 <script>
-    var theMenuHtml;
-      fetch('themenu.html')
-        .then(response => response.text())
-        .then(html => {
-            // Insert the HTML into an element
-            theMenuHtml = html;
-            document.getElementById('menuContainer').innerHTML = theMenuHtml;
-        });
+  var theMenuHtml;
+  fetch('themenu.html')
+      .then(response => response.text())
+      .then(html => {
+          // Insert the HTML into an element
+          theMenuHtml = html;
+          document.getElementById('menuContainer').innerHTML = theMenuHtml;
+      });
 
-    const sdk = Descope({
-    projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
-    persistTokens: true
-});
+  const sdk = Descope({
+      projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
+      persistTokens: true
+  });
 
-container = document.getElementById("container");
+  container = document.getElementById("container");
 
-    
-     async function DoIt() {
-    
-    user = await sdk.me(localStorage.getItem("DSR"));
-    userName = user.data.name;
-    userRoles = user.data.roleNames;
-    userEmail = user.data.email;
-    userPhone = user.data.phone;
-    userPicture = user.data.picture;
 
-    const roles = userRoles.keys();
+  async function DoIt() {
 
-// List the Keys
-let text = "";
-for (let x of roles) {
-  text += x + "<br>";
-}
-   
-    container.innerHTML = "Name: " + userName + "<br>" + "In Roles: " + userRole[0][1][2] + "<br>" + "eMail Address: " + userEmail + "<br>" + "Phone Number: " + userPhone + "<br>" + "Picture: <img src='" + userPicture +"'></img>";
+      user = await sdk.me(localStorage.getItem("DSR"));
+      userName = user.data.name;
+      userRoles = user.data.roleNames;
+      userEmail = user.data.email;
+      userPhone = user.data.phone;
+      userPicture = user.data.picture;
 
-}
-DoIt()
+      const roles = userRoles.values();
+
+      // List the Keys
+      let text = "";
+      for (let x of roles) {
+          text += x + "<br>";
+      }
+
+      container.innerHTML = "Name: " + userName + "<br>" + "In Roles: " + text + "<br>" + "eMail Address: " + userEmail + "<br>" + "Phone Number: " + userPhone + "<br>" + "Picture: <img src='" + userPicture + "'></img>";
+
+  }
+  DoIt()
 </script>
 
     </body>
