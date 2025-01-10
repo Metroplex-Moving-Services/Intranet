@@ -7,13 +7,25 @@
 
     </head>
     <body>
+        <p id="menuContainer"></p>
         <div id="container"></div>
 <script>
+    var theMenuHtml;
+      fetch('themenu.html')
+        .then(response => response.text())
+        .then(html => {
+            // Insert the HTML into an element
+            theMenuHtml = html;
+            document.getElementById('menuContainer').innerHTML = theMenuHtml;
+        });
+
     const sdk = Descope({
     projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
     persistTokens: true
 });
+
 container = document.getElementById("container");
+
     
      async function DoIt() {
     
