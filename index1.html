@@ -121,11 +121,6 @@ function setiFrame(purpose) {
             MMSiFrame.src = "needmoreprivileges.html";
         }
     }
-    if (purpose == 'logout') {
-       // sdk.logout();
-       $.LoadingOverlay("hide")
-        url_redirect("/Intranet/login1.html"); 
-    }
 }
 
 function url_redirect(url){
