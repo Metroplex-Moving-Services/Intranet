@@ -10,14 +10,15 @@
         <div id="container"></div>
 <script>
      async function DoIt() {
-    $("#container").width('100%');
+    container = document.getElementById("#container");
+    
     user = await sdk.me(localStorage.getItem("DSR"));
     userId = user.data.name;
     userRole = user.data.roleNames;
     userEmail = user.data.userEmail;
     userPhone = user.data.userPhone;
     userPicture = user.data.userPicture;
-
+    container.width = '100%';
     container.innerHTML = user + " " + userId + " " + UserRole[0] + " " + userEmail + " " + userPhone + " " + userPicture;
 
 }
