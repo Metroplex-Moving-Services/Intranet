@@ -18,13 +18,13 @@ container = document.getElementById("container");
      async function DoIt() {
     
     user = await sdk.me(localStorage.getItem("DSR"));
-    userId = user.data.name;
+    userName = user.data.name;
     userRole = user.data.roleNames;
-    userEmail = user.data.userEmail;
-    userPhone = user.data.userPhone;
-    userPicture = user.data.userPicture;
+    userEmail = user.data.email;
+    userPhone = user.data.phone;
+    userPicture = user.data.picture;
    
-    container.innerHTML = user + "<br>" + userId + "<br>" + userRole[0][1][2] + "<br>" + userEmail + "<br>" + userPhone + "<br>" + userPicture;
+    container.innerHTML = "Name: " + userName + "<br>" + "In Roles: " + userRole[0][1][2] + "<br>" + "eMail Address: " + userEmail + "<br>" + "Phone Number: " + userPhone + "<br>" + "Picture: <img src='" + userPicture +"'></img>";
 
 }
 DoIt()
