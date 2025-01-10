@@ -124,7 +124,10 @@
      }
 	 if (purpose == 'logout'){
 		   sdk.logout();
-		  window.location.href = "/Intranet/login1.html";
+		 setTimeout(function() {
+        window.location.href = "/Intranet/login1.html";
+     }, 1000);
+		  
 	 }
      
  }
