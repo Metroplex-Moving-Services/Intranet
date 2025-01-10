@@ -39,6 +39,9 @@
 
         if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
            //  container.innerHTML = "logged in";
+          const user =  await sdk.me(localStorage.getItem("DSR"));
+			const userId = user.data.name;
+			const userRole = user.data.roleNames;
         } else {
          // container.html = "<a href='/Intranet/login1.html'>Login</a>";
           window.location.href="/Intranet/login1.html";
