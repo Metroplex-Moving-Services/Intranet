@@ -96,6 +96,8 @@ function setiFrame(purpose) {
     }
 
     if (purpose == 'empty') {
+        setTimeout(function() {
+            $.LoadingOverlay("hide");}, 500);
         MMSiFrame.src = "splash.html";
     }
     if (purpose == 'clock-in') {
