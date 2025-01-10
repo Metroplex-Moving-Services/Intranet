@@ -123,6 +123,7 @@ function setiFrame(purpose) {
     }
     if (purpose == 'logout') {
        // sdk.logout();
+       $.LoadingOverlay("hide")
         window.location.replace("/Intranet/login1.html");
     }
 }
