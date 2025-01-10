@@ -101,43 +101,30 @@
 		   }
 	  }
 		if (purpose == 'clock-in'){
-		const options =
-		   {
+		const options =   {
 		      enableHighAccuracy : true,
 		      timeout : 10000,
-		      maximumAge : 0
-		   }
-		   ;
+		      maximumAge : 0   }   ;
 		
-		   if (navigator.geolocation)
-		   {
-		   setTimeout(function()
-		   {
-		      $.LoadingOverlay("hide");
-		   }
-		   , 3000);
-		      none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
+		   if (navigator.geolocation) {
+		   		setTimeout(function(){
+		     			 $.LoadingOverlay("hide");}, 3000);none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
 		   }
 		   else
 		   {
 		      alert("Geolocation is not supported by this browser.");
-		   }
-
-			}
-			async function successLocation(position)
-			{
-
-			   let response = await fetch('https://api.ipify.org/?format=json');
-			   let data = await response.text();
-			   const obj = JSON.parse(data);
-   			MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/CheckIn/8O7e3kdZNJF99mA14Gm2EgTfT5DX5YWVfr3jHy451sYFaxAdUDaudFwN86ub4fTN4qxrZHU9Ez1V5Om5zzGwq57Fs0RA9Mv8Db8j?CapturedIPAddress=" + obj.ip + "&Mover_Coordinates=" + position.coords.latitude + ", " + position.coords.longitude;
-
-   
+		   }	
+		}
+			async function successLocation(position){
+				let response = await fetch('https://api.ipify.org/?format=json');
+				let data = await response.text();
+				const obj = JSON.parse(data);
+				MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/CheckIn/8O7e3kdZNJF99mA14Gm2EgTfT5DX5YWVfr3jHy451sYFaxAdUDaudFwN86ub4fTN4qxrZHU9Ez1V5Om5zzGwq57Fs0RA9Mv8Db8j?CapturedIPAddress=" + obj.ip + "&Mover_Coordinates=" + position.coords.latitude + ", " + position.coords.longitude;
 			}
 			function error()
 			{
 			}
-		}
+		
 		if (purpose == 'empty'){
             		MMSiFrame.src = "";
 		   }
