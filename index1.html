@@ -64,6 +64,17 @@
 	}
 
         function setiFrame(purpose){
+		 $.LoadingOverlay("show",
+   {
+      imageColor : "#0C419a",
+      imageAnimation : "8000ms pulse"
+   }
+   );
+   setTimeout(function()
+   {
+      $.LoadingOverlay("hide");
+   }
+   , 2000);
 		
           menuContainer.innerHTML = theMenuHtml;
           MMSiFrame.removeAttribute("src");          
@@ -91,9 +102,6 @@
 	  }
 		if (purpose == 'empty'){
             		MMSiFrame.src = "";
-		   }
-		   else{
-			  MMSiFrame.src = "needmoreprivileges.html";
 		   }
 	  }
 	
