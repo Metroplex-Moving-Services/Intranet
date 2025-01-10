@@ -120,13 +120,17 @@
              alert("Geolocation is not supported by this browser.");
          }}else {
              MMSiFrame.src = "needmoreprivileges.html";
-         }
+         
+	      
      }
 	 if (purpose == 'logout'){
-		   sdk.logoutAll();
-		 setTimeout(function() {
+		   sdk.logout();
+		  sdk.logoutAll(); sdk.logout();
+		  sdk.logoutAll();
+		  sdk.logoutAll();
+		
         window.location.href = "/Intranet/login1.html";
-     }, 1000);
+
 		  
 	 }
      
