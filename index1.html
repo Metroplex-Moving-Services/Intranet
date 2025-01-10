@@ -22,117 +22,112 @@
       </style>
   </head>
     
-  <body>
-    <p id="menuContainer"></p>
-    <div class="h_iframe">
-    <iframe id="MMSiFrame" style="border:none; frameborder="0" allowfullscreen "></iframe>
-    </div>
-
-      <script>
-	      var user;
-	      var userId;
-	      var userRole;
-	      var theMenuHtml;
-       
-        const MMSiFrame =  document.getElementById("MMSiFrame");
-       
-	fetch('themenu.html')
-  .then(response => response.text())
-  .then(html => {
-    // Insert the HTML into an element
-	   theMenuHtml = html;
-    document.getElementById('menuContainer').innerHTML = theMenuHtml;
-  });
-      
-
-        const sdk = Descope({ projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d", persistTokens: true });
-    
-        const sessionToken = sdk.getSessionToken()
-
-        if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
-           //  container.innerHTML = "logged in";
-   
-        } else {
-         // container.html = "<a href='/Intranet/login1.html'>Login</a>";
-          window.location.href="/Intranet/login1.html";
-        }
-	async function DoIt (){
-		$("#container").width('100%');
-		 user =  await sdk.me(localStorage.getItem("DSR"));
-		 userId = user.data.name;
-		 userRole = user.data.roleNames;
-	}
-
-        function setiFrame(purpose){
-		 $.LoadingOverlay("show",
-   {
-      imageColor : "#0C419a",
-      imageAnimation : "8000ms pulse"
-   }
-   );
-   setTimeout(function()
-   {
-      $.LoadingOverlay("hide");
-   }
-   , 2000);
-		
-          menuContainer.innerHTML = theMenuHtml;
-          MMSiFrame.removeAttribute("src");          
-          if (purpose == 'calendar'){
-            MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
-            MMSiFrame.height = 1200;
-          }
-          if (purpose == 'addmovertojob'){
-		  if (userRole.includes("Hoobastank")){
-            		MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Add_Mover_To_Job/K94Pj9Q02ZQxseasgKf3RRvjqk8A5rC6CREEXtMW14vx3rhJx78x8JFxuke5XTgv1RDEjXm5Qv9AY9bD0rCC6wdAfvhnRTH4GVF4";
-            		MMSiFrame.height = 800;
-		  }
-		  else{
-			  MMSiFrame.src = "needmoreprivileges.html";
-		  }
-          }
-          if (purpose == 'createinvoice'){
-		   if (userRole.includes("Phish")){
-            		MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
-            		MMSiFrame.height = 1400;
-		   }
-		   else{
-			  MMSiFrame.src = "needmoreprivileges.html";
-		   }
-	  }
-		if (purpose == 'clock-in'){
-		const options =   {
-		      enableHighAccuracy : true,
-		      timeout : 10000,
-		      maximumAge : 0   }   ;
-		
-		   if (navigator.geolocation) {
-		   		setTimeout(function(){
-		     			 $.LoadingOverlay("hide");}, 3000);none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
-		   }
-		   else
-		   {
-		      alert("Geolocation is not supported by this browser.");
-		   }	
-		}
-			async function successLocation(position){
-				let response = await fetch('https://api.ipify.org/?format=json');
-				let data = await response.text();
-				const obj = JSON.parse(data);
-				MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/CheckIn/8O7e3kdZNJF99mA14Gm2EgTfT5DX5YWVfr3jHy451sYFaxAdUDaudFwN86ub4fTN4qxrZHU9Ez1V5Om5zzGwq57Fs0RA9Mv8Db8j?CapturedIPAddress=" + obj.ip + "&Mover_Coordinates=" + position.coords.latitude + ", " + position.coords.longitude;
-			}
-			function error()
-			{
-			}
-		
-		if (purpose == 'empty'){
-            		MMSiFrame.src = "";
-		   }
-	  
+<body>
+	<p id="menuContainer"></p>
+	<div class="h_iframe">
+	<iframe id="MMSiFrame" style="border:none; frameborder="0" allowfullscreen "></iframe>
+	</div>
 	
-	      DoIt()	      
-       
-      </script>
-    
-  </body>
+	<script>
+	 var user;
+ var userId;
+ var userRole;
+ var theMenuHtml;
+
+ const MMSiFrame = document.getElementById("MMSiFrame");
+
+ fetch('themenu.html')
+     .then(response => response.text())
+     .then(html => {
+         // Insert the HTML into an element
+         theMenuHtml = html;
+         document.getElementById('menuContainer').innerHTML = theMenuHtml;
+     });
+
+
+ const sdk = Descope({
+     projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
+     persistTokens: true
+ });
+
+ const sessionToken = sdk.getSessionToken()
+
+ if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))) {
+     //  container.innerHTML = "logged in";
+
+ } else {
+     // container.html = "<a href='/Intranet/login1.html'>Login</a>";
+     window.location.href = "/Intranet/login1.html";
+ }
+ async function DoIt() {
+     $("#container").width('100%');
+     user = await sdk.me(localStorage.getItem("DSR"));
+     userId = user.data.name;
+     userRole = user.data.roleNames;
+ }
+
+ function setiFrame(purpose) {
+     $.LoadingOverlay("show", {
+         imageColor: "#0C419a",
+         imageAnimation: "8000ms pulse"
+     });
+     setTimeout(function() {
+         $.LoadingOverlay("hide");
+     }, 2000);
+
+     menuContainer.innerHTML = theMenuHtml;
+     MMSiFrame.removeAttribute("src");
+     if (purpose == 'calendar') {
+         MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
+         MMSiFrame.height = 1200;
+     }
+     if (purpose == 'addmovertojob') {
+         if (userRole.includes("Hoobastank")) {
+             MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Add_Mover_To_Job/K94Pj9Q02ZQxseasgKf3RRvjqk8A5rC6CREEXtMW14vx3rhJx78x8JFxuke5XTgv1RDEjXm5Qv9AY9bD0rCC6wdAfvhnRTH4GVF4";
+             MMSiFrame.height = 800;
+         } else {
+             MMSiFrame.src = "needmoreprivileges.html";
+         }
+     }
+     if (purpose == 'createinvoice') {
+         if (userRole.includes("Phish")) {
+             MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
+             MMSiFrame.height = 1400;
+         } else {
+             MMSiFrame.src = "needmoreprivileges.html";
+         }
+     }
+
+     if (purpose == 'empty') {
+         MMSiFrame.src = "";
+     }
+     if (purpose == 'clock-in') {
+         const options = {
+             enableHighAccuracy: true,
+             timeout: 10000,
+             maximumAge: 0
+         };
+
+         if (navigator.geolocation) {
+             setTimeout(function() {
+                 $.LoadingOverlay("hide");
+             }, 3000);
+             none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
+         } else {
+             alert("Geolocation is not supported by this browser.");
+         }
+     }
+     DoIt()
+
+     async function successLocation(position) {
+         let response = await fetch('https://api.ipify.org/?format=json');
+         let data = await response.text();
+         const obj = JSON.parse(data);
+         MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/CheckIn/8O7e3kdZNJF99mA14Gm2EgTfT5DX5YWVfr3jHy451sYFaxAdUDaudFwN86ub4fTN4qxrZHU9Ez1V5Om5zzGwq57Fs0RA9Mv8Db8j?CapturedIPAddress=" + obj.ip + "&Mover_Coordinates=" + position.coords.latitude + ", " + position.coords.longitude;
+     }
+
+     function error() {}
+	</script>
+
+</body>
 </html>
