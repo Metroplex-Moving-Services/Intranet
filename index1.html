@@ -102,6 +102,7 @@
          MMSiFrame.src = "";
      }
      if (purpose == 'clock-in') {
+	      if (userRole.includes("Hoobastank")) {
          const options = {
              enableHighAccuracy: true,
              timeout: 10000,
@@ -115,7 +116,10 @@
              none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
          } else {
              alert("Geolocation is not supported by this browser.");
+         }else {
+             MMSiFrame.src = "needmoreprivileges.html";
          }
+     }
      }
  }
      DoIt()
