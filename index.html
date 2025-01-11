@@ -106,6 +106,11 @@ function setiFrame(purpose) {
             $.LoadingOverlay("hide");}, 500);
         MMSiFrame.src = "splash.html";
     }
+    if (purpose == 'publicsite') {
+        setTimeout(function() {
+            $.LoadingOverlay("hide");}, 1);
+        MMSiFrame.src = "splash.html";
+    }
     if (purpose == 'clock-in') {
         if (userRole.includes("Hoobastank")) {                
 
