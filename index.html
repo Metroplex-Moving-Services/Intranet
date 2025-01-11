@@ -1,101 +1,147 @@
 <!DOCTYPE html>
-<html>
-  <head>
-	<script src="https://unpkg.com/@descope/web-component@latest/dist/index.js"></script>
-	<script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
-	<link rel="stylesheet" href="mmsstyle.css">
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/smoothness/jquery-ui.css">
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <script src="https://unpkg.com/@descope/web-js-sdk@1.12.1/dist/index.umd.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
+        <style>
+            html,body        {height:100%; margin-top:0; margin-bottom:0;}
+            .h_iframe iframe {width:100%; height:calc(100% - 75px);}
+            .h_iframe {    height: 100%;}
+            .element{    width:100%;   height:70px;    background:red;    }
+        </style>
+    </head>
+
+<body>
+<p id="menuContainer"></p>
+<div class="h_iframe">
+<iframe id="MMSiFrame" style="border:none;" allowfullscreen ></iframe>
+</div>
 	
-	<title>MMS INTRANET</title>
-	<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
-	<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
-  </head>
- 
-  <body>
-	
-    <div id="container" style=""></div>
- 
-	<script>
-		$(document).ready(foc);
+<script>
+var user;
+var userId;
+var userRole;
+var theMenuHtml;
 
-		//const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true, autoRefresh: true });
- 
-		//const sessionToken = sdk.getSessionToken()
-		//var notValidToken
-		var container = document.getElementById('container');
-		container.innerHTML = '<header><h3><span style="display: flex;justify-content: center;">Metroplex Moving Services<br>INTRANET</a></span></h3><button class="hamburger">&#9776;</button><button class="cross">&#735;</button> <div class="menu" id="theMenu"></div><div><span style="display: flex;justify-content: center;color: #0c419a"></span><span id="userName" style="display: flex;justify-content: center;color: #0c419a">Loading your name..</span><span id="userRoles" style="display: flex;justify-content: center;color: #0c419a">Loading Roles...</span></div></header><div id="imgholderdiv" style="display: flex;justify-content: center;padding-top:200px;"><img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=400w" width="400"></img></div>';
-
-		//if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))){
-			//const onSuccess = (e) => {sdk.refresh()}
-			DisplayEverything();
-
-		//}
-		//else {
-    	    //window.location.replace('/Intranet/login1.html');
-   		//}
+const MMSiFrame = document.getElementById("MMSiFrame");
+MMSiFrame.src = "splash.html";
 
 
-		async function DisplayEverything (){
-			const thecontainer = document.getElementById('theMenu');
-			//const user =  await sdk.me(localStorage.getItem("DSR"));
-			//const userId = user.data.name;
-			//const userRole = user.data.roleNames;
-			//BuildMenu(); or ...
-			const theMenu = document.getElementById('theMenu');
-			//document.getElementById('userName').textContent = userId;
-			//document.getElementById('userRoles').textContent = userRole[0] + " " + userRole[1];
-			//theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/"><li>No roles found..</li></a></ul>';
-			//if (userRole.includes("Hoobastank")){
-			theMenuInnerHTML = '<ul><a href="https://metroplex-moving-services.github.io/Intranet/movers.htm"><li>Movers</li></a></ul>';
-			//}
-			//if (userRole.includes("Phish")){
-			theMenuInnerHTML = theMenuInnerHTML + '<ul><a href="https://metroplex-moving-services.github.io/Intranet/ap.htm"><li>Accounts Payable</li></a>';
-			//}
-			theMenu.innerHTML = theMenuInnerHTML;
-		}
+const sdk = Descope({
+    projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
+    persistTokens: true
+});
 
-		function foc()	{
+const sessionToken = sdk.getSessionToken()
 
-			//if (sessionToken && !notValidToken) {
-			//	$("#container").width('100%');
-			//}else{
-			const minWidth = 768; // Minimum width for desktop devices
-				var isMobile 
-				if (window.innerWidth < minWidth || screen.width < minWidth){				
-						if(navigator.maxTouchPoints > 1){}			
-						else{
-							$("#container").width('50%')}
-				}else{
-						$("#container").width('50%');
-				}
-			}			
-		
-			$( ".cross" ).hide();
-			$( ".menu" ).hide();
-			$( ".hamburger" ).click(function()
-			{
-				$( ".menu" ).slideToggle( "fast", function()
-				{
-					$( ".hamburger" ).hide();
-					$( ".cross" ).show();	      
-				}
-				);
-			}
-			);
+if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))) {
+    DoIt()
+} else {
+    window.location.href = "/Intranet/login1.html";
+}
 
-			$( ".cross" ).click(function()
-			{
-				$( ".menu" ).slideToggle( "fast", function()
-				{
-					$( ".cross" ).hide();
-					$( ".hamburger" ).show();
-				}
-				);
-			}
-			);
-		
-			
-	</script>
-  </body>
+async function DoIt() {
+    $("#container").width('100%');
+    user = await sdk.me(localStorage.getItem("DSR"));
+    userId = user.data.name;
+    userRole = user.data.roleNames;
+    fetch('themenu.html')
+        .then(response => response.text())
+        .then(html => {
+            // Insert the HTML into an element
+            theMenuHtml = html;
+            document.getElementById('menuContainer').innerHTML = theMenuHtml;
+        });
+}
+
+function setiFrame(purpose) {
+    $.LoadingOverlay("show", {
+        imageColor: "#0C419a",
+        imageAnimation: "8000ms pulse"
+    });
+    
+    menuContainer.innerHTML = theMenuHtml;
+
+    MMSiFrame.removeAttribute("src");
+
+    if (purpose == 'calendar') {
+        MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
+        MMSiFrame.height = 1200;
+        setTimeout(function() {
+            $.LoadingOverlay("hide");}, 2000);
+    }
+    if (purpose == 'addmovertojob') {
+        if (userRole.includes("Hoobastank")) {
+            MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Add_Mover_To_Job/K94Pj9Q02ZQxseasgKf3RRvjqk8A5rC6CREEXtMW14vx3rhJx78x8JFxuke5XTgv1RDEjXm5Qv9AY9bD0rCC6wdAfvhnRTH4GVF4";
+            MMSiFrame.height = 800;
+            setTimeout(function() {
+                $.LoadingOverlay("hide");}, 1000);
+        } else {
+            MMSiFrame.src = "needmoreprivileges.html";
+        }
+    }
+    if (purpose == 'createinvoice') {
+        if (userRole.includes("Phish")) {
+            MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
+            MMSiFrame.height = 1400;
+            setTimeout(function() {
+                $.LoadingOverlay("hide");}, 1000);
+        } else {
+            MMSiFrame.src = "needmoreprivileges.html";
+        }
+    }
+    if (purpose == 'myprofile') {
+        setTimeout(function() {
+            $.LoadingOverlay("hide");}, 500);
+        MMSiFrame.src = "myprofile.html";
+    }
+
+    if (purpose == 'empty') {
+        setTimeout(function() {
+            $.LoadingOverlay("hide");}, 500);
+        MMSiFrame.src = "splash.html";
+    }
+    if (purpose == 'clock-in') {
+        if (userRole.includes("Hoobastank")) {                
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            };
+
+            if (navigator.geolocation) {
+                setTimeout(function() {
+                    $.LoadingOverlay("hide");
+                }, 3000);
+                none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        } else {
+            MMSiFrame.src = "needmoreprivileges.html";
+        }
+    }
+}
+
+
+
+
+
+async function successLocation(position) {
+    let response = await fetch('https://api.ipify.org/?format=json');
+    let data = await response.text();
+    const obj = JSON.parse(data);
+    MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/CheckIn/8O7e3kdZNJF99mA14Gm2EgTfT5DX5YWVfr3jHy451sYFaxAdUDaudFwN86ub4fTN4qxrZHU9Ez1V5Om5zzGwq57Fs0RA9Mv8Db8j?CapturedIPAddress=" + obj.ip + "&Mover_Coordinates=" + position.coords.latitude + ", " + position.coords.longitude;
+}
+
+function error() {}
+</script>
+
+</body>
 </html>
