@@ -42,7 +42,7 @@ const sessionToken = sdk.getSessionToken()
 if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))) {
     DoIt()
 } else {
-    window.location.href = "/Intranet/login1.html";
+    window.location.href = "/Intranet/login.html";
 }
 
 async function DoIt() {
