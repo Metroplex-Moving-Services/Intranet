@@ -53,8 +53,9 @@ async function DoIt() {
         .then(html => {
             // Insert the HTML into an element
             theMenuHtml = html;
-            document.getElementById('menuContainer').innerHTML = theMenuHtml;
-		MMSiFrame.src = "splash.html";
+        document.getElementById('menuContainer').innerHTML = theMenuHtml;
+	MMSiFrame.height = 1200;
+	MMSiFrame.src = "splash.html";
         });
 }
 
