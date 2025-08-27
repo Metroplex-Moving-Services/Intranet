@@ -57,7 +57,7 @@ header{
   outline:none;
   z-index:10000000000000;
 }
-.menu{z-index:1000000; font-weight:bold; font-size:2em; width:33%; background:#0C419A;  position:absolute; text-align:center; font-size:12px; right : 0px ;}
+.menu{z-index:1000000; font-weight:bold; font-size:4em; width:33%; background:#0C419A;  position:absolute; text-align:center; font-size:12px; right : 0px ;}
 .menu ul {margin: 0; padding: 0; list-style-type: none; list-style-image: none;}
 .menu li {display: block;   padding:15px 0 15px 0; border-bottom:#dddddd 1px solid;}
 .menu li:hover{display: block;    background:#0C419A; padding:15px 0 15px 0; border-bottom:#dddddd 1px solid;}
