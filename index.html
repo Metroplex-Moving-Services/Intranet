@@ -61,10 +61,7 @@ async function DoIt() {
 
 function setiFrame(purpose) {
 
-	if (purpose == 'tommorrowmap'){
-		window.open("https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-perma/Map_Tommorrow_Starting/u7dy9Oqrkk97gPs7XJUSgj1qBWh8ufbmvAg071EpJrbvNQmUmhfp5ajszhAzzyegKFBNgjgkqAzMhZ8wpnjpOGOm3TKE7yRV9FCh", "Tommorrows Map");
-	}
-	else{
+
     $.LoadingOverlay("show", {
         imageColor: "#0C419a",
         imageAnimation: "8000ms pulse"
@@ -139,12 +136,8 @@ function setiFrame(purpose) {
             MMSiFrame.src = "needmoreprivileges.html";
         }
     }
-	}
+
 }
-
-
-
-
 
 async function successLocation(position) {
     let response = await fetch('https://api.ipify.org/?format=json');
