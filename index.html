@@ -60,6 +60,11 @@ async function DoIt() {
 }
 
 function setiFrame(purpose) {
+
+	if (purpose == 'tommorrowmap'){
+		window.open("https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-perma/Map_Tommorrow_Starting/u7dy9Oqrkk97gPs7XJUSgj1qBWh8ufbmvAg071EpJrbvNQmUmhfp5ajszhAzzyegKFBNgjgkqAzMhZ8wpnjpOGOm3TKE7yRV9FCh", "Tommorrows Map");
+	}
+	else{
     $.LoadingOverlay("show", {
         imageColor: "#0C419a",
         imageAnimation: "8000ms pulse"
@@ -69,9 +74,7 @@ function setiFrame(purpose) {
 
     MMSiFrame.removeAttribute("src");
 
-	if (purpose == 'tommorrowmap'){
-		window.open("https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-perma/Map_Tommorrow_Starting/u7dy9Oqrkk97gPs7XJUSgj1qBWh8ufbmvAg071EpJrbvNQmUmhfp5ajszhAzzyegKFBNgjgkqAzMhZ8wpnjpOGOm3TKE7yRV9FCh", "Tommorrows Map");
-	}
+	
 
     if (purpose == 'calendar') {
         MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
@@ -136,6 +139,7 @@ function setiFrame(purpose) {
             MMSiFrame.src = "needmoreprivileges.html";
         }
     }
+	}
 }
 
 
