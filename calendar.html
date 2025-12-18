@@ -43,7 +43,7 @@
                 btn.style.display = "block";
                 btn.onclick = function() {
                     // Redirect to Zoho Login
-                    const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPE}&state=123`;
+                    const authUrl = 'https://accounts.zoho.com/oauth/v2/auth?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPE}&state=123';
                     window.location.href = authUrl;
                 };
             }
