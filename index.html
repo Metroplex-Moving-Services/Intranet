@@ -44,6 +44,11 @@ if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))) {
 }
 
 async function DoIt() {
+	window.scrollTo({
+  		top: 0,
+  		left: 0,
+  		behavior: 'smooth'
+	});
     $("#container").width('100%');
     user = await sdk.me(localStorage.getItem("DSR"));
     userId = user.data.name;
@@ -136,6 +141,11 @@ function setiFrame(purpose) {
             MMSiFrame.src = "needmoreprivileges.html";
         }
     }
+	window.scrollTo({
+  		top: 0,
+  		left: 0,
+  		behavior: 'smooth'
+	});
 
 }
 
