@@ -1,90 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zoho Creator Calendar</title>
-
+    <title>Zoho Calendar (Authenticated)</title>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
-
     <style>
-        body { margin: 40px 10px; padding: 0; font-family: Arial, Helvetica, sans-serif; }
-        #calendar { max-width: 1100px; margin: 0 auto; }
-        /* Optional: Hide the scrollbar if you want a cleaner look */
-        .loading { text-align: center; color: #666; }
+        body { font-family: sans-serif; padding: 20px; }
+        #login-btn { display: none; padding: 10px 20px; background: #0099ff; color: white; border: none; cursor: pointer; }
+        #calendar { max-width: 1000px; margin: 20px auto; }
     </style>
 </head>
 <body>
 
-    <div id="loading" class="loading">Loading Booking Data...</div>
+    <button id="login-btn">Log in to Zoho</button>
+    <div id="status">Checking authentication...</div>
     <div id='calendar'></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var loadingEl = document.getElementById('loading');
+        // --- CONFIGURATION ---
+        const CLIENT_ID = "1000.FN71FPRIPPILQVE7T4K45RKTS35JXF"; 
+        const REDIRECT_URI = "https://metroplex-moving-services.github.io/Intranet/calendar.html"; // Must match Zoho Console exactly
+        const SCOPE = "ZohoCreator.report.READ";
+        // Find your owner name and app name in your Zoho Creator URL
+        // e.g. https://creator.zoho.com/app/owner_name/app_name/...
+        const OWNER_NAME = "information152"; 
+        const APP_LINK_NAME = "household-goods-moving-services";
+        const REPORT_LINK_NAME = "Current_Bookings"; 
 
-            // 2. Initialize the Calendar
+        // --- MAIN LOGIC ---
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // 1. Check if Zoho just redirected us back with a token
+            const token = getTokenFromUrl();
+            
+            if (token) {
+                // We have a token! Save it (optional) and Load Calendar
+                console.log("Token received:", token);
+                loadCalendar(token);
+            } else {
+                // No token. Show Login Button.
+                document.getElementById('status').innerText = "Please log in.";
+                const btn = document.getElementById('login-btn');
+                btn.style.display = "block";
+                btn.onclick = function() {
+                    // Redirect to Zoho Login
+                    const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPE}&state=123`;
+                    window.location.href = authUrl;
+                };
+            }
+        });
+
+        // Helper: Extract Access Token from URL Hash (#access_token=...)
+        function getTokenFromUrl() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            return params.get('access_token');
+        }
+
+        // --- LOAD DATA & RENDER CALENDAR ---
+        function loadCalendar(accessToken) {
+            document.getElementById('status').innerText = "Loading data from Zoho...";
+            document.getElementById('login-btn').style.display = "none";
+
+            var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
-                },
                 events: function(fetchInfo, successCallback, failureCallback) {
                     
-                    // 3. YOUR PUBLIC ZOHO URL
-                    // Note: I added "callback=?" to handle JSONP if CORS is an issue, 
-                    // but standard fetch is usually fine for Public Permalinks.
-                    var zohoUrl = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-perma/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE?Format=JSON";
+                    // The "Private" API URL (Note: different from Public Feed)
+                    const apiUrl = `https://creator.zoho.com/api/v2/${OWNER_NAME}/${APP_LINK_NAME}/report/${REPORT_LINK_NAME}`;
 
-                    fetch(zohoUrl)
-                        .then(response => response.json())
-                        .then(data => {
-                            loadingEl.style.display = 'none';
-
-                            // --- CRITICAL STEP: MAP YOUR DATA ---
-                            // Open your browser console (F12) to see your actual field names!
-                            console.log("Zoho Data Received:", data);
-
-                            // Zoho usually returns data in a structure like { "Current_Bookings": [ ... ] }
-                            // We need to find the array of records.
-                            // Assuming the report link name is "Current_Bookings" based on your URL.
-                            var records = data.Current_Bookings || data; 
-
-                            if (!Array.isArray(records)) {
-                                console.error("Could not find an array of records. Check console for data structure.");
-                                return;
-                            }
-
-                            var events = records.map(function(record) {
-                                // REPLACE 'Your_Date_Field' AND 'Your_Title_Field' 
-                                // WITH THE ACTUAL NAMES FROM YOUR CONSOLE LOG
-                                return {
-                                    title: record.Job_Name || record.Customer_Name || "Booking", 
-                                    start: record.Date_of_Move || record.Start_Date || record.Date_field,
-                                    // Optional fields:
-                                    // url: '#', 
-                                    // color: '#3788d8' 
-                                };
-                            });
-
-                            successCallback(events);
-                        })
-                        .catch(error => {
-                            console.error('Error fetching Zoho data:', error);
-                            loadingEl.innerText = "Error loading data. Open console (F12) for details.";
-                            failureCallback(error);
-                        });
+                    fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': 'Zoho-oauthtoken ' + accessToken,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error("API Error: " + response.statusText);
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Zoho V2 API returns data inside a "data" array
+                        const records = data.data; 
+                        
+                        const events = records.map(record => ({
+                            title: record.Job_Name || "Booking", // Verify field names in console
+                            start: record.Date_of_Move,          // Verify field names in console
+                        }));
+                        successCallback(events);
+                        document.getElementById('status').innerText = "";
+                    })
+                    .catch(error => {
+                        console.error("Fetch error:", error);
+                        document.getElementById('status').innerText = "Error loading data. Check Console.";
+                        failureCallback(error);
+                    });
                 }
             });
-
             calendar.render();
-            
-            // Scroll to top behavior (from your first request)
             window.scrollTo(0, 0);
-        });
+        }
     </script>
 </body>
 </html>
