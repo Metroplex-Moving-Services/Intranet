@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoho Creator Calendar</title>
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
+    <style>
+        body { margin: 40px 10px; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+        #calendar { max-width: 1100px; margin: 0 auto; }
+        /* Optional: Hide the scrollbar if you want a cleaner look */
+        .loading { text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div id="loading" class="loading">Loading Booking Data...</div>
+    <div id='calendar'></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var loadingEl = document.getElementById('loading');
+
+            // 2. Initialize the Calendar
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    
+                    // 3. YOUR PUBLIC ZOHO URL
+                    // Note: I added "callback=?" to handle JSONP if CORS is an issue, 
+                    // but standard fetch is usually fine for Public Permalinks.
+                    var zohoUrl = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-perma/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE?Format=JSON";
+
+                    fetch(zohoUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            loadingEl.style.display = 'none';
+
+                            // --- CRITICAL STEP: MAP YOUR DATA ---
+                            // Open your browser console (F12) to see your actual field names!
+                            console.log("Zoho Data Received:", data);
+
+                            // Zoho usually returns data in a structure like { "Current_Bookings": [ ... ] }
+                            // We need to find the array of records.
+                            // Assuming the report link name is "Current_Bookings" based on your URL.
+                            var records = data.Current_Bookings || data; 
+
+                            if (!Array.isArray(records)) {
+                                console.error("Could not find an array of records. Check console for data structure.");
+                                return;
+                            }
+
+                            var events = records.map(function(record) {
+                                // REPLACE 'Your_Date_Field' AND 'Your_Title_Field' 
+                                // WITH THE ACTUAL NAMES FROM YOUR CONSOLE LOG
+                                return {
+                                    title: record.Job_Name || record.Customer_Name || "Booking", 
+                                    start: record.Date_of_Move || record.Start_Date || record.Date_field,
+                                    // Optional fields:
+                                    // url: '#', 
+                                    // color: '#3788d8' 
+                                };
+                            });
+
+                            successCallback(events);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching Zoho data:', error);
+                            loadingEl.innerText = "Error loading data. Open console (F12) for details.";
+                            failureCallback(error);
+                        });
+                }
+            });
+
+            calendar.render();
+            
+            // Scroll to top behavior (from your first request)
+            window.scrollTo(0, 0);
+        });
+    </script>
+</body>
+</html>
