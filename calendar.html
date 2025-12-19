@@ -96,9 +96,14 @@
                             successCallback(events);
                         })
                         .catch(error => {
-                            console.error('Fetch error:', error);
-                            loadingEl.innerHTML = '<div class="error-msg">Error loading data.<br><small>${error.message}</small></div>';
-                            failureCallback(error);
+                           return {
+            statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "*", // <--- THIS IS CRITICAL
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ error: error.message })
+        };
                         });
                 }
             });
