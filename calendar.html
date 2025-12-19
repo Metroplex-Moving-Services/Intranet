@@ -1,132 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Zoho Calendar (Authenticated)</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moving Schedule</title>
+
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #login-btn { display: none; padding: 10px 20px; background: #0099ff; color: white; border: none; cursor: pointer; }
-        #calendar { max-width: 1000px; margin: 20px auto; }
+        body { 
+            margin: 40px; 
+            font-family: Arial, Helvetica, sans-serif; 
+            background-color: #f4f4f4;
+        }
+        #calendar-container {
+            max-width: 1100px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        #loading { 
+            text-align: center; 
+            color: #666; 
+            font-size: 1.2em; 
+            padding: 20px;
+        }
+        .error-msg {
+            color: red;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <button id="login-btn">Log in to Zoho</button>
-    <div id="status">Checking authentication...</div>
-    <div id='calendar'></div>
+    <div id="calendar-container">
+        <div id="loading">Loading Schedule...</div>
+        <div id='calendar'></div>
+    </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const CLIENT_ID = "1000.FN71FPRIPPILQVE7T4K45RKTS35JXF"; 
-        const REDIRECT_URI = "https://metroplex-moving-services.github.io/Intranet/calendar.html"; // Must match Zoho Console exactly
-        const SCOPE = "ZohoCreator.report.READ";
-        // Find your owner name and app name in your Zoho Creator URL
-        // e.g. https://creator.zoho.com/app/owner_name/app_name/...
-        const OWNER_NAME = "information152"; 
-        const APP_LINK_NAME = "household-goods-moving-services";
-        const REPORT_LINK_NAME = "Current_Bookings"; 
-
-        // --- MAIN LOGIC ---
         document.addEventListener('DOMContentLoaded', function() {
             
-            // 1. Check if Zoho just redirected us back with a token
-            const token = getTokenFromUrl();
-            
-            if (token) {
-                // We have a token! Save it (optional) and Load Calendar
-                console.log("Token received:", token);
-                loadCalendar(token);
-            } else {
-                // No token. Show Login Button.
-                document.getElementById('status').innerText = "Please log in.";
-                const btn = document.getElementById('login-btn');
-                btn.style.display = "block";
-                btn.onclick = function() {
-                    // Redirect to Zoho Login
-                    const authUrl = 'https://accounts.zoho.com/oauth/v2/auth?response_type=token&client_id=1000.FN71FPRIPPILQVE7T4K45RKTS35JXF&redirect_uri=https://metroplex-moving-services.github.io/Intranet/calendar.html&scope=ZohoCreator.report.READ&state=123';
-                    window.location.href = authUrl;
-                };
-            }document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        events: function(fetchInfo, successCallback, failureCallback) {
-            
-            // USE YOUR NEW NETLIFY URL HERE
-            // Example: https://fluffy-unicorn-123.netlify.app/.netlify/functions/get-calendar
-            fetch('https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar')
-                .then(response => response.json())
-                .then(data => {
-                    // Check if data is inside a "data" property (Standard Zoho V2)
-                    var records = data.data || data; 
-                    
-                    var events = records.map(record => ({
-                        title: record.Job_Name, 
-                        start: record.Date_of_Move
-                    }));
-                    successCallback(events);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    failureCallback(error);
-                });
-        }
-    });
-    calendar.render();
-
-
-        // Helper: Extract Access Token from URL Hash (#access_token=...)
-        function getTokenFromUrl() {
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
-            return params.get('access_token');
-        }
-
-        // --- LOAD DATA & RENDER CALENDAR ---
-        function loadCalendar(accessToken) {
-            document.getElementById('status').innerText = "Loading data from Zoho...";
-            document.getElementById('login-btn').style.display = "none";
+            // --- CONFIGURATION ---
+            // REPLACE THIS with your actual Netlify URL after you deploy Phase 3
+            // It will look like: https://your-site-name.netlify.app/.netlify/functions/get-calendar
+            const NETLIFY_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar"; 
 
             var calendarEl = document.getElementById('calendar');
+            var loadingEl = document.getElementById('loading');
+
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listWeek'
+                },
+                height: 'auto', // Adjusts height based on content
+                
+                // This function runs automatically to fetch events
                 events: function(fetchInfo, successCallback, failureCallback) {
                     
-                    // The "Private" API URL (Note: different from Public Feed)
-                    const apiUrl = 'https://creator.zoho.com/api/v2/${OWNER_NAME}/${APP_LINK_NAME}/report/${REPORT_LINK_NAME}';
+                    console.log("Fetching data from Netlify...");
 
-                    fetch(apiUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': 'Zoho-oauthtoken ' + accessToken,
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error("API Error: " + response.statusText);
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Zoho V2 API returns data inside a "data" array
-                        const records = data.data; 
-                        
-                        const events = records.map(record => ({
-                            title: record.Job_Name || "Booking", // Verify field names in console
-                            start: record.Date_of_Move,          // Verify field names in console
-                        }));
-                        successCallback(events);
-                        document.getElementById('status').innerText = "";
-                    })
-                    .catch(error => {
-                        console.error("Fetch error:", error);
-                        document.getElementById('status').innerText = "Error loading data. Check Console.";
-                        failureCallback(error);
-                    });
+                    fetch(NETLIFY_ENDPOINT)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Netlify Error: ${response.status} ${response.statusText}');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Data received:", data); // Check console (F12) to see your Zoho fields
+                            loadingEl.style.display = 'none';
+
+                            // Handle Zoho's data structure (usually wrapped in "data" or report name)
+                            // If your Netlify script returns the raw Zoho JSON, accessing .data is usually correct
+                            var records = data.data || data.Current_Bookings || data; 
+
+                            if (!Array.isArray(records)) {
+                                console.error("Expected an array but got:", records);
+                                throw new Error("Invalid data format received.");
+                            }
+
+                            // Map Zoho fields to Calendar fields
+                            var events = records.map(record => ({
+                                title: record.Customer_Name || "Booking", // CHANGE 'Job_Name' to your actual field
+                                start: record.Agreed_Start_Date_Time,          // CHANGE 'Date_of_Move' to your actual field
+                                // optional: url: '#',
+                                // optional: backgroundColor: '#0099ff'
+                            }));
+
+                            successCallback(events);
+                        })
+                        .catch(error => {
+                            console.error('Fetch error:', error);
+                            loadingEl.innerHTML = '<div class="error-msg">Error loading data.<br><small>${error.message}</small></div>';
+                            failureCallback(error);
+                        });
                 }
             });
+
             calendar.render();
+            
+            // Scroll to top behavior (Your original request)
             window.scrollTo(0, 0);
-        }
+        });
     </script>
 </body>
 </html>
