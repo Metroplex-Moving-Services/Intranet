@@ -65,7 +65,7 @@ exports.handler = async function(event, context) {
             const path = '/api/v2/${ZOHO_OWNER}/${ZOHO_APP}/report/${ZOHO_REPORT}';
             
             const req = https.request({
-                hostname: 'creator.zoho.com', // Change to creator.zoho.eu if needed
+                hostname: 'creatorapp.zoho.com', // Change to creator.zoho.eu if needed
                 path: path,
                 method: 'GET',
                 headers: { 
