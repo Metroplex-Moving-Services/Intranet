@@ -46,8 +46,34 @@
                     const authUrl = 'https://accounts.zoho.com/oauth/v2/auth?response_type=token&client_id=1000.FN71FPRIPPILQVE7T4K45RKTS35JXF&redirect_uri=https://metroplex-moving-services.github.io/Intranet/calendar.html&scope=ZohoCreator.report.READ&state=123';
                     window.location.href = authUrl;
                 };
-            }
-        });
+            }document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: function(fetchInfo, successCallback, failureCallback) {
+            
+            // USE YOUR NEW NETLIFY URL HERE
+            // Example: https://fluffy-unicorn-123.netlify.app/.netlify/functions/get-calendar
+            fetch('https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar')
+                .then(response => response.json())
+                .then(data => {
+                    // Check if data is inside a "data" property (Standard Zoho V2)
+                    var records = data.data || data; 
+                    
+                    var events = records.map(record => ({
+                        title: record.Job_Name, 
+                        start: record.Date_of_Move
+                    }));
+                    successCallback(events);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    failureCallback(error);
+                });
+        }
+    });
+    calendar.render();
+});
 
         // Helper: Extract Access Token from URL Hash (#access_token=...)
         function getTokenFromUrl() {
