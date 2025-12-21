@@ -12,24 +12,25 @@
         /* --- BASE STYLES --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            /* UPDATED: Removed all spacing around the body */
             margin: 0;
-            /* Reduced padding to bring calendar closer to edges */
-            padding: 5px; 
-            background-color: #f4f4f4;
+            padding: 0; 
+            background-color: #ffffff; /* Changed to white to blend with container */
         }
 
         #calendar-container {
-            /* Increased width to 99% to minimize side margins */
-            max-width: 99%; 
-            margin: 0 auto;
+            /* UPDATED: Full width and no internal padding */
+            max-width: 100%; 
+            margin: 0;
             background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 0; 
+            box-shadow: none; /* Removed shadow since it fills the screen */
         }
 
         #calendar {
             min-height: 600px; 
+            /* Optional: Add tiny side margins so text doesn't hit the bezel exactly */
+            margin: 0 2px; 
         }
 
         #loading {
@@ -37,6 +38,7 @@
             font-size: 1.2em;
             color: #666;
             margin-bottom: 10px;
+            padding-top: 10px;
         }
 
         /* --- HEADER CUSTOMIZATION --- */
@@ -44,6 +46,8 @@
             display: flex;
             flex-direction: column; 
             gap: 10px;
+            /* Added top padding since container padding is gone */
+            padding-top: 10px; 
             margin-bottom: 1.5em !important;
         }
 
@@ -310,22 +314,18 @@
                             resetToday: {
                                 text: 'Today',
                                 click: function() {
-                                    // 1. Navigate to today
                                     calendar.today();
                                     
-                                    // 2. Remove selection
                                     var selectedDays = document.querySelectorAll('.selected-day');
                                     selectedDays.forEach(function(el) {
                                         el.classList.remove('selected-day');
                                     });
 
-                                    // 3. Restore Default Highlight
                                     var todayEl = document.querySelector('.fc-day-today');
                                     if (todayEl) {
                                         todayEl.style.backgroundColor = '';
                                     }
 
-                                    // 4. Fade button since we are back on default today
                                     updateTodayButton(false);
                                 }
                             }
@@ -339,24 +339,19 @@
 
                         events: calendarEvents,
 
-                        // --- VIEW NAVIGATION / RENDER HANDLER ---
                         datesSet: function(info) {
                             var today = new Date();
                             today.setHours(0,0,0,0);
-                            
                             var start = info.start;
                             var end = info.end;
 
                             if (today >= start && today < end) {
-                                // Visible "today" means default state -> Fade button
                                 updateTodayButton(false);
                             } else {
-                                // "Today" not visible -> Enable button
                                 updateTodayButton(true);
                             }
                         },
                         
-                        // --- DATE CLICK HANDLER ---
                         dateClick: function(info) {
                             var previouslySelected = document.querySelectorAll('.selected-day');
                             previouslySelected.forEach(function(el) {
@@ -369,11 +364,9 @@
                                 todayEl.style.backgroundColor = 'transparent';
                             }
 
-                            // Enable the "Today" button
                             updateTodayButton(true);
                         },
 
-                        // --- EVENT CLICK HANDLER ---
                         eventClick: function(info) {
                             info.jsEvent.preventDefault(); 
                             
