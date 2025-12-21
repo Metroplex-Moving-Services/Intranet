@@ -4,42 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metroplex Moving Calendar</title>
-
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-
-        #calendar-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        #calendar {
-            height: 800px; /* Force height so it doesn't collapse */
-        }
-
-        #loading {
-            text-align: center;
-            font-size: 1.2em;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        
-        /* Event Styling */
-        .fc-event {
-            cursor: pointer;
-            font-size: 0.9em;
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #calendar-container { max-width: 1100px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        #calendar { height: 800px; }
+        #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -55,49 +25,43 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-            // RELATIVE URL: Automatically finds your Netlify function
+            // 1. Point to your Netlify Function
             const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
             
             const loadingMsg = document.getElementById('loading');
             const calendarEl = document.getElementById('calendar');
 
-            // --- HELPER 1: Convert Zoho "MM-DD-YY HH:MM AM" to ISO Date ---
+            // --- HELPER: Translate "12-23-25 09:00 AM" to "2025-12-23T09:00:00" ---
             function parseZohoDate(dateStr) {
                 if (!dateStr) return null;
-                
-                // Expected format: "01-06-26 09:00 AM"
+                // Split "12-23-25 09:00 AM"
                 const parts = dateStr.split(' '); 
                 if (parts.length < 3) return null;
 
-                const dateParts = parts[0].split('-'); // ["01", "06", "26"]
+                const dateParts = parts[0].split('-'); // ["12", "23", "25"]
                 const timeParts = parts[1].split(':'); // ["09", "00"]
-                const meridian = parts[2];             // "AM" or "PM"
+                const meridian = parts[2];             // "AM"
 
-                // Build ISO components
-                let year = "20" + dateParts[2];  // "20" + "26" -> 2026
+                // Build ISO Date
+                // Note: dateParts[0] is Month, dateParts[1] is Day, dateParts[2] is Year
+                let year = "20" + dateParts[2];
                 let month = dateParts[0];
                 let day = dateParts[1];
                 let hour = parseInt(timeParts[0], 10);
                 let minute = timeParts[1];
 
-                // Convert 12h format to 24h
                 if (meridian === "PM" && hour < 12) hour += 12;
                 if (meridian === "AM" && hour === 12) hour = 0;
 
-                // Return ISO string: "2026-01-06T09:00:00"
                 return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
             }
 
-            // --- HELPER 2: Calculate End Time based on Start Date ---
+            // --- HELPER: Calculate End Time ---
             function getEndTime(startDateIso, endTimeStr) {
                 if (!startDateIso || !endTimeStr) return null;
-                
-                // Extract just the date part (YYYY-MM-DD) from the start date
                 const dateOnly = startDateIso.split('T')[0];
-                
-                // Parse the End Time string "11:00 AM"
                 const parts = endTimeStr.split(' ');
-                if (parts.length < 2) return null; // Safety check
+                if (parts.length < 2) return null;
 
                 const timeParts = parts[0].split(':');
                 const meridian = parts[1];
@@ -110,67 +74,58 @@
                 return `${dateOnly}T${hour.toString().padStart(2, '0')}:${minute}:00`;
             }
 
-            // --- MAIN LOGIC: Fetch and Render ---
+            // --- MAIN LOGIC ---
             fetch(NETLIFY_ENDPOINT)
-                .then(response => {
-                    if (!response.ok) throw new Error("Netlify Function failed");
-                    return response.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    console.log("Raw Data from Zoho:", data); // For debugging in Console
                     loadingMsg.style.display = 'none';
+                    console.log("Zoho Data:", data);
 
-                    // Transform Zoho data into Calendar Events
+                    // --- THIS IS THE FIX ---
                     var calendarEvents = data.data.map(function(record) {
                         
-                        // 1. Parse the Start Date/Time
+                        // 1. Run the Translator on the Date
                         var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
-                        
-                        // 2. Parse the End Time (re-using the start date)
                         var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
 
-                        // 3. Create the Event Object
+                        // 2. Unwrap the Name (Check if it's an object or string)
+                        var safeTitle = "Unknown";
+                        if (record.Customer_Name && record.Customer_Name.display_value) {
+                            safeTitle = record.Customer_Name.display_value;
+                        } else if (typeof record.Customer_Name === 'string') {
+                            safeTitle = record.Customer_Name;
+                        }
+
                         return {
-                            title: record.Customer_Name.display_value || "Unknown Name",
-                            start: startISO,
+                            title: safeTitle,  // Now it is a string!
+                            start: startISO,   // Now it is ISO format!
                             end: endISO,
-                            
-                            // Color code based on status or mover count? (Optional example)
-                            backgroundColor: record.Mover_Count > 2 ? '#ff4d4d' : '#3788d8',
-                            
-                            // Save extra data for clicks
                             extendedProps: {
-                                address: record.Origination_Address.display_value,
-                                id: record.ID
+                                address: record.Origination_Address ? record.Origination_Address.display_value : ""
                             }
                         };
                     });
 
-                    // Initialize the Calendar
+                    console.log("Converted Events:", calendarEvents); // Debug check
+
                     var calendar = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth', // Start in Month View
+                        initialView: 'dayGridMonth',
                         headerToolbar: {
                             left: 'prev,next today',
                             center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                            right: 'dayGridMonth,timeGridWeek,listWeek'
                         },
                         events: calendarEvents,
-                        
-                        // Handle Clicks
                         eventClick: function(info) {
-                            alert(
-                                'Customer: ' + info.event.title + 
-                                '\nAddress: ' + info.event.extendedProps.address
-                            );
+                            alert('Job: ' + info.event.title + '\nAddress: ' + info.event.extendedProps.address);
                         }
                     });
 
                     calendar.render();
                 })
-                .catch(error => {
-                    console.error("Error loading calendar:", error);
-                    loadingMsg.innerText = "Error loading data. Check console for details.";
-                    loadingMsg.style.color = "red";
+                .catch(err => {
+                    console.error("Error:", err);
+                    loadingMsg.innerText = "Error loading data.";
                 });
         });
     </script>
