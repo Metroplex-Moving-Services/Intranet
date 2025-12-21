@@ -77,7 +77,18 @@ function setiFrame(purpose) {
     MMSiFrame.removeAttribute("src");
 
 	
+  if (purpose == 'newcalendar') {
+        // Point to your local file
+        MMSiFrame.src = "calendar.html"; 
+        
+        // Increase height to ensure scrolling feels natural
+        MMSiFrame.height = 1200; 
 
+        // Hide the loading overlay after a short delay
+        setTimeout(function() {
+            $.LoadingOverlay("hide");
+        }, 1000); // Reduced to 1s since local file loads faster
+    }
     if (purpose == 'calendar') {
         MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
         MMSiFrame.height = 1200;
