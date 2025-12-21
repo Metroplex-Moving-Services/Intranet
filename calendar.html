@@ -73,7 +73,7 @@
         .fc-button-primary:disabled {
             background-color: #0C419a !important;
             border-color: #0C419a !important;
-            opacity: 0.6;
+            opacity: 0.6; /* Fallback opacity */
         }
 
         /* --- EVENT STYLES (Solid Blocks) --- */
@@ -144,6 +144,22 @@
             const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
             const loadingMsg = document.getElementById('loading');
             const calendarEl = document.getElementById('calendar');
+
+            // --- HELPER: Control Today Button State ---
+            function updateTodayButton(shouldEnable) {
+                var btn = document.querySelector('.fc-resetToday-button');
+                if (btn) {
+                    if (shouldEnable) {
+                        btn.style.opacity = '1';
+                        btn.disabled = false;
+                        btn.style.cursor = 'pointer';
+                    } else {
+                        btn.style.opacity = '0.5';
+                        btn.disabled = true; // Optional: prevents clicking when already faded
+                        btn.style.cursor = 'default';
+                    }
+                }
+            }
 
             // --- HELPER: Parse Zoho Date ---
             function parseZohoDate(dateStr) {
@@ -288,7 +304,6 @@
                         eventDisplay: 'block', 
                         height: 'auto',
 
-                        // --- CUSTOM BUTTON DEFINITION ---
                         customButtons: {
                             resetToday: {
                                 text: 'Today',
@@ -296,17 +311,20 @@
                                     // 1. Navigate to today
                                     calendar.today();
                                     
-                                    // 2. Remove selection from other days
+                                    // 2. Remove selection
                                     var selectedDays = document.querySelectorAll('.selected-day');
                                     selectedDays.forEach(function(el) {
                                         el.classList.remove('selected-day');
                                     });
 
-                                    // 3. Restore 'Today' highlight (remove transparent override)
+                                    // 3. Restore Default Highlight
                                     var todayEl = document.querySelector('.fc-day-today');
                                     if (todayEl) {
                                         todayEl.style.backgroundColor = '';
                                     }
+
+                                    // 4. Fade button since we are back on default today
+                                    updateTodayButton(false);
                                 }
                             }
                         },
@@ -314,28 +332,50 @@
                         headerToolbar: {
                             left: 'title',
                             center: '',
-                            // Use our custom 'resetToday' button here
                             right: 'prev,next resetToday' 
                         },
 
                         events: calendarEvents,
+
+                        // --- VIEW NAVIGATION / RENDER HANDLER ---
+                        datesSet: function(info) {
+                            // Check if "Today" is within the currently displayed range
+                            var today = new Date();
+                            // Reset time to 00:00 for accurate comparison
+                            today.setHours(0,0,0,0);
+                            
+                            var start = info.start;
+                            var end = info.end;
+
+                            if (today >= start && today < end) {
+                                // We are looking at the current month
+                                // Are we manually selecting a day? (Classes are cleared on render, so check context)
+                                // If datesSet triggered by navigation, classes are gone.
+                                // Default state of current month = Faded Button.
+                                updateTodayButton(false);
+                            } else {
+                                // We navigated to a different month
+                                updateTodayButton(true);
+                            }
+                        },
                         
                         // --- DATE CLICK HANDLER ---
                         dateClick: function(info) {
-                            // A. Remove 'selected-day' from any previously selected date
+                            // 1. Highlight new day
                             var previouslySelected = document.querySelectorAll('.selected-day');
                             previouslySelected.forEach(function(el) {
                                 el.classList.remove('selected-day');
                             });
-
-                            // B. Add 'selected-day' to the clicked date element
                             info.dayEl.classList.add('selected-day');
 
-                            // C. Remove the default yellow highlight from "Today" if it exists
+                            // 2. Un-highlight default today
                             var todayEl = document.querySelector('.fc-day-today');
                             if (todayEl) {
                                 todayEl.style.backgroundColor = 'transparent';
                             }
+
+                            // 3. Enable the "Today" button (user has strayed from default view)
+                            updateTodayButton(true);
                         },
 
                         // --- EVENT CLICK HANDLER ---
@@ -346,7 +386,6 @@
                             var customer = props.name;
                             var teamList = props.team || "None assigned"; 
 
-                            // Time Logic
                             var startObj = info.event.start;
                             var endObj = info.event.end;
                             var dateStr = formatPopupDate(startObj);
@@ -354,7 +393,6 @@
                             var endTimeStr = endObj ? formatPopupTime(endObj) : "Unknown";
                             var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
 
-                            // Address Logic
                             var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
                             var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
                             var servicesText = props.services ? String(props.services).trim() : "No service details available.";
