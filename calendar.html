@@ -77,6 +77,15 @@
             opacity: 0.6;
         }
 
+        /* --- EVENT STYLES --- */
+        /* Make the event content cleaner inside the block */
+        .fc-event-main {
+            padding: 2px 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         /* --- POPUP STYLES --- */
         .popup-link {
             color: #3085d6;
@@ -106,7 +115,7 @@
         }
 
         @media (max-width: 600px) and (orientation: portrait) {
-            .fc-event-title { display: none; }
+            .fc-event-title { display: none; } /* Hide name on small portrait phones */
             .fc-event-time {
                 font-weight: bold;
                 font-size: 1.1em;
@@ -174,7 +183,7 @@
                 return "";
             }
 
-            // --- HELPER: Count Movers (For Colors) ---
+            // --- HELPER: Count Movers ---
             function countMovers(moversField) {
                 if (!moversField) return 0;
                 if (Array.isArray(moversField)) return moversField.length; 
@@ -185,19 +194,35 @@
                 return 0; 
             }
 
-            // --- HELPER: Get Formatted String of Movers (For Popup) ---
+            // --- HELPER: Get Formatted String of Movers ---
             function getMoversString(moversField) {
                 if (!moversField) return "None assigned";
-                // 1. If it's an Array (common for Zoho lists)
                 if (Array.isArray(moversField)) {
-                    // Map through to get names, handling objects with .display_value if needed
                     var names = moversField.map(function(m) {
                         return (m.display_value) ? m.display_value : m;
                     });
                     return names.join(", ");
                 }
-                // 2. If it's a string, just return it
                 return moversField;
+            }
+
+            // --- HELPER: Format Time for Popup (e.g. "10:00 AM") ---
+            function formatPopupTime(dateObj) {
+                if (!dateObj) return "";
+                return dateObj.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit', 
+                    hour12: true 
+                });
+            }
+            
+            // --- HELPER: Format Date for Popup (e.g. "Dec 21") ---
+            function formatPopupDate(dateObj) {
+                if (!dateObj) return "";
+                return dateObj.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
             }
 
             // --- MAIN LOGIC ---
@@ -215,12 +240,11 @@
                         var destRaw = getZohoVal(record.Destination_Address); 
                         var servicesRaw = getZohoVal(record.Services_Provided);
 
-                        // --- MOVERS LOGIC ---
+                        // --- MOVERS COLOR LOGIC ---
                         var requiredCount = parseInt(record.Mover_Count) || 0; 
                         var actualMoversCount = countMovers(record.Movers2); 
-                        var moversListString = getMoversString(record.Movers2); // Get names for popup
+                        var moversListString = getMoversString(record.Movers2);
 
-                        // --- COLOR LOGIC ---
                         var bgColor = '#0C419a'; // Blue
                         var bdColor = '#0C419a';
                         if (actualMoversCount < requiredCount) {
@@ -240,7 +264,7 @@
                                 origin: originRaw,
                                 destination: destRaw,
                                 services: servicesRaw,
-                                team: moversListString // Pass the names to the popup
+                                team: moversListString 
                             }
                         };
                     });
@@ -248,6 +272,9 @@
                     var calendar = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
                         
+                        // --- 1. FORCE SOLID BARS ---
+                        eventDisplay: 'block', 
+
                         headerToolbar: {
                             left: 'title',
                             center: '',
@@ -262,7 +289,18 @@
                             
                             var props = info.event.extendedProps;
                             var customer = props.name;
-                            var teamList = props.team || "None assigned"; // Get team names
+                            var teamList = props.team || "None assigned"; 
+
+                            // --- 2. GET & FORMAT TIME ---
+                            var startObj = info.event.start;
+                            var endObj = info.event.end;
+                            
+                            var dateStr = formatPopupDate(startObj);
+                            var startTimeStr = formatPopupTime(startObj);
+                            var endTimeStr = endObj ? formatPopupTime(endObj) : "Unknown";
+                            
+                            // Combine into "Dec 21, 9:00 AM - 2:00 PM"
+                            var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
 
                             var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
                             var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
@@ -285,6 +323,10 @@
                                 html: `
                                     <div style="text-align: left; font-size: 1.1em;">
                                         
+                                        <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
+                                            📅 ${fullTimeHeader}
+                                        </div>
+
                                         <div style="margin-bottom: 15px;">
                                             <p style="margin: 0 0 15px 0;"> 
                                                 <strong>📍 Pickup:</strong> 
