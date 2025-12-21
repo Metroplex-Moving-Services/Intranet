@@ -85,9 +85,8 @@
         }
 
         /* --- CUSTOM DAY HIGHLIGHT --- */
-        /* This class is applied via JS when a user clicks a day */
         .selected-day {
-            background-color: #fff9c4 !important; /* Same light yellow as default */
+            background-color: #fff9c4 !important; /* Light yellow for clicked day */
         }
 
         /* --- POPUP STYLES --- */
@@ -289,15 +288,39 @@
                         eventDisplay: 'block', 
                         height: 'auto',
 
+                        // --- CUSTOM BUTTON DEFINITION ---
+                        customButtons: {
+                            resetToday: {
+                                text: 'Today',
+                                click: function() {
+                                    // 1. Navigate to today
+                                    calendar.today();
+                                    
+                                    // 2. Remove selection from other days
+                                    var selectedDays = document.querySelectorAll('.selected-day');
+                                    selectedDays.forEach(function(el) {
+                                        el.classList.remove('selected-day');
+                                    });
+
+                                    // 3. Restore 'Today' highlight (remove transparent override)
+                                    var todayEl = document.querySelector('.fc-day-today');
+                                    if (todayEl) {
+                                        todayEl.style.backgroundColor = '';
+                                    }
+                                }
+                            }
+                        },
+
                         headerToolbar: {
                             left: 'title',
                             center: '',
-                            right: 'prev,next today' 
+                            // Use our custom 'resetToday' button here
+                            right: 'prev,next resetToday' 
                         },
 
                         events: calendarEvents,
                         
-                        // --- 1. DATE CLICK HANDLER (HIGHLIGHT LOGIC) ---
+                        // --- DATE CLICK HANDLER ---
                         dateClick: function(info) {
                             // A. Remove 'selected-day' from any previously selected date
                             var previouslySelected = document.querySelectorAll('.selected-day');
@@ -308,14 +331,14 @@
                             // B. Add 'selected-day' to the clicked date element
                             info.dayEl.classList.add('selected-day');
 
-                            // C. Remove the default yellow highlight from "Today"
+                            // C. Remove the default yellow highlight from "Today" if it exists
                             var todayEl = document.querySelector('.fc-day-today');
                             if (todayEl) {
                                 todayEl.style.backgroundColor = 'transparent';
                             }
                         },
 
-                        // --- 2. EVENT CLICK HANDLER (POPUP LOGIC) ---
+                        // --- EVENT CLICK HANDLER ---
                         eventClick: function(info) {
                             info.jsEvent.preventDefault(); 
                             
