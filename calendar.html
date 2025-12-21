@@ -6,6 +6,7 @@
     <title>Metroplex Moving Calendar</title>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
     <style>
+        /* --- 1. BASE STYLES --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
@@ -40,15 +41,13 @@
             margin-bottom: 10px;
         }
 
-        /* --- CUSTOM BRANDING (BLUE #0C419a) --- */
-        
-        /* Change the color of the top buttons (Month, Week, Next, Prev) */
+        /* --- 2. BRANDING (BLUE #0C419a) --- */
         .fc-button-primary {
             background-color: #0C419a !important;
             border-color: #0C419a !important;
         }
         .fc-button-primary:hover {
-            background-color: #082d6e !important; /* Slightly darker on hover */
+            background-color: #082d6e !important;
             border-color: #082d6e !important;
         }
         .fc-button-active {
@@ -56,8 +55,18 @@
             border-color: #062252 !important;
         }
 
-        /* --- MOBILE OPTIMIZATIONS --- */
+        /* --- 3. RESPONSIVE LOGIC --- */
+
+        /* DEFAULT: Show the Title (Name) everywhere */
+        .fc-event-title {
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        /* SMART PHONE RULES */
         @media (max-width: 768px) {
+            
+            /* Stack the header buttons nicely */
             .fc-header-toolbar {
                 display: flex;
                 flex-direction: column;
@@ -68,12 +77,21 @@
                 justify-content: center;
                 width: 100%; 
             }
-            .fc-toolbar-title {
-                font-size: 1.25em !important;
+            .fc-toolbar-title { font-size: 1.25em !important; }
+            .fc-button { font-size: 0.9em !important; padding: 0.4em 0.65em !important; }
+        }
+
+        /* MAGIC: Hide Name ONLY on Vertical Phones */
+        @media (max-width: 600px) and (orientation: portrait) {
+            .fc-event-title {
+                display: none; /* Hide the Name */
             }
-            .fc-button {
-                font-size: 0.9em !important;
-                padding: 0.4em 0.65em !important;
+            .fc-event-time {
+                font-weight: bold; /* Make time pop */
+                font-size: 1.1em;
+                text-align: center;
+                width: 100%;
+                display: block;
             }
         }
     </style>
@@ -95,7 +113,7 @@
             const loadingMsg = document.getElementById('loading');
             const calendarEl = document.getElementById('calendar');
 
-            // --- HELPER: Translate Date ---
+            // --- HELPER: Parse Zoho Date ---
             function parseZohoDate(dateStr) {
                 if (!dateStr) return null;
                 const parts = dateStr.split(' '); 
@@ -155,18 +173,16 @@
                         }
 
                         return {
-                            title: "",         // <--- LEFT EMPTY (Only time will show)
+                            title: safeName,   // <--- Name is INCLUDED here, but hidden by CSS vertically
                             start: startISO,   
                             end: endISO,
                             
-                            // BRANDING COLORS
                             backgroundColor: '#0C419a', 
                             borderColor: '#0C419a',
                             textColor: '#ffffff',
 
-                            // HIDDEN DATA (For Click Popup)
                             extendedProps: {
-                                name: safeName, // Store name here to show on click
+                                name: safeName, 
                                 address: record.Origination_Address ? record.Origination_Address.display_value : ""
                             }
                         };
