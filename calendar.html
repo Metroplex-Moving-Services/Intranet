@@ -232,14 +232,15 @@
                             var originLink, destLink;
 
                             if (isApple) {
-                                // USE APPLE MAPS
-                                // 'daddr' is destination address. We assume start point is current location.
+                                // APPLE MAPS: No reliable "Avoid Tolls" URL parameter exists.
+                                // We use 'dirflg=d' for Driving.
                                 originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
                                 destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
                             } else {
-                                // USE GOOGLE MAPS (Your original format)
-                                originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
-                                destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
+                                // GOOGLE MAPS: We add '&dirflg=t' which specifically triggers "Avoid Tolls".
+                                // We also switched to standard 'maps.google.com' syntax for better compatibility.
+                                originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
+                                destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
                             }
 
                             // 3. Show Detailed Popup
