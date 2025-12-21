@@ -18,17 +18,18 @@
         }
 
         #calendar-container {
-            max-width: 1100px;
+            /* UPDATED: Made wider for laptops (95% instead of fixed pixel width) */
+            max-width: 95%; 
             margin: 0 auto;
             background: white;
-            padding: 10px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         #calendar {
-            min-height: 500px; 
-            height: 80vh; 
+            /* UPDATED: Removed fixed '80vh' height so it expands naturally */
+            min-height: 600px; 
         }
 
         #loading {
@@ -113,9 +114,7 @@
             margin-left: 4px;
         }
 
-        /* STRICT RULE FOR VERTICAL PHONES 
-           We use max-width: 900px + orientation: portrait to catch even large phones.
-        */
+        /* STRICT RULE FOR VERTICAL PHONES (Portrait) */
         @media (max-width: 900px) and (orientation: portrait) {
             
             /* FORCE HIDE TITLE (Name) */
@@ -189,7 +188,6 @@
                 if (!fullName) return "Unknown";
                 var parts = fullName.trim().split(/\s+/); 
                 if (parts.length === 1) return parts[0];
-                
                 var first = parts[0];
                 var lastInitial = parts[parts.length - 1].charAt(0);
                 return first + " " + lastInitial + ".";
@@ -273,7 +271,6 @@
                             bgColor = '#fd7e14'; // Orange
                             bdColor = '#fd7e14';
                         }
-                        // else stays Blue
 
                         return {
                             title: shortName,  
@@ -295,6 +292,9 @@
                     var calendar = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
                         eventDisplay: 'block', 
+                        
+                        // UPDATED: 'auto' forces it to expand to fit all weeks
+                        height: 'auto',
 
                         headerToolbar: {
                             left: 'title',
