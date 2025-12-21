@@ -3,115 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moving Schedule</title>
+    <title>Metroplex Moving Calendar</title>
 
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
     <style>
-        body { 
-            margin: 40px; 
-            font-family: Arial, Helvetica, sans-serif; 
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
             background-color: #f4f4f4;
         }
+
         #calendar-container {
-            max-width: 1100px; 
-            margin: 0 auto; 
+            max-width: 1100px;
+            margin: 0 auto;
             background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        #loading { 
-            text-align: center; 
-            color: #666; 
-            font-size: 1.2em; 
-            padding: 20px;
+
+        #calendar {
+            height: 800px; /* Force height so it doesn't collapse */
         }
-        .error-msg {
-            color: red;
+
+        #loading {
             text-align: center;
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        /* Event Styling */
+        .fc-event {
+            cursor: pointer;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
 
     <div id="calendar-container">
-        <div id="loading">Loading Schedule...</div>
-        <div id='calendar'></div>
+        <h2>Job Schedule</h2>
+        <div id="loading">Loading calendar data...</div>
+        <div id="calendar"></div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-            // --- CONFIGURATION ---
-            // REPLACE THIS with your actual Netlify URL after you deploy Phase 3
-            // It will look like: https://your-site-name.netlify.app/.netlify/functions/get-calendar
-            const NETLIFY_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar"; 
-
-            var calendarEl = document.getElementById('calendar');
-            var loadingEl = document.getElementById('loading');
-
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,listWeek'
-                },
-                height: 'auto', // Adjusts height based on content
-                
-                // This function runs automatically to fetch events
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    
-                    console.log("Fetching data from Netlify...");
-
-                    fetch(NETLIFY_ENDPOINT)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Netlify Error: ${response.status} ${response.statusText}');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log("Data received:", data); // Check console (F12) to see your Zoho fields
-                            loadingEl.style.display = 'none';
-
-                            // Handle Zoho's data structure (usually wrapped in "data" or report name)
-                            // If your Netlify script returns the raw Zoho JSON, accessing .data is usually correct
-                            var records = data.data || data.Current_Bookings || data; 
-
-                            if (!Array.isArray(records)) {
-                                console.error("Expected an array but got:", records);
-                                throw new Error("Invalid data format received.");
-                            }
-
-                            // Map Zoho fields to Calendar fields
-                            var events = records.map(record => ({
-                                title: record.Customer_Name || "Booking", // CHANGE 'Job_Name' to your actual field
-                                start: record.Agreed_Start_Date_Time,          // CHANGE 'Date_of_Move' to your actual field
-                                // optional: url: '#',
-                                // optional: backgroundColor: '#0099ff'
-                            }));
-
-                            successCallback(events);
-                        })
-                        .catch(error => {
-                           return {
-            statusCode: 500,
-            headers: {
-                "Access-Control-Allow-Origin": "*", // <--- THIS IS CRITICAL
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ error: error.message })
-        };
-                        });
-                }
-            });
-
-            calendar.render();
+            // RELATIVE URL: Automatically finds your Netlify function
+            const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
             
-            // Scroll to top behavior (Your original request)
-            window.scrollTo(0, 0);
+            const loadingMsg = document.getElementById('loading');
+            const calendarEl = document.getElementById('calendar');
+
+            // --- HELPER 1: Convert Zoho "MM-DD-YY HH:MM AM" to ISO Date ---
+            function parseZohoDate(dateStr) {
+                if (!dateStr) return null;
+                
+                // Expected format: "01-06-26 09:00 AM"
+                const parts = dateStr.split(' '); 
+                if (parts.length < 3) return null;
+
+                const dateParts = parts[0].split('-'); // ["01", "06", "26"]
+                const timeParts = parts[1].split(':'); // ["09", "00"]
+                const meridian = parts[2];             // "AM" or "PM"
+
+                // Build ISO components
+                let year = "20" + dateParts[2];  // "20" + "26" -> 2026
+                let month = dateParts[0];
+                let day = dateParts[1];
+                let hour = parseInt(timeParts[0], 10);
+                let minute = timeParts[1];
+
+                // Convert 12h format to 24h
+                if (meridian === "PM" && hour < 12) hour += 12;
+                if (meridian === "AM" && hour === 12) hour = 0;
+
+                // Return ISO string: "2026-01-06T09:00:00"
+                return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
+            }
+
+            // --- HELPER 2: Calculate End Time based on Start Date ---
+            function getEndTime(startDateIso, endTimeStr) {
+                if (!startDateIso || !endTimeStr) return null;
+                
+                // Extract just the date part (YYYY-MM-DD) from the start date
+                const dateOnly = startDateIso.split('T')[0];
+                
+                // Parse the End Time string "11:00 AM"
+                const parts = endTimeStr.split(' ');
+                if (parts.length < 2) return null; // Safety check
+
+                const timeParts = parts[0].split(':');
+                const meridian = parts[1];
+                let hour = parseInt(timeParts[0], 10);
+                let minute = timeParts[1];
+
+                if (meridian === "PM" && hour < 12) hour += 12;
+                if (meridian === "AM" && hour === 12) hour = 0;
+
+                return `${dateOnly}T${hour.toString().padStart(2, '0')}:${minute}:00`;
+            }
+
+            // --- MAIN LOGIC: Fetch and Render ---
+            fetch(NETLIFY_ENDPOINT)
+                .then(response => {
+                    if (!response.ok) throw new Error("Netlify Function failed");
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Raw Data from Zoho:", data); // For debugging in Console
+                    loadingMsg.style.display = 'none';
+
+                    // Transform Zoho data into Calendar Events
+                    var calendarEvents = data.data.map(function(record) {
+                        
+                        // 1. Parse the Start Date/Time
+                        var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
+                        
+                        // 2. Parse the End Time (re-using the start date)
+                        var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
+
+                        // 3. Create the Event Object
+                        return {
+                            title: record.Customer_Name.display_value || "Unknown Name",
+                            start: startISO,
+                            end: endISO,
+                            
+                            // Color code based on status or mover count? (Optional example)
+                            backgroundColor: record.Mover_Count > 2 ? '#ff4d4d' : '#3788d8',
+                            
+                            // Save extra data for clicks
+                            extendedProps: {
+                                address: record.Origination_Address.display_value,
+                                id: record.ID
+                            }
+                        };
+                    });
+
+                    // Initialize the Calendar
+                    var calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth', // Start in Month View
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                        },
+                        events: calendarEvents,
+                        
+                        // Handle Clicks
+                        eventClick: function(info) {
+                            alert(
+                                'Customer: ' + info.event.title + 
+                                '\nAddress: ' + info.event.extendedProps.address
+                            );
+                        }
+                    });
+
+                    calendar.render();
+                })
+                .catch(error => {
+                    console.error("Error loading calendar:", error);
+                    loadingMsg.innerText = "Error loading data. Check console for details.";
+                    loadingMsg.style.color = "red";
+                });
         });
     </script>
 </body>
