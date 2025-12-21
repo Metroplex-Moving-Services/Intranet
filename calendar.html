@@ -1,142 +1,219 @@
 <!DOCTYPE html>
-<html lang='en'>
-  <head>
-    <meta charset='utf-8' />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metroplex Moving Calendar</title>
-
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
     <style>
-      body {
-        margin: 40px 10px;
-        padding: 0;
-        font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
-        font-size: 14px;
-      }
-      #calendar {
-        max-width: 1100px;
-        margin: 0 auto;
-        height: 85vh; /* Take up 85% of the screen height */
-      }
-      /* Custom style for the popup links */
-      .popup-link {
-        color: #3085d6;
-        text-decoration: underline;
-        font-weight: bold;
-        cursor: pointer;
-      }
+        /* --- 1. BASE STYLES --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 10px; 
+            background-color: #f4f4f4;
+        }
+
+        #calendar-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #calendar {
+            min-height: 500px; 
+            height: 80vh; 
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #333;
+        }
+
+        #loading {
+            text-align: center;
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        /* --- 2. BRANDING (BLUE #0C419a) --- */
+        .fc-button-primary {
+            background-color: #0C419a !important;
+            border-color: #0C419a !important;
+        }
+        .fc-button-primary:hover {
+            background-color: #082d6e !important;
+            border-color: #082d6e !important;
+        }
+        .fc-button-active {
+            background-color: #062252 !important;
+            border-color: #062252 !important;
+        }
+
+        /* --- 3. RESPONSIVE LOGIC --- */
+
+        /* DEFAULT: Show the Title (Name) everywhere */
+        .fc-event-title {
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        /* SMART PHONE RULES */
+        @media (max-width: 768px) {
+            
+            /* Stack the header buttons nicely */
+            .fc-header-toolbar {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .fc-toolbar-chunk {
+                display: flex;
+                justify-content: center;
+                width: 100%; 
+            }
+            .fc-toolbar-title { font-size: 1.25em !important; }
+            .fc-button { font-size: 0.9em !important; padding: 0.4em 0.65em !important; }
+        }
+
+        /* MAGIC: Hide Name ONLY on Vertical Phones */
+        @media (max-width: 600px) and (orientation: portrait) {
+            .fc-event-title {
+                display: none; /* Hide the Name */
+            }
+            .fc-event-time {
+                font-weight: bold; /* Make time pop */
+                font-size: 1.1em;
+                text-align: center;
+                width: 100%;
+                display: block;
+            }
+        }
     </style>
+</head>
+<body>
 
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  </head>
-  <body>
+    <div id="calendar-container">
+        <h2>Job Schedule</h2>
+        <div id="loading">Loading calendar data...</div>
+        <div id="calendar"></div>
+    </div>
 
-    <div id='calendar'></div>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
-
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek'
-          },
-          
-          // --- DATA SOURCE SECTION ---
-          // Replace the events array below with your actual Zoho API Fetch logic.
-          // For now, I have put "Mock Data" here so you can test the popup immediately.
-          events: [
-            {
-              title: 'Move: John Doe',
-              start: '2025-12-22T10:00:00',
-              // "extendedProps" is where we store your custom Zoho fields
-              extendedProps: {
-                customer_name: "John Doe",
-                origin_address: "2600 N Stemmons Fwy, Dallas, TX 75207",
-                destination_address: "8000 Denton Hwy, Watauga, TX 76148"
-              }
-            },
-            {
-              title: 'Move: Jane Smith (Missing Dest)',
-              start: '2025-12-23T14:00:00',
-              extendedProps: {
-                customer_name: "Jane Smith",
-                origin_address: "123 Main St, Carrollton, TX",
-                destination_address: "" // EMPTY to test your error logic
-              }
-            }
-          ],
-
-          // --- CLICK HANDLER SECTION ---
-          eventClick: function(info) {
-            // Prevent the browser from navigating if the event has a URL
-            info.jsEvent.preventDefault(); 
+        document.addEventListener('DOMContentLoaded', function() {
             
-            // 1. Extract data from the clicked event
-            // We use 'info.event.extendedProps' because that is where FullCalendar stores custom data
-            var props = info.event.extendedProps;
-            var customer = props.customer_name || "Unknown Customer";
-            var originAddr = props.origin_address || "";
-            var destAddr = props.destination_address || "";
+            const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
+            const loadingMsg = document.getElementById('loading');
+            const calendarEl = document.getElementById('calendar');
 
-            // 2. LOGIC: Check if Destination is Missing
-            if (!destAddr) {
-                // A. Display Error Popup
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Missing Address',
-                    text: 'Destination address is missing for ' + customer,
-                    confirmButtonText: 'Update in Zoho'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                       // B. TODO: Trigger Zoho Update
-                       // Since this is a public webpage, you cannot safely write to Zoho directly here 
-                       // without exposing your API keys. 
-                       // Ideally, you would open the Zoho Record in a new tab to edit it:
-                       // window.open("YOUR_ZOHO_RECORD_EDIT_URL", "_blank");
-                       console.log("User requested to update Zoho record.");
-                    }
-                });
-                return; // Stop here, do not show the navigation popup
+            // --- HELPER: Parse Zoho Date ---
+            function parseZohoDate(dateStr) {
+                if (!dateStr) return null;
+                const parts = dateStr.split(' '); 
+                if (parts.length < 3) return null;
+
+                const dateParts = parts[0].split('-'); 
+                const timeParts = parts[1].split(':'); 
+                const meridian = parts[2];            
+
+                let year = "20" + dateParts[2];
+                let month = dateParts[0];
+                let day = dateParts[1];
+                let hour = parseInt(timeParts[0], 10);
+                let minute = timeParts[1];
+
+                if (meridian === "PM" && hour < 12) hour += 12;
+                if (meridian === "AM" && hour === 12) hour = 0;
+
+                return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
             }
 
-            // 3. Construct Google Maps Links (Defaulting Origin to "Current Location")
-            // We encodeURIComponent to ensure spaces and commas don't break the link
-            var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
-            var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
+            // --- HELPER: End Time ---
+            function getEndTime(startDateIso, endTimeStr) {
+                if (!startDateIso || !endTimeStr) return null;
+                const dateOnly = startDateIso.split('T')[0];
+                const parts = endTimeStr.split(' ');
+                if (parts.length < 2) return null;
 
-            // 4. Show the Success Popup
-            Swal.fire({
-              title: customer,
-              html: `
-                <div style="text-align: left; font-size: 1.1em;">
-                    <p style="margin-bottom: 15px;">
-                        <strong style="color:#555;">📍 Pickup (Origin):</strong><br>
-                        <a href="${originLink}" target="_blank" class="popup-link">
-                            ${originAddr}
-                        </a> 
-                    </p>
-                    <hr style="border-top: 1px solid #eee; margin: 10px 0;">
-                    <p>
-                        <strong style="color:#555;">🏁 Dropoff (Destination):</strong><br>
-                        <a href="${destLink}" target="_blank" class="popup-link">
-                            ${destAddr}
-                        </a> 
-                    </p>
-                </div>
-              `,
-              icon: 'info',
-              showConfirmButton: true,
-              confirmButtonText: 'Close'
-            });
-          }
+                const timeParts = parts[0].split(':');
+                const meridian = parts[1];
+                let hour = parseInt(timeParts[0], 10);
+                let minute = timeParts[1];
+
+                if (meridian === "PM" && hour < 12) hour += 12;
+                if (meridian === "AM" && hour === 12) hour = 0;
+
+                return `${dateOnly}T${hour.toString().padStart(2, '0')}:${minute}:00`;
+            }
+
+            // --- MAIN LOGIC ---
+            fetch(NETLIFY_ENDPOINT)
+                .then(res => res.json())
+                .then(data => {
+                    loadingMsg.style.display = 'none';
+
+                    var calendarEvents = data.data.map(function(record) {
+                        
+                        var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
+                        var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
+
+                        // Safe Name Extraction
+                        var safeName = "Unknown";
+                        if (record.Customer_Name && record.Customer_Name.display_value) {
+                            safeName = record.Customer_Name.display_value;
+                        } else if (typeof record.Customer_Name === 'string') {
+                            safeName = record.Customer_Name;
+                        }
+
+                        return {
+                            title: safeName,   // <--- Name is INCLUDED here, but hidden by CSS vertically
+                            start: startISO,   
+                            end: endISO,
+                            
+                            backgroundColor: '#0C419a', 
+                            borderColor: '#0C419a',
+                            textColor: '#ffffff',
+
+                            extendedProps: {
+                                name: safeName, 
+                                address: record.Origination_Address ? record.Origination_Address.display_value : ""
+                            }
+                        };
+                    });
+
+                    var calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,listWeek'
+                        },
+                        events: calendarEvents,
+                        
+                        // POPUP ON CLICK
+                        eventClick: function(info) {
+                            alert(
+                                'Job Details:\n\n' +
+                                'Customer: ' + info.event.extendedProps.name + '\n' +
+                                'Address: ' + info.event.extendedProps.address
+                            );
+                        }
+                    });
+
+                    calendar.render();
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    loadingMsg.innerText = "Error loading data.";
+                });
         });
-
-        calendar.render();
-      });
     </script>
-  </body>
+</body>
 </html>
