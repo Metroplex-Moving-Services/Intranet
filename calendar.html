@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metroplex Moving Calendar</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        /* --- 1. BASE STYLES --- */
+        /* --- BASE STYLES --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
@@ -41,7 +44,7 @@
             margin-bottom: 10px;
         }
 
-        /* --- 2. BRANDING (BLUE #0C419a) --- */
+        /* --- BRANDING (BLUE #0C419a) --- */
         .fc-button-primary {
             background-color: #0C419a !important;
             border-color: #0C419a !important;
@@ -55,18 +58,21 @@
             border-color: #062252 !important;
         }
 
-        /* --- 3. RESPONSIVE LOGIC --- */
+        /* Custom link style for the popup */
+        .popup-link {
+            color: #3085d6;
+            text-decoration: underline;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-        /* DEFAULT: Show the Title (Name) everywhere */
+        /* --- RESPONSIVE LOGIC --- */
         .fc-event-title {
             display: inline-block;
             margin-left: 4px;
         }
 
-        /* SMART PHONE RULES */
         @media (max-width: 768px) {
-            
-            /* Stack the header buttons nicely */
             .fc-header-toolbar {
                 display: flex;
                 flex-direction: column;
@@ -81,13 +87,10 @@
             .fc-button { font-size: 0.9em !important; padding: 0.4em 0.65em !important; }
         }
 
-        /* MAGIC: Hide Name ONLY on Vertical Phones */
         @media (max-width: 600px) and (orientation: portrait) {
-            .fc-event-title {
-                display: none; /* Hide the Name */
-            }
+            .fc-event-title { display: none; }
             .fc-event-time {
-                font-weight: bold; /* Make time pop */
+                font-weight: bold;
                 font-size: 1.1em;
                 text-align: center;
                 width: 100%;
@@ -153,6 +156,14 @@
                 return `${dateOnly}T${hour.toString().padStart(2, '0')}:${minute}:00`;
             }
 
+            // --- HELPER: Safely Get String from Zoho Object or String ---
+            function getZohoVal(field) {
+                if (!field) return "";
+                if (field.display_value) return field.display_value; // It's an object
+                if (typeof field === 'string') return field;         // It's a string
+                return "";
+            }
+
             // --- MAIN LOGIC ---
             fetch(NETLIFY_ENDPOINT)
                 .then(res => res.json())
@@ -163,17 +174,18 @@
                         
                         var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
                         var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
-
-                        // Safe Name Extraction
+                        
+                        // 1. Get Name
                         var safeName = "Unknown";
-                        if (record.Customer_Name && record.Customer_Name.display_value) {
-                            safeName = record.Customer_Name.display_value;
-                        } else if (typeof record.Customer_Name === 'string') {
-                            safeName = record.Customer_Name;
-                        }
+                        if (record.Customer_Name) safeName = getZohoVal(record.Customer_Name);
+
+                        // 2. Get Addresses (Using helper to handle objects/strings safely)
+                        var originRaw = getZohoVal(record.Origination_Address);
+                        // Make sure 'Destination_Address' matches your Zoho API key exactly
+                        var destRaw = getZohoVal(record.Destination_Address); 
 
                         return {
-                            title: safeName,   // <--- Name is INCLUDED here, but hidden by CSS vertically
+                            title: safeName, 
                             start: startISO,   
                             end: endISO,
                             
@@ -183,7 +195,8 @@
 
                             extendedProps: {
                                 name: safeName, 
-                                address: record.Origination_Address ? record.Origination_Address.display_value : ""
+                                origin: originRaw,
+                                destination: destRaw  // Store destination in props
                             }
                         };
                     });
@@ -197,13 +210,62 @@
                         },
                         events: calendarEvents,
                         
-                        // POPUP ON CLICK
+                        // --- UPDATED CLICK HANDLER ---
                         eventClick: function(info) {
-                            alert(
-                                'Job Details:\n\n' +
-                                'Customer: ' + info.event.extendedProps.name + '\n' +
-                                'Address: ' + info.event.extendedProps.address
-                            );
+                            info.jsEvent.preventDefault(); // Stop browser default
+                            
+                            // Get data from props
+                            var props = info.event.extendedProps;
+                            var customer = props.name;
+                            var originAddr = props.origin;
+                            var destAddr = props.destination;
+
+                            // CHECK: Is Destination Missing?
+                            if (!destAddr) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Address Missing',
+                                    text: `Destination address is missing for ${customer}`,
+                                    confirmButtonText: 'Update in Zoho',
+                                    confirmButtonColor: '#d33'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        // Placeholder: logic to open Zoho record would go here
+                                        console.log("User clicked Update for missing address");
+                                    }
+                                });
+                                return; // Stop here
+                            }
+
+                            // CREATE LINKS: (Default origin is Current Location)
+                            var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
+                            var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
+
+                            // SHOW SUCCESS POPUP
+                            Swal.fire({
+                                title: customer,
+                                html: `
+                                    <div style="text-align: left; font-size: 1.1em;">
+                                        <p style="margin-bottom: 10px;">
+                                            <strong>📍 Pickup (Origin):</strong><br>
+                                            <a href="${originLink}" target="_blank" class="popup-link">
+                                                ${originAddr} 
+                                            </a> 
+                                        </p>
+                                        <hr style="border-top: 1px solid #eee; margin: 10px 0;">
+                                        <p>
+                                            <strong>🏁 Dropoff (Destination):</strong><br>
+                                            <a href="${destLink}" target="_blank" class="popup-link">
+                                                ${destAddr}
+                                            </a> 
+                                        </p>
+                                    </div>
+                                `,
+                                icon: 'info',
+                                showConfirmButton: true,
+                                confirmButtonText: 'Close',
+                                confirmButtonColor: '#0C419a'
+                            });
                         }
                     });
 
