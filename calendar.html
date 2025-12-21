@@ -76,7 +76,7 @@
             color: #444;
             white-space: pre-wrap; /* Preserves line breaks */
             text-align: left;
-            max-height: 200px;     /* Increased height slightly */
+            max-height: 200px;
             overflow-y: auto;
         }
 
@@ -217,36 +217,28 @@
                             
                             var props = info.event.extendedProps;
                             var customer = props.name;
-                            var originAddr = props.origin;
-                            var destAddr = props.destination;
+
+                            // 1. Clean Addresses: Remove "missing" (case insensitive) and trim whitespace
+                            var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
+                            var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
                             
-                            // CLEAN UP SERVICES: .trim() removes leading/trailing spaces & tabs
+                            // 2. Clean Services: Trim leading/trailing whitespace
                             var servicesText = props.services ? String(props.services).trim() : "No service details available.";
 
-                            if (!destAddr) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Address Missing',
-                                    text: `Destination address is missing for ${customer}`,
-                                    confirmButtonText: 'Update in Zoho',
-                                    confirmButtonColor: '#d33'
-                                });
-                                return; 
-                            }
-
+                            // 3. Create Links (Destination is assumed to exist now per your request)
                             var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
                             var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
 
-                            // SHOW DETAILED POPUP (No Icon, Better Spacing)
+                            // 4. Show Detailed Popup
                             Swal.fire({
                                 title: customer,
                                 width: 600,
-                                // Note: removed "icon: 'info'" to save space at the top
                                 html: `
                                     <div style="text-align: left; font-size: 1.1em;">
                                         
                                         <div style="margin-bottom: 15px;">
-                                            <p style="margin: 0 0 15px 0;"> <strong>📍 Pickup:</strong> 
+                                            <p style="margin: 0 0 15px 0;"> 
+                                                <strong>📍 Pickup:</strong> 
                                                 <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a>
                                             </p>
                                             <p style="margin: 0;">
