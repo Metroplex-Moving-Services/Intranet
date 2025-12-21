@@ -251,4 +251,62 @@
                         events: calendarEvents,
                         
                         // --- CLICK HANDLER ---
-                        eventClick: function
+                        eventClick: function(info) {
+                            info.jsEvent.preventDefault(); 
+                            
+                            var props = info.event.extendedProps;
+                            var customer = props.name;
+
+                            var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
+                            var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
+                            var servicesText = props.services ? String(props.services).trim() : "No service details available.";
+
+                            var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+                            var originLink, destLink;
+
+                            if (isApple) {
+                                originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
+                                destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
+                            } else {
+                                // Google: Use &dirflg=t to Avoid Tolls
+                                originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
+                                destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
+                            }
+
+                            Swal.fire({
+                                title: customer,
+                                width: 600,
+                                html: `
+                                    <div style="text-align: left; font-size: 1.1em;">
+                                        <div style="margin-bottom: 15px;">
+                                            <p style="margin: 0 0 15px 0;"> 
+                                                <strong>📍 Pickup:</strong> 
+                                                <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a>
+                                            </p>
+                                            <p style="margin: 0;">
+                                                <strong>🏁 Dropoff:</strong> 
+                                                <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a>
+                                            </p>
+                                        </div>
+                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+                                        <strong>📋 Services Provided:</strong>
+                                        <div class="services-box">${servicesText}</div>
+                                    </div>
+                                `,
+                                showConfirmButton: true,
+                                confirmButtonText: 'Close',
+                                confirmButtonColor: '#0C419a'
+                            });
+                        }
+                    });
+
+                    calendar.render();
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    loadingMsg.innerText = "Error loading data.";
+                });
+        });
+    </script>
+</body>
+</html>
