@@ -72,7 +72,6 @@
             background-color: #062252 !important;
             border-color: #062252 !important;
         }
-        /* Disable the default 'state' opacity to keep colors vibrant */
         .fc-button-primary:disabled {
             background-color: #0C419a !important;
             border-color: #0C419a !important;
@@ -180,7 +179,7 @@
             function countMovers(moversField) {
                 if (!moversField) return 0;
                 if (Array.isArray(moversField)) return moversField.length; // It's a real JSON array
-                // If it's a comma separated string (rare in JSON API but possible)
+                // If it's a comma separated string 
                 if (typeof moversField === 'string') {
                     if(moversField.trim() === "") return 0;
                     return moversField.split(',').length; 
@@ -203,9 +202,9 @@
                         var destRaw = getZohoVal(record.Destination_Address); 
                         var servicesRaw = getZohoVal(record.Services_Provided);
 
-                        // --- CONDITIONAL COLOR LOGIC ---
-                        var requiredCount = parseInt(record.Movers_Count) || 0;
-                        var actualMovers = countMovers(record.Movers); // Uses 'Movers' field list
+                        // --- CONDITIONAL COLOR LOGIC (Corrected Fields) ---
+                        var requiredCount = parseInt(record.Mover_Count) || 0; // Corrected field
+                        var actualMovers = countMovers(record.Movers2);       // Corrected field
 
                         // Default: BLUE (#0C419a)
                         var bgColor = '#0C419a';
@@ -216,7 +215,6 @@
                             bgColor = '#fd7e14'; // Bright Orange
                             bdColor = '#fd7e14';
                         }
-                        // (If actual >= required, it stays Blue)
 
                         return {
                             title: safeName, 
@@ -237,11 +235,7 @@
                     var calendar = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
                         
-                        // --- HEADER CONFIG ---
-                        // 'left' chunk contains the Title
-                        // 'center' is empty
-                        // 'right' chunk contains the buttons
-                        // CSS above forces these to stack vertically
+                        // --- HEADER CONFIG (Stacked Title above Buttons) ---
                         headerToolbar: {
                             left: 'title',
                             center: '',
@@ -268,7 +262,7 @@
                                 originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
                                 destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
                             } else {
-                                // Google: Use &dirflg=t to Avoid Tolls
+                                // Google: Avoid Tolls
                                 originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
                                 destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
                             }
