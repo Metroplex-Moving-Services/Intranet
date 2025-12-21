@@ -219,6 +219,7 @@
                             var customer = props.name;
                             var originAddr = props.origin;
                             var destAddr = props.destination;
+                            var servicesprovided = props.Services_Provided;
 
                             // CHECK: Is Destination Missing?
                             if (!destAddr) {
@@ -246,6 +247,9 @@
                                 title: customer,
                                 html: `
                                     <div style="text-align: left; font-size: 1.1em;">
+                                    <p style="margin-bottom: 10px;">                                                                                
+                                                ${servicesprovided}                                             
+                                        </p>                                    
                                         <p style="margin-bottom: 10px;">
                                             <strong>📍 Pickup (Origin):</strong><br>
                                             <a href="${originLink}" target="_blank" class="popup-link">
