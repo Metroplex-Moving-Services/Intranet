@@ -113,15 +113,23 @@
             margin-left: 4px;
         }
 
-        /* Logic for Vertical Phone (Portrait) - Hide Name completely */
-        @media (max-width: 600px) and (orientation: portrait) {
-            .fc-event-title { display: none; } 
+        /* STRICT RULE FOR VERTICAL PHONES 
+           We use max-width: 900px + orientation: portrait to catch even large phones.
+        */
+        @media (max-width: 900px) and (orientation: portrait) {
+            
+            /* FORCE HIDE TITLE (Name) */
+            .fc-event-title { 
+                display: none !important; 
+            } 
+            
+            /* FORCE SHOW TIME */
             .fc-event-time {
                 font-weight: bold;
                 font-size: 1.1em;
                 text-align: center;
                 width: 100%;
-                display: block;
+                display: block !important;
             }
         }
     </style>
@@ -176,7 +184,7 @@
                 return "";
             }
 
-            // --- HELPER: Shorten Name (John Doe -> John D.) ---
+            // --- HELPER: Shorten Name ---
             function getShortName(fullName) {
                 if (!fullName) return "Unknown";
                 var parts = fullName.trim().split(/\s+/); 
@@ -241,7 +249,6 @@
                         var endISO = parseZohoDate(record.Estimate_End_Date_Time);
 
                         var safeName = getZohoVal(record.Customer_Name) || "Unknown";
-                        // Generate Short Name for Calendar View
                         var shortName = getShortName(safeName);
 
                         var originRaw = getZohoVal(record.Origination_Address);
@@ -252,22 +259,31 @@
                         var actualMoversCount = countMovers(record.Movers2); 
                         var moversListString = getMoversString(record.Movers2);
 
-                        var bgColor = '#0C419a'; 
+                        // --- COLOR LOGIC ---
+                        var bgColor = '#0C419a'; // Default Blue
                         var bdColor = '#0C419a';
-                        if (actualMoversCount < requiredCount) {
-                            bgColor = '#fd7e14'; 
+
+                        // 1. PRIORITY: If "Pending" in services -> GREEN
+                        if (servicesRaw.toLowerCase().includes("pending")) {
+                            bgColor = '#28a745'; // Green
+                            bdColor = '#28a745';
+                        }
+                        // 2. ELSE: Check Mover Count Logic (Orange vs Blue)
+                        else if (actualMoversCount < requiredCount) {
+                            bgColor = '#fd7e14'; // Orange
                             bdColor = '#fd7e14';
                         }
+                        // else stays Blue
 
                         return {
-                            title: shortName,  // Use Short Name for the Bar
+                            title: shortName,  
                             start: startISO,   
                             end: endISO,
                             backgroundColor: bgColor, 
                             borderColor: bdColor,
                             textColor: '#ffffff',
                             extendedProps: {
-                                name: safeName, // Keep Full Name for Popup
+                                name: safeName, 
                                 origin: originRaw,
                                 destination: destRaw,
                                 services: servicesRaw,
@@ -293,7 +309,7 @@
                             info.jsEvent.preventDefault(); 
                             
                             var props = info.event.extendedProps;
-                            var customer = props.name; // Full Name
+                            var customer = props.name;
                             var teamList = props.team || "None assigned"; 
 
                             // Time Logic
@@ -302,7 +318,6 @@
                             var dateStr = formatPopupDate(startObj);
                             var startTimeStr = formatPopupTime(startObj);
                             var endTimeStr = endObj ? formatPopupTime(endObj) : "Unknown";
-                            
                             var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
 
                             // Address Logic
