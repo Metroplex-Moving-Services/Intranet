@@ -64,7 +64,7 @@
             const loadingMsg = document.getElementById('loading');
             loadingMsg.innerText = "Loading calendar data...";
             const calendarEl = document.getElementById('calendar');
-            const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
+            const NETLIFY_ENDPOINT = "https://metroplexmovingservice.netlify.app/.netlify/functions/get-calendar";
 
             // --- ALL HELPER FUNCTIONS GO HERE ---
             function parseZohoDate(dateStr) {
@@ -123,7 +123,7 @@
                 }
             }
 
-            // --- FETCH DATA -
+            
 // --- FETCH DATA ---
             fetch(NETLIFY_ENDPOINT, {
                 headers: { 'Authorization': `Bearer ${authToken}` }
