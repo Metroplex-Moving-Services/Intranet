@@ -69,7 +69,7 @@ exports.handler = async function(event, context) {
                 path: path,
                 method: 'GET',
                 headers: { 
-                    'Authorization': 'Zoho-oauthtoken ${accessToken}',
+                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
                     'Content-Type': 'application/json'
                 }
             }, (res) => {
