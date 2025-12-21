@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metroplex Moving Calendar</title>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* --- 1. BASE STYLES --- */
         body {
@@ -199,11 +200,40 @@
                         
                         // POPUP ON CLICK
                         eventClick: function(info) {
-                            alert(
-                                'Job Details:\n\n' +
-                                'Customer: ' + info.event.extendedProps.name + '\n' +
-                                'Address: ' + info.event.extendedProps.address
-                            );
+                            // 1. Get your data (Assuming these variables are already pulled from your JSON)
+var customer = jsonResponse.Customer_Name;       // e.g., "John Doe"
+var originAddr = jsonResponse.origin_address;    // e.g., "123 Start St, Dallas, TX"
+var destAddr = jsonResponse.destination_address; // e.g., "456 End Blvd, Fort Worth, TX"
+
+// 2. Create the Google Maps URLs (Encodes spaces/special chars automatically)
+// "dir/?api=1&destination=" forces navigation from Current Location to the specific address
+var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
+var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
+
+// 3. Fire the Custom Popup
+Swal.fire({
+  title: customer, // Customer Name appears as the big header
+  html: `
+    <div style="text-align: left; font-size: 1.1em;">
+        <p style="margin-bottom: 10px;">
+            <strong>Origin:</strong><br>
+            <a href="${originLink}" target="_blank" style="color: #3085d6; text-decoration: underline;">
+                ${originAddr} 
+            </a> <span style="font-size:0.8em">📍</span>
+        </p>
+        <hr style="border-top: 1px solid #eee; margin: 10px 0;">
+        <p>
+            <strong>Dropoff (Destination):</strong><br>
+            <a href="${destLink}" target="_blank" style="color: #3085d6; text-decoration: underline;">
+                ${destAddr}
+            </a> <span style="font-size:0.8em">🏁</span>
+        </p>
+    </div>
+  `,
+  icon: 'info',
+  showConfirmButton: true,
+  confirmButtonText: 'Close'
+});
                         }
                     });
 
