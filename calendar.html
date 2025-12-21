@@ -319,4 +319,83 @@
                         eventClick: function(info) {
                             info.jsEvent.preventDefault(); 
                             
-                            var
+                            var props = info.event.extendedProps;
+                            var customer = props.name;
+                            var teamList = props.team || "None assigned"; 
+
+                            // Time Logic
+                            var startObj = info.event.start;
+                            var endObj = info.event.end;
+                            var dateStr = formatPopupDate(startObj);
+                            var startTimeStr = formatPopupTime(startObj);
+                            var endTimeStr = endObj ? formatPopupTime(endObj) : "Unknown";
+                            var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
+
+                            // Address Logic
+                            var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
+                            var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
+                            var servicesText = props.services ? String(props.services).trim() : "No service details available.";
+
+                            var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+                            var originLink, destLink;
+
+                            if (isApple) {
+                                originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
+                                destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
+                            } else {
+                                originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
+                                destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
+                            }
+
+                            Swal.fire({
+                                title: customer,
+                                width: 600,
+                                html: `
+                                    <div style="text-align: left; font-size: 1.1em;">
+                                        
+                                        <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
+                                            📅 ${fullTimeHeader}
+                                        </div>
+
+                                        <div style="margin-bottom: 15px;">
+                                            <p style="margin: 0 0 15px 0;"> 
+                                                <strong>📍 Pickup:</strong> 
+                                                <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a>
+                                            </p>
+                                            <p style="margin: 0;">
+                                                <strong>🏁 Dropoff:</strong> 
+                                                <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a>
+                                            </p>
+                                        </div>
+
+                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+
+                                        <strong>📋 Services Provided:</strong>
+                                        <div class="services-box">${servicesText}</div>
+
+                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+
+                                        <strong>👷 Team:</strong>
+                                        <div style="margin-top: 5px; color: #333; font-weight: 500;">
+                                            ${teamList}
+                                        </div>
+
+                                    </div>
+                                `,
+                                showConfirmButton: true,
+                                confirmButtonText: 'Close',
+                                confirmButtonColor: '#0C419a'
+                            });
+                        }
+                    });
+
+                    calendar.render();
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    loadingMsg.innerText = "Error loading data.";
+                });
+        });
+    </script>
+</body>
+</html>
