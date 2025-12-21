@@ -77,8 +77,7 @@
             opacity: 0.6;
         }
 
-        /* --- EVENT STYLES --- */
-        /* Make the event content cleaner inside the block */
+        /* --- EVENT STYLES (Solid Blocks) --- */
         .fc-event-main {
             padding: 2px 4px;
             white-space: nowrap;
@@ -114,8 +113,9 @@
             margin-left: 4px;
         }
 
+        /* Logic for Vertical Phone (Portrait) - Hide Name completely */
         @media (max-width: 600px) and (orientation: portrait) {
-            .fc-event-title { display: none; } /* Hide name on small portrait phones */
+            .fc-event-title { display: none; } 
             .fc-event-time {
                 font-weight: bold;
                 font-size: 1.1em;
@@ -146,33 +146,26 @@
             function parseZohoDate(dateStr) {
                 if (!dateStr) return null;
                 const parts = dateStr.split(' '); 
-                if (parts.length < 3) return null;
+                if (parts.length < 2) return null; 
+
                 const dateParts = parts[0].split('-'); 
                 const timeParts = parts[1].split(':'); 
-                const meridian = parts[2];            
-                let year = "20" + dateParts[2];
+                
+                let year = dateParts[2];
+                if (year.length === 2) year = "20" + year;
+                
                 let month = dateParts[0];
                 let day = dateParts[1];
                 let hour = parseInt(timeParts[0], 10);
                 let minute = timeParts[1];
-                if (meridian === "PM" && hour < 12) hour += 12;
-                if (meridian === "AM" && hour === 12) hour = 0;
-                return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
-            }
+                
+                if (parts.length > 2) {
+                    const meridian = parts[2];
+                    if (meridian === "PM" && hour < 12) hour += 12;
+                    if (meridian === "AM" && hour === 12) hour = 0;
+                }
 
-            // --- HELPER: End Time ---
-            function getEndTime(startDateIso, endTimeStr) {
-                if (!startDateIso || !endTimeStr) return null;
-                const dateOnly = startDateIso.split('T')[0];
-                const parts = endTimeStr.split(' ');
-                if (parts.length < 2) return null;
-                const timeParts = parts[0].split(':');
-                const meridian = parts[1];
-                let hour = parseInt(timeParts[0], 10);
-                let minute = timeParts[1];
-                if (meridian === "PM" && hour < 12) hour += 12;
-                if (meridian === "AM" && hour === 12) hour = 0;
-                return `${dateOnly}T${hour.toString().padStart(2, '0')}:${minute}:00`;
+                return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
             }
 
             // --- HELPER: Safely Get String ---
@@ -181,6 +174,17 @@
                 if (field.display_value) return field.display_value; 
                 if (typeof field === 'string') return field;         
                 return "";
+            }
+
+            // --- HELPER: Shorten Name (John Doe -> John D.) ---
+            function getShortName(fullName) {
+                if (!fullName) return "Unknown";
+                var parts = fullName.trim().split(/\s+/); 
+                if (parts.length === 1) return parts[0];
+                
+                var first = parts[0];
+                var lastInitial = parts[parts.length - 1].charAt(0);
+                return first + " " + lastInitial + ".";
             }
 
             // --- HELPER: Count Movers ---
@@ -206,7 +210,7 @@
                 return moversField;
             }
 
-            // --- HELPER: Format Time for Popup (e.g. "10:00 AM") ---
+            // --- HELPER: Format Time ---
             function formatPopupTime(dateObj) {
                 if (!dateObj) return "";
                 return dateObj.toLocaleTimeString('en-US', { 
@@ -216,7 +220,7 @@
                 });
             }
             
-            // --- HELPER: Format Date for Popup (e.g. "Dec 21") ---
+            // --- HELPER: Format Date ---
             function formatPopupDate(dateObj) {
                 if (!dateObj) return "";
                 return dateObj.toLocaleDateString('en-US', {
@@ -234,33 +238,36 @@
                     var calendarEvents = data.data.map(function(record) {
                         
                         var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
-                        var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
+                        var endISO = parseZohoDate(record.Estimate_End_Date_Time);
+
                         var safeName = getZohoVal(record.Customer_Name) || "Unknown";
+                        // Generate Short Name for Calendar View
+                        var shortName = getShortName(safeName);
+
                         var originRaw = getZohoVal(record.Origination_Address);
                         var destRaw = getZohoVal(record.Destination_Address); 
                         var servicesRaw = getZohoVal(record.Services_Provided);
 
-                        // --- MOVERS COLOR LOGIC ---
                         var requiredCount = parseInt(record.Mover_Count) || 0; 
                         var actualMoversCount = countMovers(record.Movers2); 
                         var moversListString = getMoversString(record.Movers2);
 
-                        var bgColor = '#0C419a'; // Blue
+                        var bgColor = '#0C419a'; 
                         var bdColor = '#0C419a';
                         if (actualMoversCount < requiredCount) {
-                            bgColor = '#fd7e14'; // Orange
+                            bgColor = '#fd7e14'; 
                             bdColor = '#fd7e14';
                         }
 
                         return {
-                            title: safeName, 
+                            title: shortName,  // Use Short Name for the Bar
                             start: startISO,   
                             end: endISO,
                             backgroundColor: bgColor, 
                             borderColor: bdColor,
                             textColor: '#ffffff',
                             extendedProps: {
-                                name: safeName, 
+                                name: safeName, // Keep Full Name for Popup
                                 origin: originRaw,
                                 destination: destRaw,
                                 services: servicesRaw,
@@ -271,8 +278,6 @@
 
                     var calendar = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
-                        
-                        // --- 1. FORCE SOLID BARS ---
                         eventDisplay: 'block', 
 
                         headerToolbar: {
@@ -288,20 +293,19 @@
                             info.jsEvent.preventDefault(); 
                             
                             var props = info.event.extendedProps;
-                            var customer = props.name;
+                            var customer = props.name; // Full Name
                             var teamList = props.team || "None assigned"; 
 
-                            // --- 2. GET & FORMAT TIME ---
+                            // Time Logic
                             var startObj = info.event.start;
                             var endObj = info.event.end;
-                            
                             var dateStr = formatPopupDate(startObj);
                             var startTimeStr = formatPopupTime(startObj);
                             var endTimeStr = endObj ? formatPopupTime(endObj) : "Unknown";
                             
-                            // Combine into "Dec 21, 9:00 AM - 2:00 PM"
                             var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
 
+                            // Address Logic
                             var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
                             var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
                             var servicesText = props.services ? String(props.services).trim() : "No service details available.";
