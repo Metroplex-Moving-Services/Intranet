@@ -1,121 +1,96 @@
-// netlify/functions/get-calendar.js
-const https = require('https');
-const querystring = require('querystring'); // We use this to format the body correctly
+const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
-    
-    // 1. Get and CLEAN the variables (Remove hidden spaces/newlines)
-    const ZOHO_CLIENT_ID = process.env.ZOHO_CLIENT_ID ? process.env.ZOHO_CLIENT_ID.trim() : "";
-    const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET ? process.env.ZOHO_CLIENT_SECRET.trim() : "";
-    const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN ? process.env.ZOHO_REFRESH_TOKEN.trim() : "";
-    
-    const ZOHO_OWNER = process.env.ZOHO_OWNER ? process.env.ZOHO_OWNER.trim() : "";
-    const ZOHO_APP = process.env.ZOHO_APP ? process.env.ZOHO_APP.trim() : "";
-    const ZOHO_REPORT = process.env.ZOHO_REPORT ? process.env.ZOHO_REPORT.trim() : "";
+  
+  // 1. DEFINE CORS HEADERS
+  // These headers allow your GitHub Pages site (or any site) to read this data.
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Content-Type": "application/json"
+  };
 
-    // 2. Helper: Get Access Token (POST via BODY, not URL - safer)
-    const getAccessToken = () => {
-        return new Promise((resolve, reject) => {
-            
-            // Prepare the data for the Body
-            const postData = querystring.stringify({
-                refresh_token: ZOHO_REFRESH_TOKEN,
-                client_id: ZOHO_CLIENT_ID,
-                client_secret: ZOHO_CLIENT_SECRET,
-                grant_type: 'refresh_token'
-            });
-
-            const options = {
-                hostname: 'accounts.zoho.com', // Change to accounts.zoho.eu if needed
-                path: '/oauth/v2/token',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Content-Length': postData.length
-                }
-            };
-
-            const req = https.request(options, (res) => {
-                let data = '';
-                res.on('data', (chunk) => data += chunk);
-                res.on('end', () => {
-                    try {
-                        const json = JSON.parse(data);
-                        if (json.error) reject(new Error("Zoho Auth Error: " + json.error));
-                        resolve(json.access_token);
-                    } catch (e) {
-                        // This catches the "<!doctype" error if it happens again
-                        console.error("Zoho sent HTML instead of JSON:", data);
-                        reject(new Error("Zoho returned HTML (Likely 404 or Bad URL)"));
-                    }
-                });
-            });
-
-            req.on('error', (e) => reject(e));
-            
-            // Send the body data
-            req.write(postData);
-            req.end();
-        });
+  // 2. HANDLE "OPTIONS" REQUEST (Pre-flight check)
+  // Browsers verify the connection with an OPTIONS request before sending the real data.
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: headers,
+      body: ""
     };
+  }
 
-    // 3. Helper: Get Data from Creator
-    const getCreatorData = (accessToken) => {
-        return new Promise((resolve, reject) => {
-            const path = '/api/v2/information152/household-goods-moving-services/report/Proposal_Contract_Report';
-            
-            const req = https.request({
-                hostname: 'creator.zoho.com', // Change to creator.zoho.eu if needed
-                path: path,
-                method: 'GET',
-                headers: { 
-                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }
-            }, (res) => {
-                let data = '';
-                res.on('data', (chunk) => data += chunk);
-                res.on('end', () => {
-                    try {
-                        // Try to parse JSON, if it fails, it's HTML error page
-                        const json = JSON.parse(data);
-                        resolve(json);
-                    } catch (e) {
-                        console.error("Creator sent HTML:", data);
-                        reject(new Error("Zoho Creator returned HTML (Check App/Owner/Report names)"));
-                    }
-                });
-            });
-            req.on('error', reject);
-            req.end();
-        });
-    };
+  try {
+    // 3. DEFINE ZOHO CONFIGURATION
+    // Replace these with your actual Zoho credentials from your environment variables
+    const REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN;
+    const CLIENT_ID = process.env.ZOHO_CLIENT_ID;
+    const CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
+    
+    // Your specific Zoho Creator Report details
+    const OWNER_NAME = "information152"; // Your Zoho Owner Name
+    const APP_LINK_NAME = "household-goods-moving-services";
+    const REPORT_LINK_NAME = "Current_Bookings";
 
-    try {
-        if (!ZOHO_REFRESH_TOKEN) throw new Error("Missing ZOHO_REFRESH_TOKEN");
-
-        const token = await getAccessToken();
-        if (!token) throw new Error("Failed to get Access Token");
-
-        const data = await getCreatorData(token);
-        
-        return {
-            statusCode: 200,
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        };
-    } catch (error) {
-        console.error("Function Crash:", error.message);
-        return { 
-            statusCode: 500, 
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ error: error.message }) 
-        };
+    // 4. GET ACCESS TOKEN FROM ZOHO
+    // We exchange the long-lived Refresh Token for a short-lived Access Token
+    const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${REFRESH_TOKEN}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=refresh_token`;
+    
+    const tokenResponse = await fetch(tokenUrl, { method: 'POST' });
+    const tokenData = await tokenResponse.json();
+    
+    if (tokenData.error) {
+      console.error("Zoho Token Error:", tokenData.error);
+      return {
+        statusCode: 500,
+        headers: headers,
+        body: JSON.stringify({ error: "Failed to authenticate with Zoho." })
+      };
     }
+    
+    const accessToken = tokenData.access_token;
+
+    // 5. FETCH DATA FROM ZOHO CREATOR
+    // We use the access token to get the actual calendar records
+    const zohoDataUrl = `https://creator.zoho.com/api/v2/${OWNER_NAME}/${APP_LINK_NAME}/report/${REPORT_LINK_NAME}`;
+    
+    const dataResponse = await fetch(zohoDataUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Zoho-oauthtoken ${accessToken}`
+      }
+    });
+    
+    const zohoJson = await dataResponse.json();
+
+    // 6. RETURN DATA TO FRONTEND
+    if (zohoJson.code && zohoJson.code !== 3000) {
+      // Zoho returned an application-level error (e.g., no records found)
+      console.warn("Zoho API Warning:", zohoJson);
+      // We still return 200 OK but with the error message so the frontend can handle it
+      return {
+        statusCode: 200,
+        headers: headers,
+        body: JSON.stringify({ data: [], message: "Zoho returned no data or an error." })
+      };
+    }
+
+    // Success! Return the list of records
+    return {
+      statusCode: 200,
+      headers: headers,
+      body: JSON.stringify({
+        data: zohoJson.data || [] // Ensure 'data' is always an array
+      })
+    };
+
+  } catch (error) {
+    // 7. CATCH & LOG SERVER ERRORS
+    console.error("Function Error:", error);
+    return {
+      statusCode: 500,
+      headers: headers,
+      body: JSON.stringify({ error: "Internal Server Error", details: error.message })
+    };
+  }
 };
