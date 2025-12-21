@@ -62,7 +62,7 @@ exports.handler = async function(event, context) {
     // 3. Helper: Get Data from Creator
     const getCreatorData = (accessToken) => {
         return new Promise((resolve, reject) => {
-            const path = '/api/v2/information152/household-goods-moving-services/report/Calendar';
+            const path = '/api/v2/information152/household-goods-moving-services/report/Proposal_Contract_Report';
             
             const req = https.request({
                 hostname: 'creator.zoho.com', // Change to creator.zoho.eu if needed
