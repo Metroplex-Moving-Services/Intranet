@@ -9,7 +9,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 10px; /* Much smaller padding for mobile */
+            padding: 10px; 
             background-color: #f4f4f4;
         }
 
@@ -17,15 +17,14 @@
             max-width: 1100px;
             margin: 0 auto;
             background: white;
-            padding: 10px; /* Reduced padding inside the box */
+            padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         #calendar {
-            /* Height will adjust automatically, but we set a min-height */
             min-height: 500px; 
-            height: 80vh; /* Takes up 80% of the screen height */
+            height: 80vh; 
         }
 
         h2 {
@@ -41,36 +40,41 @@
             margin-bottom: 10px;
         }
 
+        /* --- CUSTOM BRANDING (BLUE #0C419a) --- */
+        
+        /* Change the color of the top buttons (Month, Week, Next, Prev) */
+        .fc-button-primary {
+            background-color: #0C419a !important;
+            border-color: #0C419a !important;
+        }
+        .fc-button-primary:hover {
+            background-color: #082d6e !important; /* Slightly darker on hover */
+            border-color: #082d6e !important;
+        }
+        .fc-button-active {
+            background-color: #062252 !important;
+            border-color: #062252 !important;
+        }
+
         /* --- MOBILE OPTIMIZATIONS --- */
         @media (max-width: 768px) {
-            
-            /* Stack the header elements nicely */
             .fc-header-toolbar {
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
             }
-
             .fc-toolbar-chunk {
                 display: flex;
                 justify-content: center;
-                width: 100%; /* Center everything */
+                width: 100%; 
             }
-
-            /* Make the Title smaller */
             .fc-toolbar-title {
                 font-size: 1.25em !important;
             }
-
-            /* Make buttons slightly smaller and easier to tap */
             .fc-button {
                 font-size: 0.9em !important;
                 padding: 0.4em 0.65em !important;
             }
-            
-            /* Hide the "Month/Week/Day" text if needed, or keep it if it fits */
-            /* You can create a compact look by un-commenting below: */
-            /* .fc-dayGridMonth-button { text-transform: uppercase; letter-spacing: 1px; } */
         }
     </style>
 </head>
@@ -87,25 +91,20 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-            // 1. Point to your Netlify Function
             const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
-            
             const loadingMsg = document.getElementById('loading');
             const calendarEl = document.getElementById('calendar');
 
-            // --- HELPER: Translate "12-23-25 09:00 AM" to "2025-12-23T09:00:00" ---
+            // --- HELPER: Translate Date ---
             function parseZohoDate(dateStr) {
                 if (!dateStr) return null;
-                // Split "12-23-25 09:00 AM"
                 const parts = dateStr.split(' '); 
                 if (parts.length < 3) return null;
 
-                const dateParts = parts[0].split('-'); // ["12", "23", "25"]
-                const timeParts = parts[1].split(':'); // ["09", "00"]
-                const meridian = parts[2];             // "AM"
+                const dateParts = parts[0].split('-'); 
+                const timeParts = parts[1].split(':'); 
+                const meridian = parts[2];            
 
-                // Build ISO Date
-                // Note: dateParts[0] is Month, dateParts[1] is Day, dateParts[2] is Year
                 let year = "20" + dateParts[2];
                 let month = dateParts[0];
                 let day = dateParts[1];
@@ -118,7 +117,7 @@
                 return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
             }
 
-            // --- HELPER: Calculate End Time ---
+            // --- HELPER: End Time ---
             function getEndTime(startDateIso, endTimeStr) {
                 if (!startDateIso || !endTimeStr) return null;
                 const dateOnly = startDateIso.split('T')[0];
@@ -141,34 +140,37 @@
                 .then(res => res.json())
                 .then(data => {
                     loadingMsg.style.display = 'none';
-                    console.log("Zoho Data:", data);
 
-                    // --- THIS IS THE FIX ---
                     var calendarEvents = data.data.map(function(record) {
                         
-                        // 1. Run the Translator on the Date
                         var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
                         var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
 
-                        // 2. Unwrap the Name (Check if it's an object or string)
-                        var safeTitle = "Unknown";
+                        // Safe Name Extraction
+                        var safeName = "Unknown";
                         if (record.Customer_Name && record.Customer_Name.display_value) {
-                            safeTitle = record.Customer_Name.display_value;
+                            safeName = record.Customer_Name.display_value;
                         } else if (typeof record.Customer_Name === 'string') {
-                            safeTitle = record.Customer_Name;
+                            safeName = record.Customer_Name;
                         }
 
                         return {
-                            title: safeTitle,  // Now it is a string!
-                            start: startISO,   // Now it is ISO format!
+                            title: "",         // <--- LEFT EMPTY (Only time will show)
+                            start: startISO,   
                             end: endISO,
+                            
+                            // BRANDING COLORS
+                            backgroundColor: '#0C419a', 
+                            borderColor: '#0C419a',
+                            textColor: '#ffffff',
+
+                            // HIDDEN DATA (For Click Popup)
                             extendedProps: {
+                                name: safeName, // Store name here to show on click
                                 address: record.Origination_Address ? record.Origination_Address.display_value : ""
                             }
                         };
                     });
-
-                    console.log("Converted Events:", calendarEvents); // Debug check
 
                     var calendar = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
@@ -178,8 +180,14 @@
                             right: 'dayGridMonth,timeGridWeek,listWeek'
                         },
                         events: calendarEvents,
+                        
+                        // POPUP ON CLICK
                         eventClick: function(info) {
-                            alert('Job: ' + info.event.title + '\nAddress: ' + info.event.extendedProps.address);
+                            alert(
+                                'Job Details:\n\n' +
+                                'Customer: ' + info.event.extendedProps.name + '\n' +
+                                'Address: ' + info.event.extendedProps.address
+                            );
                         }
                     });
 
