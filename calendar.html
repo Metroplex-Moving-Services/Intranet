@@ -105,4 +105,194 @@
             .fc-event-title { display: none; }
             .fc-event-time {
                 font-weight: bold;
-                font-size
+                font-size: 1.1em;
+                text-align: center;
+                width: 100%;
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="calendar-container">
+        <h2>Job Schedule</h2>
+        <div id="loading">Loading calendar data...</div>
+        <div id="calendar"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
+            const loadingMsg = document.getElementById('loading');
+            const calendarEl = document.getElementById('calendar');
+
+            // --- HELPER: Parse Zoho Date ---
+            function parseZohoDate(dateStr) {
+                if (!dateStr) return null;
+                const parts = dateStr.split(' '); 
+                if (parts.length < 3) return null;
+
+                const dateParts = parts[0].split('-'); 
+                const timeParts = parts[1].split(':'); 
+                const meridian = parts[2];            
+
+                let year = "20" + dateParts[2];
+                let month = dateParts[0];
+                let day = dateParts[1];
+                let hour = parseInt(timeParts[0], 10);
+                let minute = timeParts[1];
+
+                if (meridian === "PM" && hour < 12) hour += 12;
+                if (meridian === "AM" && hour === 12) hour = 0;
+
+                return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
+            }
+
+            // --- HELPER: End Time ---
+            function getEndTime(startDateIso, endTimeStr) {
+                if (!startDateIso || !endTimeStr) return null;
+                const dateOnly = startDateIso.split('T')[0];
+                const parts = endTimeStr.split(' ');
+                if (parts.length < 2) return null;
+
+                const timeParts = parts[0].split(':');
+                const meridian = parts[1];
+                let hour = parseInt(timeParts[0], 10);
+                let minute = timeParts[1];
+
+                if (meridian === "PM" && hour < 12) hour += 12;
+                if (meridian === "AM" && hour === 12) hour = 0;
+
+                return `${dateOnly}T${hour.toString().padStart(2, '0')}:${minute}:00`;
+            }
+
+            // --- HELPER: Safely Get String from Zoho Object or String ---
+            function getZohoVal(field) {
+                if (!field) return "";
+                if (field.display_value) return field.display_value; 
+                if (typeof field === 'string') return field;         
+                return "";
+            }
+
+            // --- MAIN LOGIC ---
+            fetch(NETLIFY_ENDPOINT)
+                .then(res => res.json())
+                .then(data => {
+                    loadingMsg.style.display = 'none';
+
+                    var calendarEvents = data.data.map(function(record) {
+                        
+                        var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
+                        var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
+                        
+                        // 1. Get Fields
+                        var safeName = getZohoVal(record.Customer_Name) || "Unknown";
+                        var originRaw = getZohoVal(record.Origination_Address);
+                        var destRaw = getZohoVal(record.Destination_Address); 
+                        
+                        // 2. Get Services Provided (New Field)
+                        var servicesRaw = getZohoVal(record.Services_Provided);
+
+                        return {
+                            title: safeName, 
+                            start: startISO,   
+                            end: endISO,
+                            
+                            backgroundColor: '#0C419a', 
+                            borderColor: '#0C419a',
+                            textColor: '#ffffff',
+
+                            // Pass all custom data here
+                            extendedProps: {
+                                name: safeName, 
+                                origin: originRaw,
+                                destination: destRaw,
+                                services: servicesRaw // Store services here
+                            }
+                        };
+                    });
+
+                    var calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,listWeek'
+                        },
+                        events: calendarEvents,
+                        
+                        // --- UPDATED CLICK HANDLER ---
+                        eventClick: function(info) {
+                            info.jsEvent.preventDefault(); 
+                            
+                            var props = info.event.extendedProps;
+                            var customer = props.name;
+                            var originAddr = props.origin;
+                            var destAddr = props.destination;
+                            var servicesText = props.services || "No service details available.";
+
+                            // ERROR CHECK: Missing Destination
+                            if (!destAddr) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Address Missing',
+                                    text: `Destination address is missing for ${customer}`,
+                                    confirmButtonText: 'Update in Zoho',
+                                    confirmButtonColor: '#d33'
+                                });
+                                return; 
+                            }
+
+                            // CREATE GOOGLE MAPS LINKS
+                            var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
+                            var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
+
+                            // SHOW DETAILED POPUP
+                            Swal.fire({
+                                title: customer,
+                                width: 600, /* Made popup slightly wider for better reading */
+                                html: `
+                                    <div style="text-align: left; font-size: 1.1em;">
+                                        
+                                        <div style="margin-bottom: 15px;">
+                                            <p style="margin: 0 0 5px;">
+                                                <strong>📍 Pickup:</strong> 
+                                                <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a>
+                                            </p>
+                                            <p style="margin: 0;">
+                                                <strong>🏁 Dropoff:</strong> 
+                                                <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a>
+                                            </p>
+                                        </div>
+
+                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+
+                                        <strong>📋 Services Provided:</strong>
+                                        <div class="services-box">
+                                            ${servicesText}
+                                        </div>
+
+                                    </div>
+                                `,
+                                icon: 'info',
+                                showConfirmButton: true,
+                                confirmButtonText: 'Close',
+                                confirmButtonColor: '#0C419a'
+                            });
+                        }
+                    });
+
+                    calendar.render();
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    loadingMsg.innerText = "Error loading data.";
+                });
+        });
+    </script>
+</body>
+</html>
