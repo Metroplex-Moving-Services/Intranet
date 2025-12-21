@@ -58,12 +58,26 @@
             border-color: #062252 !important;
         }
 
-        /* Custom link style for the popup */
+        /* --- POPUP STYLES --- */
         .popup-link {
             color: #3085d6;
             text-decoration: underline;
             font-weight: bold;
             cursor: pointer;
+        }
+        
+        /* This box holds the services text and keeps the formatting nice */
+        .services-box {
+            background-color: #f9f9f9;
+            border-left: 4px solid #0C419a;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #444;
+            white-space: pre-wrap; /* Key: Preserves your JSON line breaks */
+            text-align: left;
+            max-height: 150px;     /* Optional: Adds scroll if text is huge */
+            overflow-y: auto;
         }
 
         /* --- RESPONSIVE LOGIC --- */
@@ -91,195 +105,4 @@
             .fc-event-title { display: none; }
             .fc-event-time {
                 font-weight: bold;
-                font-size: 1.1em;
-                text-align: center;
-                width: 100%;
-                display: block;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div id="calendar-container">
-        <h2>Job Schedule</h2>
-        <div id="loading">Loading calendar data...</div>
-        <div id="calendar"></div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            
-            const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
-            const loadingMsg = document.getElementById('loading');
-            const calendarEl = document.getElementById('calendar');
-
-            // --- HELPER: Parse Zoho Date ---
-            function parseZohoDate(dateStr) {
-                if (!dateStr) return null;
-                const parts = dateStr.split(' '); 
-                if (parts.length < 3) return null;
-
-                const dateParts = parts[0].split('-'); 
-                const timeParts = parts[1].split(':'); 
-                const meridian = parts[2];            
-
-                let year = "20" + dateParts[2];
-                let month = dateParts[0];
-                let day = dateParts[1];
-                let hour = parseInt(timeParts[0], 10);
-                let minute = timeParts[1];
-
-                if (meridian === "PM" && hour < 12) hour += 12;
-                if (meridian === "AM" && hour === 12) hour = 0;
-
-                return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
-            }
-
-            // --- HELPER: End Time ---
-            function getEndTime(startDateIso, endTimeStr) {
-                if (!startDateIso || !endTimeStr) return null;
-                const dateOnly = startDateIso.split('T')[0];
-                const parts = endTimeStr.split(' ');
-                if (parts.length < 2) return null;
-
-                const timeParts = parts[0].split(':');
-                const meridian = parts[1];
-                let hour = parseInt(timeParts[0], 10);
-                let minute = timeParts[1];
-
-                if (meridian === "PM" && hour < 12) hour += 12;
-                if (meridian === "AM" && hour === 12) hour = 0;
-
-                return `${dateOnly}T${hour.toString().padStart(2, '0')}:${minute}:00`;
-            }
-
-            // --- HELPER: Safely Get String from Zoho Object or String ---
-            function getZohoVal(field) {
-                if (!field) return "";
-                if (field.display_value) return field.display_value; // It's an object
-                if (typeof field === 'string') return field;         // It's a string
-                return "";
-            }
-
-            // --- MAIN LOGIC ---
-            fetch(NETLIFY_ENDPOINT)
-                .then(res => res.json())
-                .then(data => {
-                    loadingMsg.style.display = 'none';
-
-                    var calendarEvents = data.data.map(function(record) {
-                        
-                        var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
-                        var endISO = getEndTime(startISO, record.Estimate_End_Date_Time);
-                        
-                        // 1. Get Name
-                        var safeName = "Unknown";
-                        if (record.Customer_Name) safeName = getZohoVal(record.Customer_Name);
-
-                        // 2. Get Addresses (Using helper to handle objects/strings safely)
-                        var originRaw = getZohoVal(record.Origination_Address);
-                        // Make sure 'Destination_Address' matches your Zoho API key exactly
-                        var destRaw = getZohoVal(record.Destination_Address); 
-
-                        return {
-                            title: safeName, 
-                            start: startISO,   
-                            end: endISO,
-                            
-                            backgroundColor: '#0C419a', 
-                            borderColor: '#0C419a',
-                            textColor: '#ffffff',
-
-                            extendedProps: {
-                                name: safeName, 
-                                origin: originRaw,
-                                destination: destRaw  // Store destination in props
-                            }
-                        };
-                    });
-
-                    var calendar = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
-                        headerToolbar: {
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,listWeek'
-                        },
-                        events: calendarEvents,
-                        
-                        // --- UPDATED CLICK HANDLER ---
-                        eventClick: function(info) {
-                            info.jsEvent.preventDefault(); // Stop browser default
-                            
-                            // Get data from props
-                            var props = info.event.extendedProps;
-                            var customer = props.name;
-                            var originAddr = props.origin;
-                            var destAddr = props.destination;
-                            var servicesprovided = props.Services_Provided;
-
-                            // CHECK: Is Destination Missing?
-                            if (!destAddr) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Address Missing',
-                                    text: `Destination address is missing for ${customer}`,
-                                    confirmButtonText: 'Update in Zoho',
-                                    confirmButtonColor: '#d33'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        // Placeholder: logic to open Zoho record would go here
-                                        console.log("User clicked Update for missing address");
-                                    }
-                                });
-                                return; // Stop here
-                            }
-
-                            // CREATE LINKS: (Default origin is Current Location)
-                            var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
-                            var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
-
-                            // SHOW SUCCESS POPUP
-                            Swal.fire({
-                                title: customer,
-                                html: `
-                                    <div style="text-align: left; font-size: 1.1em;">
-                                    <p style="margin-bottom: 10px;">                                                                                
-                                                ${servicesprovided}                                             
-                                        </p>                                    
-                                        <p style="margin-bottom: 10px;">
-                                            <strong>📍 Pickup (Origin):</strong><br>
-                                            <a href="${originLink}" target="_blank" class="popup-link">
-                                                ${originAddr} 
-                                            </a> 
-                                        </p>
-                                        <hr style="border-top: 1px solid #eee; margin: 10px 0;">
-                                        <p>
-                                            <strong>🏁 Dropoff (Destination):</strong><br>
-                                            <a href="${destLink}" target="_blank" class="popup-link">
-                                                ${destAddr}
-                                            </a> 
-                                        </p>
-                                    </div>
-                                `,
-                                icon: 'info',
-                                showConfirmButton: true,
-                                confirmButtonText: 'Close',
-                                confirmButtonColor: '#0C419a'
-                            });
-                        }
-                    });
-
-                    calendar.render();
-                })
-                .catch(err => {
-                    console.error("Error:", err);
-                    loadingMsg.innerText = "Error loading data.";
-                });
-        });
-    </script>
-</body>
-</html>
+                font-size
