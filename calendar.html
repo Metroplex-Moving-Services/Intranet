@@ -31,12 +31,6 @@
             height: 80vh; 
         }
 
-        h2 {
-            text-align: center;
-            margin-top: 0;
-            color: #333;
-        }
-
         #loading {
             text-align: center;
             font-size: 1.2em;
@@ -44,10 +38,31 @@
             margin-bottom: 10px;
         }
 
-        /* --- BRANDING (BLUE #0C419a) --- */
+        /* --- HEADER CUSTOMIZATION --- */
+        /* This stacks the Title above the Buttons */
+        .fc-header-toolbar {
+            display: flex;
+            flex-direction: column; /* Stack vertically */
+            gap: 10px;
+            margin-bottom: 1.5em !important;
+        }
+
+        .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center; /* Center align items */
+        }
+        
+        .fc-toolbar-title {
+            font-size: 1.75em !important; /* Make Month/Year larger */
+            color: #333;
+        }
+
+        /* --- BUTTON STYLES (Blue #0C419a) --- */
         .fc-button-primary {
             background-color: #0C419a !important;
             border-color: #0C419a !important;
+            padding: 8px 16px !important;
+            font-weight: bold;
         }
         .fc-button-primary:hover {
             background-color: #082d6e !important;
@@ -56,6 +71,12 @@
         .fc-button-active {
             background-color: #062252 !important;
             border-color: #062252 !important;
+        }
+        /* Disable the default 'state' opacity to keep colors vibrant */
+        .fc-button-primary:disabled {
+            background-color: #0C419a !important;
+            border-color: #0C419a !important;
+            opacity: 0.6;
         }
 
         /* --- POPUP STYLES --- */
@@ -66,7 +87,6 @@
             cursor: pointer;
         }
         
-        /* Services Box Styles */
         .services-box {
             background-color: #f9f9f9;
             border-left: 4px solid #0C419a;
@@ -74,10 +94,8 @@
             margin-top: 5px;
             font-size: 0.9em;
             color: #444;
-            white-space: pre-wrap; /* Preserves line breaks */
+            white-space: pre-wrap; 
             text-align: left;
-            
-            /* --- HEIGHT SETTINGS --- */
             min-height: 100px;     
             max-height: 350px;     
             overflow-y: auto;      
@@ -87,21 +105,6 @@
         .fc-event-title {
             display: inline-block;
             margin-left: 4px;
-        }
-
-        @media (max-width: 768px) {
-            .fc-header-toolbar {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-            .fc-toolbar-chunk {
-                display: flex;
-                justify-content: center;
-                width: 100%; 
-            }
-            .fc-toolbar-title { font-size: 1.25em !important; }
-            .fc-button { font-size: 0.9em !important; padding: 0.4em 0.65em !important; }
         }
 
         @media (max-width: 600px) and (orientation: portrait) {
@@ -119,7 +122,6 @@
 <body>
 
     <div id="calendar-container">
-        <h2>Job Schedule</h2>
         <div id="loading">Loading calendar data...</div>
         <div id="calendar"></div>
     </div>
@@ -174,6 +176,18 @@
                 return "";
             }
 
+            // --- HELPER: Count Movers ---
+            function countMovers(moversField) {
+                if (!moversField) return 0;
+                if (Array.isArray(moversField)) return moversField.length; // It's a real JSON array
+                // If it's a comma separated string (rare in JSON API but possible)
+                if (typeof moversField === 'string') {
+                    if(moversField.trim() === "") return 0;
+                    return moversField.split(',').length; 
+                }
+                return 0; 
+            }
+
             // --- MAIN LOGIC ---
             fetch(NETLIFY_ENDPOINT)
                 .then(res => res.json())
@@ -189,12 +203,27 @@
                         var destRaw = getZohoVal(record.Destination_Address); 
                         var servicesRaw = getZohoVal(record.Services_Provided);
 
+                        // --- CONDITIONAL COLOR LOGIC ---
+                        var requiredCount = parseInt(record.Movers_Count) || 0;
+                        var actualMovers = countMovers(record.Movers); // Uses 'Movers' field list
+
+                        // Default: BLUE (#0C419a)
+                        var bgColor = '#0C419a';
+                        var bdColor = '#0C419a';
+
+                        // Logic: If Actual < Required -> ORANGE (#fd7e14)
+                        if (actualMovers < requiredCount) {
+                            bgColor = '#fd7e14'; // Bright Orange
+                            bdColor = '#fd7e14';
+                        }
+                        // (If actual >= required, it stays Blue)
+
                         return {
                             title: safeName, 
                             start: startISO,   
                             end: endISO,
-                            backgroundColor: '#0C419a', 
-                            borderColor: '#0C419a',
+                            backgroundColor: bgColor, 
+                            borderColor: bdColor,
                             textColor: '#ffffff',
                             extendedProps: {
                                 name: safeName, 
@@ -207,83 +236,19 @@
 
                     var calendar = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
+                        
+                        // --- HEADER CONFIG ---
+                        // 'left' chunk contains the Title
+                        // 'center' is empty
+                        // 'right' chunk contains the buttons
+                        // CSS above forces these to stack vertically
                         headerToolbar: {
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,listWeek'
+                            left: 'title',
+                            center: '',
+                            right: 'prev,next today' 
                         },
+
                         events: calendarEvents,
                         
-                        // --- UPDATED CLICK HANDLER ---
-                        eventClick: function(info) {
-                            info.jsEvent.preventDefault(); 
-                            
-                            var props = info.event.extendedProps;
-                            var customer = props.name;
-
-                            // 1. Clean Data
-                            var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
-                            var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
-                            var servicesText = props.services ? String(props.services).trim() : "No service details available.";
-
-                            // 2. DETECT APPLE DEVICE
-                            var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-                            
-                            var originLink, destLink;
-
-                            if (isApple) {
-                                // APPLE MAPS: No reliable "Avoid Tolls" URL parameter exists.
-                                // We use 'dirflg=d' for Driving.
-                                originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
-                                destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
-                            } else {
-                                // GOOGLE MAPS: We add '&dirflg=t' which specifically triggers "Avoid Tolls".
-                                // We also switched to standard 'maps.google.com' syntax for better compatibility.
-                                originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
-                                destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
-                            }
-
-                            // 3. Show Detailed Popup
-                            Swal.fire({
-                                title: customer,
-                                width: 600,
-                                html: `
-                                    <div style="text-align: left; font-size: 1.1em;">
-                                        
-                                        <div style="margin-bottom: 15px;">
-                                            <p style="margin: 0 0 15px 0;"> 
-                                                <strong>📍 Pickup:</strong> 
-                                                <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a>
-                                            </p>
-                                            <p style="margin: 0;">
-                                                <strong>🏁 Dropoff:</strong> 
-                                                <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a>
-                                            </p>
-                                        </div>
-
-                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-
-                                        <strong>📋 Services Provided:</strong>
-                                        <div class="services-box">
-                                            ${servicesText}
-                                        </div>
-
-                                    </div>
-                                `,
-                                showConfirmButton: true,
-                                confirmButtonText: 'Close',
-                                confirmButtonColor: '#0C419a'
-                            });
-                        }
-                    });
-
-                    calendar.render();
-                })
-                .catch(err => {
-                    console.error("Error:", err);
-                    loadingMsg.innerText = "Error loading data.";
-                });
-        });
-    </script>
-</body>
-</html>
+                        // --- CLICK HANDLER ---
+                        eventClick: function
