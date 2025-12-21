@@ -6,445 +6,236 @@
     <title>Metroplex Moving Calendar</title>
     
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/@descope/web-js-sdk@1.12.1/dist/index.umd.js"></script>
 
     <style>
-        /* --- BASE STYLES --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            /* UPDATED: Removed all spacing around the body */
-            margin: 0;
-            padding: 0; 
-            background-color: #ffffff; /* Changed to white to blend with container */
-        }
-
-        #calendar-container {
-            /* UPDATED: Full width and no internal padding */
-            max-width: 100%; 
-            margin: 0;
-            background: white;
-            padding: 0; 
-            box-shadow: none; /* Removed shadow since it fills the screen */
-        }
-
-        #calendar {
-            min-height: 600px; 
-            /* Optional: Add tiny side margins so text doesn't hit the bezel exactly */
-            margin: 0 2px; 
-        }
-
-        #loading {
-            text-align: center;
-            font-size: 1.2em;
-            color: #666;
-            margin-bottom: 10px;
-            padding-top: 10px;
-        }
-
-        /* --- HEADER CUSTOMIZATION --- */
-        .fc-header-toolbar {
-            display: flex;
-            flex-direction: column; 
-            gap: 10px;
-            /* Added top padding since container padding is gone */
-            padding-top: 10px; 
-            margin-bottom: 1.5em !important;
-        }
-
-        .fc-toolbar-chunk {
-            display: flex;
-            justify-content: center; 
-        }
+        /* --- COPY YOUR CSS HERE --- */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
+        #calendar-container { max-width: 100%; margin: 0; background: white; padding: 0; }
+        #calendar { min-height: 600px; margin: 0 2px; }
+        #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
         
-        .fc-toolbar-title {
-            font-size: 1.75em !important; 
-            color: #333;
-        }
-
-        /* --- BUTTON STYLES (Blue #0C419a) --- */
-        .fc-button-primary {
-            background-color: #0C419a !important;
-            border-color: #0C419a !important;
-            padding: 8px 16px !important;
-            font-weight: bold;
-        }
-        .fc-button-primary:hover {
-            background-color: #082d6e !important;
-            border-color: #082d6e !important;
-        }
-        .fc-button-active {
-            background-color: #062252 !important;
-            border-color: #062252 !important;
-        }
-        .fc-button-primary:disabled {
-            background-color: #0C419a !important;
-            border-color: #0C419a !important;
-            opacity: 0.6;
-        }
-
-        /* --- EVENT STYLES (Solid Blocks) --- */
-        .fc-event-main {
-            padding: 2px 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* --- CUSTOM DAY HIGHLIGHT --- */
-        .selected-day {
-            background-color: #fff9c4 !important; /* Light yellow for clicked day */
-        }
-
-        /* --- POPUP STYLES --- */
-        .popup-link {
-            color: #3085d6;
-            text-decoration: underline;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .fc-header-toolbar { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; margin-bottom: 1.5em !important; }
+        .fc-toolbar-title { font-size: 1.75em !important; color: #333; }
         
-        .services-box {
-            background-color: #f9f9f9;
-            border-left: 4px solid #0C419a;
-            padding: 10px;
-            margin-top: 5px;
-            font-size: 0.9em;
-            color: #444;
-            white-space: pre-wrap; 
-            text-align: left;
-            min-height: 100px;     
-            max-height: 350px;     
-            overflow-y: auto;      
-        }
+        .fc-button-primary { background-color: #0C419a !important; border-color: #0C419a !important; }
+        .fc-button-primary:hover { background-color: #082d6e !important; border-color: #082d6e !important; }
+        .fc-button-active { background-color: #062252 !important; border-color: #062252 !important; }
+        .fc-button-primary:disabled { opacity: 0.6; }
 
-        /* --- RESPONSIVE LOGIC --- */
-        .fc-event-title {
-            display: inline-block;
-            margin-left: 4px;
-        }
-
+        .fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .selected-day { background-color: #fff9c4 !important; }
+        .popup-link { color: #3085d6; text-decoration: underline; font-weight: bold; cursor: pointer; }
+        .services-box { background-color: #f9f9f9; border-left: 4px solid #0C419a; padding: 10px; margin-top: 5px; font-size: 0.9em; color: #444; white-space: pre-wrap; text-align: left; min-height: 100px; max-height: 350px; overflow-y: auto; }
+        
         @media (max-width: 900px) and (orientation: portrait) {
             .fc-event-title { display: none !important; } 
-            .fc-event-time {
-                font-weight: bold;
-                font-size: 1.1em;
-                text-align: center;
-                width: 100%;
-                display: block !important;
-            }
+            .fc-event-time { font-weight: bold; font-size: 1.1em; text-align: center; width: 100%; display: block !important; }
         }
     </style>
 </head>
 <body>
 
     <div id="calendar-container">
-        <div id="loading">Loading calendar data...</div>
+        <div id="loading">Authenticating...</div>
         <div id="calendar"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            
-            const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
-            const loadingMsg = document.getElementById('loading');
-            const calendarEl = document.getElementById('calendar');
+        // 1. Initialize Descope (Using your Project ID)
+        const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
 
-            // --- HELPER: Control Today Button State ---
-            function updateTodayButton(shouldEnable) {
-                var btn = document.querySelector('.fc-resetToday-button');
-                if (btn) {
-                    if (shouldEnable) {
-                        btn.style.opacity = '1';
-                        btn.disabled = false;
-                        btn.style.cursor = 'pointer';
-                    } else {
-                        btn.style.opacity = '0.5';
-                        btn.disabled = true;
-                        btn.style.cursor = 'default';
-                    }
-                }
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 2. Get the Token from local storage (shared with index.html)
+            const sessionToken = sdk.getSessionToken();
+
+            if (!sessionToken || sdk.isJwtExpired(sessionToken)) {
+                // Not logged in? Redirect parent window to login
+                window.top.location.href = "/Intranet/login.html";
+            } else {
+                // Logged in? Start the Calendar
+                initCalendar(sessionToken);
             }
+        });
 
-            // --- HELPER: Parse Zoho Date ---
+        function initCalendar(authToken) {
+            const loadingMsg = document.getElementById('loading');
+            loadingMsg.innerText = "Loading calendar data...";
+            const calendarEl = document.getElementById('calendar');
+            const NETLIFY_ENDPOINT = "/.netlify/functions/get-calendar";
+
+            // --- ALL HELPER FUNCTIONS GO HERE ---
             function parseZohoDate(dateStr) {
                 if (!dateStr) return null;
                 const parts = dateStr.split(' '); 
                 if (parts.length < 2) return null; 
-
                 const dateParts = parts[0].split('-'); 
                 const timeParts = parts[1].split(':'); 
-                
                 let year = dateParts[2];
                 if (year.length === 2) year = "20" + year;
-                
                 let month = dateParts[0];
                 let day = dateParts[1];
                 let hour = parseInt(timeParts[0], 10);
                 let minute = timeParts[1];
-                
                 if (parts.length > 2) {
                     const meridian = parts[2];
                     if (meridian === "PM" && hour < 12) hour += 12;
                     if (meridian === "AM" && hour === 12) hour = 0;
                 }
-
                 return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
             }
-
-            // --- HELPER: Safely Get String ---
-            function getZohoVal(field) {
-                if (!field) return "";
-                if (field.display_value) return field.display_value; 
-                if (typeof field === 'string') return field;         
-                return "";
-            }
-
-            // --- HELPER: Shorten Name ---
+            function getZohoVal(field) { return (field && field.display_value) ? field.display_value : (field || ""); }
             function getShortName(fullName) {
                 if (!fullName) return "Unknown";
                 var parts = fullName.trim().split(/\s+/); 
                 if (parts.length === 1) return parts[0];
-                var first = parts[0];
-                var lastInitial = parts[parts.length - 1].charAt(0);
-                return first + " " + lastInitial + ".";
+                return parts[0] + " " + parts[parts.length - 1].charAt(0) + ".";
             }
-
-            // --- HELPER: Count Movers ---
             function countMovers(moversField) {
                 if (!moversField) return 0;
                 if (Array.isArray(moversField)) return moversField.length; 
-                if (typeof moversField === 'string') {
-                    if(moversField.trim() === "") return 0;
-                    return moversField.split(',').length; 
-                }
+                if (typeof moversField === 'string') return moversField.trim() === "" ? 0 : moversField.split(',').length; 
                 return 0; 
             }
-
-            // --- HELPER: Get Formatted String of Movers ---
             function getMoversString(moversField) {
                 if (!moversField) return "None assigned";
                 if (Array.isArray(moversField)) {
-                    var names = moversField.map(function(m) {
-                        return (m.display_value) ? m.display_value : m;
-                    });
-                    return names.join(", ");
+                    return moversField.map(m => (m.display_value ? m.display_value : m)).join(", ");
                 }
                 return moversField;
             }
-
-            // --- HELPER: Format Time ---
             function formatPopupTime(dateObj) {
                 if (!dateObj) return "";
-                return dateObj.toLocaleTimeString('en-US', { 
-                    hour: 'numeric', 
-                    minute: '2-digit', 
-                    hour12: true 
-                });
+                return dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             }
-            
-            // --- HELPER: Format Date ---
             function formatPopupDate(dateObj) {
                 if (!dateObj) return "";
-                return dateObj.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric'
-                });
+                return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            function updateTodayButton(shouldEnable) {
+                var btn = document.querySelector('.fc-resetToday-button');
+                if (btn) {
+                    btn.style.opacity = shouldEnable ? '1' : '0.5';
+                    btn.disabled = !shouldEnable;
+                    btn.style.cursor = shouldEnable ? 'pointer' : 'default';
+                }
             }
 
-            // --- MAIN LOGIC ---
-            fetch(NETLIFY_ENDPOINT)
-                .then(res => res.json())
-                .then(data => {
-                    loadingMsg.style.display = 'none';
+            // --- FETCH DATA ---
+            fetch(NETLIFY_ENDPOINT, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                loadingMsg.style.display = 'none';
 
-                    var calendarEvents = data.data.map(function(record) {
-                        
-                        var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
-                        var endISO = parseZohoDate(record.Estimate_End_Date_Time);
+                var calendarEvents = data.data.map(function(record) {
+                    var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
+                    var endISO = parseZohoDate(record.Estimate_End_Date_Time);
+                    var safeName = getZohoVal(record.Customer_Name) || "Unknown";
+                    var shortName = getShortName(safeName);
+                    var originRaw = getZohoVal(record.Origination_Address);
+                    var destRaw = getZohoVal(record.Destination_Address); 
+                    var servicesRaw = getZohoVal(record.Services_Provided);
+                    var requiredCount = parseInt(record.Mover_Count) || 0; 
+                    var actualMoversCount = countMovers(record.Movers2); 
+                    var moversListString = getMoversString(record.Movers2);
 
-                        var safeName = getZohoVal(record.Customer_Name) || "Unknown";
-                        var shortName = getShortName(safeName);
+                    var bgColor = '#0C419a'; 
+                    var bdColor = '#0C419a';
+                    if (servicesRaw.toLowerCase().includes("pending")) {
+                        bgColor = '#28a745'; 
+                        bdColor = '#28a745';
+                    } else if (actualMoversCount < requiredCount) {
+                        bgColor = '#fd7e14'; 
+                        bdColor = '#fd7e14';
+                    }
 
-                        var originRaw = getZohoVal(record.Origination_Address);
-                        var destRaw = getZohoVal(record.Destination_Address); 
-                        var servicesRaw = getZohoVal(record.Services_Provided);
-
-                        var requiredCount = parseInt(record.Mover_Count) || 0; 
-                        var actualMoversCount = countMovers(record.Movers2); 
-                        var moversListString = getMoversString(record.Movers2);
-
-                        // --- COLOR LOGIC ---
-                        var bgColor = '#0C419a'; // Default Blue
-                        var bdColor = '#0C419a';
-
-                        if (servicesRaw.toLowerCase().includes("pending")) {
-                            bgColor = '#28a745'; // Green
-                            bdColor = '#28a745';
-                        }
-                        else if (actualMoversCount < requiredCount) {
-                            bgColor = '#fd7e14'; // Orange
-                            bdColor = '#fd7e14';
-                        }
-
-                        return {
-                            title: shortName,  
-                            start: startISO,   
-                            end: endISO,
-                            backgroundColor: bgColor, 
-                            borderColor: bdColor,
-                            textColor: '#ffffff',
-                            extendedProps: {
-                                name: safeName, 
-                                origin: originRaw,
-                                destination: destRaw,
-                                services: servicesRaw,
-                                team: moversListString 
-                            }
-                        };
-                    });
-
-                    var calendar = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
-                        eventDisplay: 'block', 
-                        height: 'auto',
-
-                        customButtons: {
-                            resetToday: {
-                                text: 'Today',
-                                click: function() {
-                                    calendar.today();
-                                    
-                                    var selectedDays = document.querySelectorAll('.selected-day');
-                                    selectedDays.forEach(function(el) {
-                                        el.classList.remove('selected-day');
-                                    });
-
-                                    var todayEl = document.querySelector('.fc-day-today');
-                                    if (todayEl) {
-                                        todayEl.style.backgroundColor = '';
-                                    }
-
-                                    updateTodayButton(false);
-                                }
-                            }
-                        },
-
-                        headerToolbar: {
-                            left: 'title',
-                            center: '',
-                            right: 'prev,next resetToday' 
-                        },
-
-                        events: calendarEvents,
-
-                        datesSet: function(info) {
-                            var today = new Date();
-                            today.setHours(0,0,0,0);
-                            var start = info.start;
-                            var end = info.end;
-
-                            if (today >= start && today < end) {
-                                updateTodayButton(false);
-                            } else {
-                                updateTodayButton(true);
-                            }
-                        },
-                        
-                        dateClick: function(info) {
-                            var previouslySelected = document.querySelectorAll('.selected-day');
-                            previouslySelected.forEach(function(el) {
-                                el.classList.remove('selected-day');
-                            });
-                            info.dayEl.classList.add('selected-day');
-
-                            var todayEl = document.querySelector('.fc-day-today');
-                            if (todayEl) {
-                                todayEl.style.backgroundColor = 'transparent';
-                            }
-
-                            updateTodayButton(true);
-                        },
-
-                        eventClick: function(info) {
-                            info.jsEvent.preventDefault(); 
-                            
-                            var props = info.event.extendedProps;
-                            var customer = props.name;
-                            var teamList = props.team || "None assigned"; 
-
-                            var startObj = info.event.start;
-                            var endObj = info.event.end;
-                            var dateStr = formatPopupDate(startObj);
-                            var startTimeStr = formatPopupTime(startObj);
-                            var endTimeStr = endObj ? formatPopupTime(endObj) : "Unknown";
-                            var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
-
-                            var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
-                            var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
-                            var servicesText = props.services ? String(props.services).trim() : "No service details available.";
-
-                            var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-                            var originLink, destLink;
-
-                            if (isApple) {
-                                originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
-                                destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
-                            } else {
-                                originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
-                                destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
-                            }
-
-                            Swal.fire({
-                                title: customer,
-                                width: 600,
-                                html: `
-                                    <div style="text-align: left; font-size: 1.1em;">
-                                        
-                                        <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
-                                            📅 ${fullTimeHeader}
-                                        </div>
-
-                                        <div style="margin-bottom: 15px;">
-                                            <p style="margin: 0 0 15px 0;"> 
-                                                <strong>📍 Pickup:</strong> 
-                                                <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a>
-                                            </p>
-                                            <p style="margin: 0;">
-                                                <strong>🏁 Dropoff:</strong> 
-                                                <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a>
-                                            </p>
-                                        </div>
-
-                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-
-                                        <strong>📋 Services Provided:</strong>
-                                        <div class="services-box">${servicesText}</div>
-
-                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-
-                                        <strong>👷 Team:</strong>
-                                        <div style="margin-top: 5px; color: #333; font-weight: 500;">
-                                            ${teamList}
-                                        </div>
-
-                                    </div>
-                                `,
-                                showConfirmButton: true,
-                                confirmButtonText: 'Close',
-                                confirmButtonColor: '#0C419a'
-                            });
-                        }
-                    });
-
-                    calendar.render();
-                })
-                .catch(err => {
-                    console.error("Error:", err);
-                    loadingMsg.innerText = "Error loading data.";
+                    return {
+                        title: shortName, start: startISO, end: endISO,
+                        backgroundColor: bgColor, borderColor: bdColor, textColor: '#ffffff',
+                        extendedProps: { name: safeName, origin: originRaw, destination: destRaw, services: servicesRaw, team: moversListString }
+                    };
                 });
-        });
+
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    eventDisplay: 'block', 
+                    height: 'auto',
+                    customButtons: {
+                        resetToday: {
+                            text: 'Today',
+                            click: function() {
+                                calendar.today();
+                                document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
+                                var todayEl = document.querySelector('.fc-day-today');
+                                if (todayEl) todayEl.style.backgroundColor = '';
+                                updateTodayButton(false);
+                            }
+                        }
+                    },
+                    headerToolbar: { left: 'title', center: '', right: 'prev,next resetToday' },
+                    events: calendarEvents,
+                    datesSet: function(info) {
+                        var today = new Date(); today.setHours(0,0,0,0);
+                        if (today >= info.start && today < info.end) updateTodayButton(false);
+                        else updateTodayButton(true);
+                    },
+                    dateClick: function(info) {
+                        document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
+                        info.dayEl.classList.add('selected-day');
+                        var todayEl = document.querySelector('.fc-day-today');
+                        if (todayEl) todayEl.style.backgroundColor = 'transparent';
+                        updateTodayButton(true);
+                    },
+                    eventClick: function(info) {
+                        info.jsEvent.preventDefault(); 
+                        var props = info.event.extendedProps;
+                        var dateStr = formatPopupDate(info.event.start);
+                        var startTimeStr = formatPopupTime(info.event.start);
+                        var endTimeStr = info.event.end ? formatPopupTime(info.event.end) : "Unknown";
+                        var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
+                        
+                        var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
+                        var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
+                        
+                        var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+                        var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
+                        var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
+
+                        Swal.fire({
+                            title: props.name,
+                            width: 600,
+                            html: `
+                                <div style="text-align: left; font-size: 1.1em;">
+                                    <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">📅 ${fullTimeHeader}</div>
+                                    <div style="margin-bottom: 15px;">
+                                        <p style="margin: 0 0 15px 0;"><strong>📍 Pickup:</strong> <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a></p>
+                                        <p style="margin: 0;"><strong>🏁 Dropoff:</strong> <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a></p>
+                                    </div>
+                                    <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+                                    <strong>📋 Services Provided:</strong>
+                                    <div class="services-box">${props.services ? String(props.services).trim() : "No details."}</div>
+                                    <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+                                    <strong>👷 Team:</strong>
+                                    <div style="margin-top: 5px; color: #333; font-weight: 500;">${props.team || "None assigned"}</div>
+                                </div>
+                            `,
+                            showConfirmButton: true,
+                            confirmButtonText: 'Close',
+                            confirmButtonColor: '#0C419a'
+                        });
+                    }
+                });
+                calendar.render();
+            })
+            .catch(err => {
+                loadingMsg.innerText = "Error loading data.";
+                console.error(err);
+            });
+        }
     </script>
 </body>
 </html>
