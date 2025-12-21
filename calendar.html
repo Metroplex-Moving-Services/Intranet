@@ -77,10 +77,10 @@
             white-space: pre-wrap; /* Preserves line breaks */
             text-align: left;
             
-            /* --- UPDATED HEIGHT SETTINGS --- */
-            min-height: 100px;     /* Ensures popup isn't too small */
-            max-height: 350px;     /* Increased from 200px to make it ~30% taller */
-            overflow-y: auto;      /* Scroll bar appears if text exceeds 350px */
+            /* --- HEIGHT SETTINGS --- */
+            min-height: 100px;     
+            max-height: 350px;     
+            overflow-y: auto;      
         }
 
         /* --- RESPONSIVE LOGIC --- */
@@ -221,18 +221,28 @@
                             var props = info.event.extendedProps;
                             var customer = props.name;
 
-                            // 1. Clean Addresses: Remove "missing" (case insensitive) and trim whitespace
+                            // 1. Clean Data
                             var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
                             var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
-                            
-                            // 2. Clean Services: Trim leading/trailing whitespace
                             var servicesText = props.services ? String(props.services).trim() : "No service details available.";
 
-                            // 3. Create Links 
-                            var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
-                            var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
+                            // 2. DETECT APPLE DEVICE
+                            var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+                            
+                            var originLink, destLink;
 
-                            // 4. Show Detailed Popup
+                            if (isApple) {
+                                // USE APPLE MAPS
+                                // 'daddr' is destination address. We assume start point is current location.
+                                originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
+                                destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
+                            } else {
+                                // USE GOOGLE MAPS (Your original format)
+                                originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
+                                destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
+                            }
+
+                            // 3. Show Detailed Popup
                             Swal.fire({
                                 title: customer,
                                 width: 600,
