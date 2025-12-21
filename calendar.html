@@ -60,7 +60,7 @@
             }
         });
 
-        function initCalendar(authToken) {
+        function initCalendar(authToken) {-
             const loadingMsg = document.getElementById('loading');
             loadingMsg.innerText = "Loading calendar data...";
             const calendarEl = document.getElementById('calendar');
@@ -123,15 +123,41 @@
                 }
             }
 
-            // --- FETCH DATA ---
+            // --- FETCH DATA -
+// --- FETCH DATA ---
             fetch(NETLIFY_ENDPOINT, {
                 headers: { 'Authorization': `Bearer ${authToken}` }
             })
-            .then(res => res.json())
+            .then(async response => {
+                // 1. Check if the request actually worked
+                if (!response.ok) {
+                    // If server returned 404, 500, or 401, throw an error
+                    const text = await response.text();
+                    throw new Error(`Server Error: ${response.status} ${response.statusText} \nResponse: ${text.substring(0, 100)}...`);
+                }
+
+                // 2. Ensure the response is actually JSON before parsing
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    // This logs the HTML causing the issue so you can see it in Console
+                    console.error("Received HTML instead of JSON:", text); 
+                    throw new Error("Received HTML instead of JSON. Check Network Tab.");
+                }
+
+                return response.json();
+            })
             .then(data => {
                 loadingMsg.style.display = 'none';
 
-                var calendarEvents = data.data.map(function(record) {
+                // SAFETY CHECK: Ensure data.data exists (Zoho structure)
+                const records = data.data || []; 
+                
+                if (records.length === 0) {
+                     console.warn("No events returned from Zoho.");
+                }
+
+                var calendarEvents = records.map(function(record) {
                     var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
                     var endISO = parseZohoDate(record.Estimate_End_Date_Time);
                     var safeName = getZohoVal(record.Customer_Name) || "Unknown";
@@ -200,10 +226,17 @@
                         
                         var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
                         var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
-                        
+                        var servicesText = props.services ? String(props.services).trim() : "No service details available.";
+
                         var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-                        var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
-                        var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
+                        var originLink, destLink;
+                        if (isApple) {
+                            originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
+                            destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
+                        } else {
+                            originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
+                            destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
+                        }
 
                         Swal.fire({
                             title: props.name,
@@ -217,7 +250,7 @@
                                     </div>
                                     <hr style="border-top: 1px solid #eee; margin: 15px 0;">
                                     <strong>📋 Services Provided:</strong>
-                                    <div class="services-box">${props.services ? String(props.services).trim() : "No details."}</div>
+                                    <div class="services-box">${servicesText}</div>
                                     <hr style="border-top: 1px solid #eee; margin: 15px 0;">
                                     <strong>👷 Team:</strong>
                                     <div style="margin-top: 5px; color: #333; font-weight: 500;">${props.team || "None assigned"}</div>
@@ -232,9 +265,13 @@
                 calendar.render();
             })
             .catch(err => {
-                loadingMsg.innerText = "Error loading data.";
-                console.error(err);
+                // UPDATE THE LOADING MESSAGE ON SCREEN SO YOU SEE THE ERROR
+                loadingMsg.innerHTML = `<span style='color:red'><strong>Error:</strong> ${err.message}</span>`;
+                console.error("Full Error Details:", err);
             });
+                                          
+                                          
+
         }
     </script>
 </body>
