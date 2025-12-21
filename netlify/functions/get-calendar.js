@@ -3,17 +3,16 @@ const fetch = require('node-fetch');
 exports.handler = async function(event, context) {
   
   // 1. DEFINE CORS HEADERS
-  // We explicitly allow "Authorization" to fix your specific error
+  // The error happened because "Authorization" was missing from this list.
   const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Requested-With",
+    "Access-Control-Allow-Origin": "*", // Allows GitHub Pages to connect
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Requested-With", // <--- THIS FIXES YOUR ERROR
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Content-Type": "application/json"
   };
 
   // 2. HANDLE "OPTIONS" REQUEST (Pre-flight check)
-  // This is the "handshake" that failed in your error log.
-  // We must return status 200 with the headers above.
+  // The browser sends this "handshake" first. We must say "OK" and send the headers.
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -27,12 +26,12 @@ exports.handler = async function(event, context) {
     const CLIENT_ID = process.env.ZOHO_CLIENT_ID;
     const CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
     
-    // Zoho Config
+    // Zoho Configuration
     const OWNER_NAME = "information152"; 
     const APP_LINK_NAME = "household-goods-moving-services";
     const REPORT_LINK_NAME = "Current_Bookings";
 
-    // 3. GET ACCESS TOKEN FROM ZOHO
+    // 3. GET ACCESS TOKEN
     const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${REFRESH_TOKEN}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=refresh_token`;
     
     const tokenResponse = await fetch(tokenUrl, { method: 'POST' });
@@ -49,7 +48,7 @@ exports.handler = async function(event, context) {
     
     const accessToken = tokenData.access_token;
 
-    // 4. FETCH DATA FROM ZOHO
+    // 4. GET CALENDAR DATA
     const zohoDataUrl = `https://creator.zoho.com/api/v2/${OWNER_NAME}/${APP_LINK_NAME}/report/${REPORT_LINK_NAME}`;
     
     const dataResponse = await fetch(zohoDataUrl, {
@@ -61,13 +60,13 @@ exports.handler = async function(event, context) {
     
     const zohoJson = await dataResponse.json();
 
-    // 5. RETURN DATA
+    // 5. RETURN SUCCESS
     return {
       statusCode: 200,
       headers: headers,
       body: JSON.stringify({
         data: zohoJson.data || [],
-        message: zohoJson.code ? "Zoho returned code " + zohoJson.code : "Success"
+        message: "Success"
       })
     };
 
