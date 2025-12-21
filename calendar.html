@@ -76,8 +76,11 @@
             color: #444;
             white-space: pre-wrap; /* Preserves line breaks */
             text-align: left;
-            max-height: 200px;
-            overflow-y: auto;
+            
+            /* --- UPDATED HEIGHT SETTINGS --- */
+            min-height: 100px;     /* Ensures popup isn't too small */
+            max-height: 350px;     /* Increased from 200px to make it ~30% taller */
+            overflow-y: auto;      /* Scroll bar appears if text exceeds 350px */
         }
 
         /* --- RESPONSIVE LOGIC --- */
@@ -225,7 +228,7 @@
                             // 2. Clean Services: Trim leading/trailing whitespace
                             var servicesText = props.services ? String(props.services).trim() : "No service details available.";
 
-                            // 3. Create Links (Destination is assumed to exist now per your request)
+                            // 3. Create Links 
                             var originLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(originAddr);
                             var destLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destAddr);
 
