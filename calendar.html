@@ -18,7 +18,6 @@
         }
 
         #calendar-container {
-            /* UPDATED: Made wider for laptops (95% instead of fixed pixel width) */
             max-width: 95%; 
             margin: 0 auto;
             background: white;
@@ -28,7 +27,6 @@
         }
 
         #calendar {
-            /* UPDATED: Removed fixed '80vh' height so it expands naturally */
             min-height: 600px; 
         }
 
@@ -86,6 +84,12 @@
             text-overflow: ellipsis;
         }
 
+        /* --- CUSTOM DAY HIGHLIGHT --- */
+        /* This class is applied via JS when a user clicks a day */
+        .selected-day {
+            background-color: #fff9c4 !important; /* Same light yellow as default */
+        }
+
         /* --- POPUP STYLES --- */
         .popup-link {
             color: #3085d6;
@@ -114,15 +118,8 @@
             margin-left: 4px;
         }
 
-        /* STRICT RULE FOR VERTICAL PHONES (Portrait) */
         @media (max-width: 900px) and (orientation: portrait) {
-            
-            /* FORCE HIDE TITLE (Name) */
-            .fc-event-title { 
-                display: none !important; 
-            } 
-            
-            /* FORCE SHOW TIME */
+            .fc-event-title { display: none !important; } 
             .fc-event-time {
                 font-weight: bold;
                 font-size: 1.1em;
@@ -261,12 +258,10 @@
                         var bgColor = '#0C419a'; // Default Blue
                         var bdColor = '#0C419a';
 
-                        // 1. PRIORITY: If "Pending" in services -> GREEN
                         if (servicesRaw.toLowerCase().includes("pending")) {
                             bgColor = '#28a745'; // Green
                             bdColor = '#28a745';
                         }
-                        // 2. ELSE: Check Mover Count Logic (Orange vs Blue)
                         else if (actualMoversCount < requiredCount) {
                             bgColor = '#fd7e14'; // Orange
                             bdColor = '#fd7e14';
@@ -292,8 +287,6 @@
                     var calendar = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
                         eventDisplay: 'block', 
-                        
-                        // UPDATED: 'auto' forces it to expand to fit all weeks
                         height: 'auto',
 
                         headerToolbar: {
@@ -304,87 +297,26 @@
 
                         events: calendarEvents,
                         
-                        // --- CLICK HANDLER ---
+                        // --- 1. DATE CLICK HANDLER (HIGHLIGHT LOGIC) ---
+                        dateClick: function(info) {
+                            // A. Remove 'selected-day' from any previously selected date
+                            var previouslySelected = document.querySelectorAll('.selected-day');
+                            previouslySelected.forEach(function(el) {
+                                el.classList.remove('selected-day');
+                            });
+
+                            // B. Add 'selected-day' to the clicked date element
+                            info.dayEl.classList.add('selected-day');
+
+                            // C. Remove the default yellow highlight from "Today"
+                            var todayEl = document.querySelector('.fc-day-today');
+                            if (todayEl) {
+                                todayEl.style.backgroundColor = 'transparent';
+                            }
+                        },
+
+                        // --- 2. EVENT CLICK HANDLER (POPUP LOGIC) ---
                         eventClick: function(info) {
                             info.jsEvent.preventDefault(); 
                             
-                            var props = info.event.extendedProps;
-                            var customer = props.name;
-                            var teamList = props.team || "None assigned"; 
-
-                            // Time Logic
-                            var startObj = info.event.start;
-                            var endObj = info.event.end;
-                            var dateStr = formatPopupDate(startObj);
-                            var startTimeStr = formatPopupTime(startObj);
-                            var endTimeStr = endObj ? formatPopupTime(endObj) : "Unknown";
-                            var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
-
-                            // Address Logic
-                            var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
-                            var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
-                            var servicesText = props.services ? String(props.services).trim() : "No service details available.";
-
-                            var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-                            var originLink, destLink;
-
-                            if (isApple) {
-                                originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
-                                destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
-                            } else {
-                                originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
-                                destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
-                            }
-
-                            Swal.fire({
-                                title: customer,
-                                width: 600,
-                                html: `
-                                    <div style="text-align: left; font-size: 1.1em;">
-                                        
-                                        <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
-                                            📅 ${fullTimeHeader}
-                                        </div>
-
-                                        <div style="margin-bottom: 15px;">
-                                            <p style="margin: 0 0 15px 0;"> 
-                                                <strong>📍 Pickup:</strong> 
-                                                <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a>
-                                            </p>
-                                            <p style="margin: 0;">
-                                                <strong>🏁 Dropoff:</strong> 
-                                                <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a>
-                                            </p>
-                                        </div>
-
-                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-
-                                        <strong>📋 Services Provided:</strong>
-                                        <div class="services-box">${servicesText}</div>
-
-                                        <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-
-                                        <strong>👷 Team:</strong>
-                                        <div style="margin-top: 5px; color: #333; font-weight: 500;">
-                                            ${teamList}
-                                        </div>
-
-                                    </div>
-                                `,
-                                showConfirmButton: true,
-                                confirmButtonText: 'Close',
-                                confirmButtonColor: '#0C419a'
-                            });
-                        }
-                    });
-
-                    calendar.render();
-                })
-                .catch(err => {
-                    console.error("Error:", err);
-                    loadingMsg.innerText = "Error loading data.";
-                });
-        });
-    </script>
-</body>
-</html>
+                            var
