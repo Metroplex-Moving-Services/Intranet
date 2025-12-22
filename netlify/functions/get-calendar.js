@@ -50,7 +50,7 @@ exports.handler = async function(event, context) {
 
     // 4. GET CALENDAR DATA
     const zohoDataUrl = `https://creator.zoho.com/api/v2/${OWNER_NAME}/${APP_LINK_NAME}/report/${REPORT_LINK_NAME}`;
-    
+    console.log("Fetching from Zoho URL:", zohoDataUrl);
     const dataResponse = await fetch(zohoDataUrl, {
       method: 'GET',
       headers: {
