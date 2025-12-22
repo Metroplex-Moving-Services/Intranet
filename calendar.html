@@ -208,14 +208,14 @@
                      console.warn("No events returned from Zoho.");
                 }
 
-                var calendarEvents = records.map(function(record) {
+      var calendarEvents = records.map(function(record) {
                     var startRaw = record.Agreed_Start_Date_Time;
                     var endRaw = record.Estimate_End_Date_Time;
 
                     var startISO = parseZohoDate(startRaw);
-                    
-                    // End Date Logic
                     var endISO = parseZohoDate(endRaw);
+                    
+                    // Fallback logic for end dates
                     if (!endISO && startRaw && endRaw) {
                         try {
                             var dateOnly = startRaw.trim().split(/\s+/)[0]; 
@@ -228,14 +228,14 @@
 
                     var safeName = getZohoVal(record.Customer_Name) || "Unknown";
                     var shortName = getShortName(safeName);
-                    
-                    // --- CHANGED: Pass the RAW Address Object, not a string ---
                     var originObj = record.Origination_Address; 
                     var destObj = record.Destination_Address;
-                    // ---------------------------------------------------------
-
                     var servicesRaw = getZohoVal(record.Services_Provided);
+                    
+                    // --- NEW: Capture the Count ---
                     var requiredCount = parseInt(record.Mover_Count) || 0; 
+                    // -----------------------------
+                    
                     var actualMoversCount = countMovers(record.Movers2); 
                     var moversListString = getMoversString(record.Movers2);
 
@@ -252,10 +252,11 @@
                         backgroundColor: bgColor, borderColor: bdColor, textColor: '#ffffff',
                         extendedProps: { 
                             name: safeName, 
-                            origin: originObj,      // Passing object
-                            destination: destObj,   // Passing object
+                            origin: originObj, 
+                            destination: destObj,
                             services: servicesRaw, 
-                            team: moversListString 
+                            team: moversListString,
+                            moverCount: requiredCount // <--- Passing it here
                         }
                     };
                 }).filter(event => event !== null);
@@ -290,7 +291,7 @@
                         if (todayEl) todayEl.style.backgroundColor = 'transparent';
                         updateTodayButton(true);
                     },
-                    eventClick: function(info) {
+           eventClick: function(info) {
                         info.jsEvent.preventDefault(); 
                         var props = info.event.extendedProps;
                         
@@ -299,36 +300,30 @@
                         var endTimeStr = info.event.end ? formatPopupTime(info.event.end) : "Unknown";
                         var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
                         
-                        // --- HELPER 1: Format for DISPLAY (Street, Apt, City) ---
+                        // Helpers
                         function getDisplayAddr(addrObj) {
                             if (!addrObj) return "Unknown";
                             if (typeof addrObj === 'string') return addrObj;
-                            
                             let parts = [];
                             if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
                             if (addrObj.address_line_2) parts.push(addrObj.address_line_2);
                             if (addrObj.district_city)  parts.push(addrObj.district_city);
-                            
                             return parts.join(", ");
                         }
 
-                        // --- HELPER 2: Format for MAP LINK (Street, City, State, Zip) ---
                         function getMapAddr(addrObj) {
                             if (!addrObj) return "";
                             if (typeof addrObj === 'string') return addrObj;
-                            
                             let parts = [];
                             if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
                             if (addrObj.district_city)  parts.push(addrObj.district_city);
                             if (addrObj.state_province) parts.push(addrObj.state_province);
                             if (addrObj.postal_code)    parts.push(addrObj.postal_code);
-                            
                             return parts.join(", ");
                         }
 
                         var originDisplay = getDisplayAddr(props.origin);
                         var destDisplay   = getDisplayAddr(props.destination);
-                        
                         var originMapStr  = getMapAddr(props.origin);
                         var destMapStr    = getMapAddr(props.destination);
                         
@@ -339,9 +334,7 @@
                         Swal.fire({
                             title: props.name,
                             width: 600,
-                            // 1. Enable Top-Right 'X'
                             showCloseButton: true,
-                            // 2. Disable Bottom 'Close' Button
                             showConfirmButton: false, 
                             html: `
                                 <div style="text-align: left; font-size: 1.1em;">
@@ -367,8 +360,14 @@
                                     <strong>📋 Services Provided:</strong>
                                     <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
                                     <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+                                    
                                     <strong>👷 Team:</strong>
-                                    <div style="margin-top: 5px; color: #333; font-weight: 500;">${props.team || "None assigned"}</div>
+                                    <div style="margin-top: 5px; color: #333; font-weight: 500;">
+                                        ${props.team || "None assigned"}
+                                    </div>
+                                    <div style="margin-top: 4px; color: #666; font-size: 0.9em;">
+                                        Target Size: <strong>${props.moverCount || 0} Movers</strong>
+                                    </div>
                                 </div>
                             `
                         });
