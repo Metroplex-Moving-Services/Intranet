@@ -20,8 +20,8 @@
     
     #MMSiFrame {
         width: 100%;
-        /* Calculate height: 100% of screen minus the Menu Bar height (approx 60px) */
-        height: calc(100vh - 60px); 
+        /* This ensures the iframe ALWAYS fills the remaining screen space */
+        height: calc(100vh - 60px) !important; 
         border: none;
         display: block;
     }
