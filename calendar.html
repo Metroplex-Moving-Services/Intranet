@@ -302,9 +302,8 @@
                         // --- HELPER 1: Format for DISPLAY (Street, Apt, City) ---
                         function getDisplayAddr(addrObj) {
                             if (!addrObj) return "Unknown";
-                            if (typeof addrObj === 'string') return addrObj; // Fallback for old data
+                            if (typeof addrObj === 'string') return addrObj;
                             
-                            // Combine Line 1 (Street) + Line 2 (Apt) + City
                             let parts = [];
                             if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
                             if (addrObj.address_line_2) parts.push(addrObj.address_line_2);
@@ -313,31 +312,26 @@
                             return parts.join(", ");
                         }
 
-                        // --- HELPER 2: Format for MAP LINK (Street, City, State, Zip -- NO APT) ---
+                        // --- HELPER 2: Format for MAP LINK (Street, City, State, Zip) ---
                         function getMapAddr(addrObj) {
                             if (!addrObj) return "";
                             if (typeof addrObj === 'string') return addrObj;
                             
-                            // Combine Line 1 (Street) + City + State + Zip
-                            // Excludes address_line_2 (Apt/Suite) to help Maps find the building
                             let parts = [];
                             if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
                             if (addrObj.district_city)  parts.push(addrObj.district_city);
                             if (addrObj.state_province) parts.push(addrObj.state_province);
-                            // Note: Zoho sometimes puts zip in state_province, but if it has a separate postal_code field:
                             if (addrObj.postal_code)    parts.push(addrObj.postal_code);
                             
                             return parts.join(", ");
                         }
 
-                        // Generate the strings
                         var originDisplay = getDisplayAddr(props.origin);
                         var destDisplay   = getDisplayAddr(props.destination);
                         
                         var originMapStr  = getMapAddr(props.origin);
                         var destMapStr    = getMapAddr(props.destination);
                         
-                        // Generate Links
                         var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
                         var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=t";
                         var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=t";
@@ -345,7 +339,10 @@
                         Swal.fire({
                             title: props.name,
                             width: 600,
+                            // 1. Enable Top-Right 'X'
                             showCloseButton: true,
+                            // 2. Disable Bottom 'Close' Button
+                            showConfirmButton: false, 
                             html: `
                                 <div style="text-align: left; font-size: 1.1em;">
                                     <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
@@ -353,14 +350,14 @@
                                     </div>
 
                                     <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
-                                        <strong style="min-width: 80px; color: #333;">📍 Pickup:</strong>
+                                        <strong style="min-width: 80px; color: #333; margin-right: 10px;">📍 Pickup:</strong>
                                         <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
                                             ${originDisplay}
                                         </a>
                                     </div>
 
                                     <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
-                                        <strong style="min-width: 80px; color: #333;">🏁 Dropoff:</strong>
+                                        <strong style="min-width: 80px; color: #333; margin-right: 10px;">🏁 Dropoff:</strong>
                                         <a href="${destLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
                                             ${destDisplay}
                                         </a>
@@ -373,10 +370,7 @@
                                     <strong>👷 Team:</strong>
                                     <div style="margin-top: 5px; color: #333; font-weight: 500;">${props.team || "None assigned"}</div>
                                 </div>
-                            `,
-                            showConfirmButton: true,
-                            confirmButtonText: 'Close',
-                            confirmButtonColor: '#0C419a'
+                            `
                         });
                     }
                 });
