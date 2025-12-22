@@ -198,8 +198,31 @@
                 }
 
                 var calendarEvents = records.map(function(record) {
-                    var startISO = parseZohoDate(record.Agreed_Start_Date_Time);
-                    var endISO = parseZohoDate(record.Estimate_End_Date_Time);
+                    // Get raw strings first
+                    var startRaw = record.Agreed_Start_Date_Time;
+                    var endRaw = record.Estimate_End_Date_Time;
+
+                    // 1. Parse Start Date
+                    var startISO = parseZohoDate(startRaw);
+                    
+                    // 2. Parse End Date (Try standard parsing first)
+                    var endISO = parseZohoDate(endRaw);
+
+                    // 3. FALLBACK: If End Date failed (e.g. it is just "02:00 PM"), 
+                    // merge it with the Start Date.
+                    if (!endISO && startRaw && endRaw) {
+                        try {
+                            // Grab the date part from start (e.g. "20-Dec-2025")
+                            var datePart = startRaw.trim().split(/\s+/)[0];
+                            // Combine it with the end time (e.g. "20-Dec-2025 02:00 PM")
+                            var combinedString = datePart + " " + endRaw;
+                            // Try parsing again
+                            endISO = parseZohoDate(combinedString);
+                        } catch (e) {
+                            console.log("End time fallback failed for:", endRaw);
+                        }
+                    }
+
                     var safeName = getZohoVal(record.Customer_Name) || "Unknown";
                     var shortName = getShortName(safeName);
                     var originRaw = getZohoVal(record.Origination_Address);
