@@ -293,40 +293,55 @@
                     eventClick: function(info) {
                         info.jsEvent.preventDefault(); 
                         var props = info.event.extendedProps;
+                        
+                        // Formatting Times
                         var dateStr = formatPopupDate(info.event.start);
                         var startTimeStr = formatPopupTime(info.event.start);
                         var endTimeStr = info.event.end ? formatPopupTime(info.event.end) : "Unknown";
                         var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
                         
+                        // Cleaning Addresses
                         var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
                         var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
-                        var servicesText = props.services ? String(props.services).trim() : "No service details available.";
-
+                        
+                        // Map Links
                         var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-                        var originLink, destLink;
-                        if (isApple) {
-                            originLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d";
-                            destLink = "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d";
-                        } else {
-                            originLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
-                            destLink = "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
-                        }
+                        var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
+                        var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
 
+                        // --- NEW FLEXBOX LAYOUT FOR POPUP ---
                         Swal.fire({
                             title: props.name,
                             width: 600,
                             showCloseButton: true,
                             html: `
                                 <div style="text-align: left; font-size: 1.1em;">
-                                    <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">📅 ${fullTimeHeader}</div>
-                                    <div style="margin-bottom: 15px;">
-                                        <p style="margin: 0 0 15px 0;"><strong>📍 Pickup:</strong> <a href="${originLink}" target="_blank" class="popup-link">${originAddr}</a></p>
-                                        <p style="margin: 0;"><strong>🏁 Dropoff:</strong> <a href="${destLink}" target="_blank" class="popup-link">${destAddr}</a></p>
+                                    
+                                    <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
+                                        📅 ${fullTimeHeader}
                                     </div>
+
+                                    <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+                                        <strong style="min-width: 80px; color: #333;">📍 Pickup:</strong>
+                                        <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
+                                            ${originAddr}
+                                        </a>
+                                    </div>
+
+                                    <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
+                                        <strong style="min-width: 80px; color: #333;">🏁 Dropoff:</strong>
+                                        <a href="${destLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
+                                            ${destAddr}
+                                        </a>
+                                    </div>
+
                                     <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+                                    
                                     <strong>📋 Services Provided:</strong>
-                                    <div class="services-box">${servicesText}</div>
+                                    <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
+                                    
                                     <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+                                    
                                     <strong>👷 Team:</strong>
                                     <div style="margin-top: 5px; color: #333; font-weight: 500;">${props.team || "None assigned"}</div>
                                 </div>
