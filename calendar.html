@@ -29,6 +29,18 @@
         .selected-day { background-color: #fff9c4 !important; }
         .popup-link { color: #3085d6; text-decoration: underline; font-weight: bold; cursor: pointer; }
         .services-box { background-color: #f9f9f9; border-left: 4px solid #0C419a; padding: 10px; margin-top: 5px; font-size: 0.9em; color: #444; white-space: pre-wrap; text-align: left; min-height: 100px; max-height: 350px; overflow-y: auto; }
+
+        /* --- GLOBAL POPUP POSITIONING --- */
+        /* This moves the popup to the top on ALL devices */
+        div.swal2-container {
+            align-items: flex-start !important; /* Top alignment */
+            padding-top: 30px !important;       /* Distance from the very top edge */
+        }
+
+        /* --- RESPONSIVE LOGIC --- */
+        @media (max-width: 900px) {
+           /* ... keep your existing mobile font sizing code here ... */
+        }
         
         /* --- RESPONSIVE LOGIC --- */
         @media (max-width: 900px) {
@@ -44,11 +56,6 @@
                 display: block !important; 
             }
 
-            /* 3. NEW: Force Popup to the Top on Mobile */
-            div.swal2-container {
-                align-items: flex-start !important; /* Aligns popup to top instead of center */
-                padding-top: 20px !important;       /* Adds a small gap from the very top edge */
-            }
         }
     </style>
 </head>
