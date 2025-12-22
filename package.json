@@ -1,0 +1,9 @@
+{
+  "name": "metroplex-moving-calendar",
+  "version": "1.0.0",
+  "description": "Calendar backend function",
+  "main": "index.js",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
