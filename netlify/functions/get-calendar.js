@@ -67,7 +67,7 @@ exports.handler = async function(event, context) {
     
     const OWNER_NAME = "information152"; 
     const APP_LINK_NAME = "household-goods-moving-services";
-    const REPORT_LINK_NAME = "Current_Bookings";
+    const REPORT_LINK_NAME = "Proposal_Contract_Report";
 
     // Get Zoho Token
     const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${REFRESH_TOKEN}&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=refresh_token`;
