@@ -1,1 +1,44 @@
-<img id="splash" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg?format=400w" width="400"></img>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        /* 1. Reset Body to fill the screen */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Disable scrolling on the splash page */
+            background-color: #ffffff; /* Change to match your brand background */
+        }
+
+        /* 2. Flex Container to Center Content */
+        body {
+            display: flex;
+            justify-content: center; /* Center Horizontally */
+            align-items: center;     /* Center Vertically */
+        }
+
+        /* 3. Responsive Image Styling */
+        #splashImage {
+            /* Logic: Never wider than screen, never taller than screen */
+            max-width: 90%;   
+            max-height: 90vh; 
+            
+            /* Maintain Aspect Ratio */
+            width: auto;
+            height: auto;
+            
+            /* Smooth edges */
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <img id="splashImage" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg" alt="Metroplex Moving Services">
+
+</body>
+</html>
