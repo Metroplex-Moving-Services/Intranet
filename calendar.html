@@ -209,35 +209,31 @@
                 }
 
                 var calendarEvents = records.map(function(record) {
-                    // Get raw strings first
                     var startRaw = record.Agreed_Start_Date_Time;
                     var endRaw = record.Estimate_End_Date_Time;
 
-                    // 1. Parse Start Date
                     var startISO = parseZohoDate(startRaw);
                     
-                    // 2. Parse End Date (Try standard parsing first)
+                    // End Date Logic
                     var endISO = parseZohoDate(endRaw);
-
-                    // 3. FALLBACK: If End Date failed (e.g. it is just "02:00 PM"), 
-                    // merge it with the Start Date.
                     if (!endISO && startRaw && endRaw) {
                         try {
-                            // Grab the date part from start (e.g. "20-Dec-2025")
-                            var datePart = startRaw.trim().split(/\s+/)[0];
-                            // Combine it with the end time (e.g. "20-Dec-2025 02:00 PM")
-                            var combinedString = datePart + " " + endRaw;
-                            // Try parsing again
-                            endISO = parseZohoDate(combinedString);
-                        } catch (e) {
-                            console.log("End time fallback failed for:", endRaw);
-                        }
+                            var dateOnly = startRaw.trim().split(/\s+/)[0]; 
+                            var combined = dateOnly + " " + endRaw;
+                            endISO = parseZohoDate(combined);
+                        } catch(e) {}
                     }
+                    
+                    if (!startISO) return null;
 
                     var safeName = getZohoVal(record.Customer_Name) || "Unknown";
                     var shortName = getShortName(safeName);
-                    var originRaw = getZohoVal(record.Origination_Address);
-                    var destRaw = getZohoVal(record.Destination_Address); 
+                    
+                    // --- CHANGED: Pass the RAW Address Object, not a string ---
+                    var originObj = record.Origination_Address; 
+                    var destObj = record.Destination_Address;
+                    // ---------------------------------------------------------
+
                     var servicesRaw = getZohoVal(record.Services_Provided);
                     var requiredCount = parseInt(record.Mover_Count) || 0; 
                     var actualMoversCount = countMovers(record.Movers2); 
@@ -245,20 +241,24 @@
 
                     var bgColor = '#0C419a'; 
                     var bdColor = '#0C419a';
-                    if (servicesRaw.toLowerCase().includes("pending")) {
-                        bgColor = '#28a745'; 
-                        bdColor = '#28a745';
+                    if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) {
+                        bgColor = '#28a745'; bdColor = '#28a745';
                     } else if (actualMoversCount < requiredCount) {
-                        bgColor = '#fd7e14'; 
-                        bdColor = '#fd7e14';
+                        bgColor = '#fd7e14'; bdColor = '#fd7e14';
                     }
 
                     return {
                         title: shortName, start: startISO, end: endISO,
                         backgroundColor: bgColor, borderColor: bdColor, textColor: '#ffffff',
-                        extendedProps: { name: safeName, origin: originRaw, destination: destRaw, services: servicesRaw, team: moversListString }
+                        extendedProps: { 
+                            name: safeName, 
+                            origin: originObj,      // Passing object
+                            destination: destObj,   // Passing object
+                            services: servicesRaw, 
+                            team: moversListString 
+                        }
                     };
-                });
+                }).filter(event => event !== null);
 
                 var calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
@@ -294,29 +294,60 @@
                         info.jsEvent.preventDefault(); 
                         var props = info.event.extendedProps;
                         
-                        // Formatting Times
                         var dateStr = formatPopupDate(info.event.start);
                         var startTimeStr = formatPopupTime(info.event.start);
                         var endTimeStr = info.event.end ? formatPopupTime(info.event.end) : "Unknown";
                         var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
                         
-                        // Cleaning Addresses
-                        var originAddr = (props.origin || "").replace(/missing/gi, "").trim();
-                        var destAddr = (props.destination || "").replace(/missing/gi, "").trim();
-                        
-                        // Map Links
-                        var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-                        var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originAddr) + "&dirflg=t";
-                        var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destAddr) + "&dirflg=t";
+                        // --- HELPER 1: Format for DISPLAY (Street, Apt, City) ---
+                        function getDisplayAddr(addrObj) {
+                            if (!addrObj) return "Unknown";
+                            if (typeof addrObj === 'string') return addrObj; // Fallback for old data
+                            
+                            // Combine Line 1 (Street) + Line 2 (Apt) + City
+                            let parts = [];
+                            if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
+                            if (addrObj.address_line_2) parts.push(addrObj.address_line_2);
+                            if (addrObj.district_city)  parts.push(addrObj.district_city);
+                            
+                            return parts.join(", ");
+                        }
 
-                        // --- NEW FLEXBOX LAYOUT FOR POPUP ---
+                        // --- HELPER 2: Format for MAP LINK (Street, City, State, Zip -- NO APT) ---
+                        function getMapAddr(addrObj) {
+                            if (!addrObj) return "";
+                            if (typeof addrObj === 'string') return addrObj;
+                            
+                            // Combine Line 1 (Street) + City + State + Zip
+                            // Excludes address_line_2 (Apt/Suite) to help Maps find the building
+                            let parts = [];
+                            if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
+                            if (addrObj.district_city)  parts.push(addrObj.district_city);
+                            if (addrObj.state_province) parts.push(addrObj.state_province);
+                            // Note: Zoho sometimes puts zip in state_province, but if it has a separate postal_code field:
+                            if (addrObj.postal_code)    parts.push(addrObj.postal_code);
+                            
+                            return parts.join(", ");
+                        }
+
+                        // Generate the strings
+                        var originDisplay = getDisplayAddr(props.origin);
+                        var destDisplay   = getDisplayAddr(props.destination);
+                        
+                        var originMapStr  = getMapAddr(props.origin);
+                        var destMapStr    = getMapAddr(props.destination);
+                        
+                        // Generate Links
+                        var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+                        var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=t";
+                        var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=t";
+
                         Swal.fire({
                             title: props.name,
                             width: 600,
                             showCloseButton: true,
                             html: `
                                 <div style="text-align: left; font-size: 1.1em;">
-                                    
                                     <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
                                         📅 ${fullTimeHeader}
                                     </div>
@@ -324,24 +355,21 @@
                                     <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
                                         <strong style="min-width: 80px; color: #333;">📍 Pickup:</strong>
                                         <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
-                                            ${originAddr}
+                                            ${originDisplay}
                                         </a>
                                     </div>
 
                                     <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
                                         <strong style="min-width: 80px; color: #333;">🏁 Dropoff:</strong>
                                         <a href="${destLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
-                                            ${destAddr}
+                                            ${destDisplay}
                                         </a>
                                     </div>
 
                                     <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-                                    
                                     <strong>📋 Services Provided:</strong>
                                     <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
-                                    
                                     <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-                                    
                                     <strong>👷 Team:</strong>
                                     <div style="margin-top: 5px; color: #333; font-weight: 500;">${props.team || "None assigned"}</div>
                                 </div>
