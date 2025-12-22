@@ -67,64 +67,52 @@
             const NETLIFY_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar";
 
             // --- ALL HELPER FUNCTIONS GO HERE ---
-            // --- UPDATED HELPER: Robust Date Parser ---
+            // --- UPDATED HELPER: Parses MM-DD-YY format ---
             function parseZohoDate(dateStr) {
-                // 1. Safety Check: Ensure we have a string
-                if (!dateStr || typeof dateStr !== 'string') return null;
+                if (!dateStr) return null;
+                dateStr = dateStr.trim();
                 
-                // 2. Split Date and Time (Handle multiple spaces cleanly)
-                const parts = dateStr.trim().split(/\s+/); 
-                if (parts.length < 2) return null; // Needs at least "Date" and "Time"
-
-                // 3. Normalize Separators (Convert '/' to '-')
+                // 1. Split Date and Time
+                // Input: "01-09-26 11:00 AM"
+                const parts = dateStr.split(/\s+/); 
+                
+                // 2. Parse the Date Part (01-09-26)
                 const dateRaw = parts[0].replace(/\//g, '-');
-                const dateParts = dateRaw.split('-'); 
+                const dateParts = dateRaw.split('-'); // ["01", "09", "26"]
 
-                // 4. CRITICAL FIX: Ensure we actually have 3 parts (Year-Month-Day)
-                if (dateParts.length < 3) {
-                    console.warn("Invalid date format detected:", dateStr);
-                    return null;
+                if (dateParts.length < 3) return null;
+
+                let month = parseInt(dateParts[0], 10);
+                let day   = parseInt(dateParts[1], 10);
+                let year  = parseInt(dateParts[2], 10);
+
+                // Handle 2-digit years (e.g. 26 becomes 2026)
+                if (year < 100) year += 2000;
+
+                // 3. Parse the Time Part
+                let hour = 0;
+                let minute = 0;
+
+                if (parts.length > 1) {
+                    const timeRaw = parts[1]; // "11:00"
+                    const timeParts = timeRaw.split(':');
+                    hour = parseInt(timeParts[0], 10);
+                    minute = parseInt(timeParts[1], 10);
+
+                    // Handle AM/PM
+                    if (parts.length > 2) {
+                        const meridian = parts[2].toUpperCase(); // "AM" or "PM"
+                        if (meridian === "PM" && hour < 12) hour += 12;
+                        if (meridian === "AM" && hour === 12) hour = 0;
+                    }
                 }
 
-                const timeParts = parts[1].split(':'); 
-                
-                // 5. Extract Parts Safely
-                let partA = dateParts[0];
-                let partB = dateParts[1];
-                let partC = dateParts[2];
-                
-                let year, month, day;
+                // 4. Format into ISO String (YYYY-MM-DDTHH:mm:ss) for FullCalendar
+                // Note: padStart ensures "9" becomes "09"
+                const isoDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                const isoTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
 
-                // Handle YYYY-MM-DD (ISO) vs DD-MMM-YY (Zoho default)
-                if (partA.length === 4) {
-                    // It is YYYY-MM-DD
-                    year = partA;
-                    month = partB;
-                    day = partC;
-                } else {
-                    // It is likely DD-MM-YY or DD-MMM-YY
-                    day = partA;
-                    month = partB;
-                    year = partC;
-                }
-
-                // Handle 2-digit years (e.g., "25" -> "2025")
-                if (year && year.length === 2) year = "20" + year;
-
-                let hour = parseInt(timeParts[0], 10);
-                let minute = timeParts[1] || "00";
-                
-                // Handle AM/PM
-                if (parts.length > 2) {
-                    const meridian = parts[2].toUpperCase();
-                    if (meridian === "PM" && hour < 12) hour += 12;
-                    if (meridian === "AM" && hour === 12) hour = 0;
-                }
-                
-                // Final safety check for hour
-                if (isNaN(hour)) hour = 0;
-
-                return `${year}-${month}-${day}T${hour.toString().padStart(2, '0')}:${minute}:00`;
+                return `${isoDate}T${isoTime}`;
             }
             function getZohoVal(field) { return (field && field.display_value) ? field.display_value : (field || ""); }
             function getShortName(fullName) {
