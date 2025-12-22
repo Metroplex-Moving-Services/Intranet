@@ -1,6 +1,10 @@
 const fetch = require('node-fetch');
-// FIX 1: Use the correct import for version 1.0+
-const { DescopeClient } = require('@descope/node-sdk'); 
+
+// --- ROBUST IMPORT LOGIC ---
+// We load the package and try to find the correct constructor automatically
+const descopePkg = require('@descope/node-sdk');
+// Try to grab the client from standard locations:
+const DescopeClient = descopePkg.default || descopePkg.DescopeClient || descopePkg;
 
 exports.handler = async function(event, context) {
   
@@ -26,8 +30,26 @@ exports.handler = async function(event, context) {
 
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
-    // FIX 2: Initialize using DescopeClient directly
-    const descopeClient = DescopeClient({ projectId: process.env.DESCOPE_PROJECT_ID });
+    // INITIALIZATION FIX
+    // We check if DescopeClient is a function/class before calling it
+    let descopeClient;
+    try {
+        if (typeof DescopeClient === 'function') {
+             // Some versions require 'new', some don't. We try both.
+             try {
+                 descopeClient = DescopeClient({ projectId: process.env.DESCOPE_PROJECT_ID });
+             } catch (e) {
+                 descopeClient = new DescopeClient({ projectId: process.env.DESCOPE_PROJECT_ID });
+             }
+        } else {
+             throw new Error("Descope Library failed to load correctly. Import was: " + typeof DescopeClient);
+        }
+    } catch (initErr) {
+        console.error("Descope Init Error:", initErr);
+        // Fallback: log what we actually got from the require to help debug
+        console.log("Package Dump:", descopePkg);
+        return { statusCode: 500, headers: headers, body: JSON.stringify({ error: "Security Library Error", details: initErr.message }) };
+    }
 
     try {
       await descopeClient.validateSession(token);
@@ -81,7 +103,6 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error("Function Error:", error);
-    // This logs the specific error if something else breaks
     return {
       statusCode: 500,
       headers: headers,
