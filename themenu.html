@@ -7,20 +7,33 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#" onclick="setiFrame('empty')" style="color: #31708f;">MMS Intranet</a>
+      <a class="navbar-brand" href="#" onclick="setiFrame('empty')" style="color: #31708f; font-weight: bold;">MMS Intranet</a>
     </div>
 
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li><a href="#" onclick="setiFrame('myprofile')">My Profile</a></li>
-        <li><a href="#" onclick="setiFrame('clock-in')">Clock In</a></li>
-        <li><a href="#" onclick="setiFrame('newcalendar')">Calendar</a></li>
-        <li><a href="#" onclick="setiFrame('addmovertojob')">Add Mover</a></li>
-        <li><a href="#" onclick="setiFrame('createinvoice')">Invoice</a></li>
-        <li><a href="#" onclick="setiFrame('publicsite')">Public Site</a></li>
+        <li><a href="#" onclick="setiFrame('myprofile')" style="color: #333;">My Profile</a></li>
+        <li><a href="#" onclick="setiFrame('newcalendar')" style="color: #333;">Calendar</a></li>
+        
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #333;">Movers <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#" onclick="setiFrame('clock-in')">Clock In</a></li>
+            <li><a href="#" onclick="setiFrame('addmovertojob')">Add Mover to Job</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #333;">Home Stagers <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#" onclick="setiFrame('createinvoice')">Create Invoice</a></li>
+          </ul>
+        </li>
+
+        <li><a href="#" onclick="setiFrame('publicsite')" style="color: #333;">Public Site</a></li>
         
         <li>
-            <a href="https://wa.me/13183324696" target="_blank">
+            <a href="https://wa.me/13183324696" target="_blank" style="color: #333;">
                 Whatsapp John 
                 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="Whatsapp" style="width: 20px; height: 20px; vertical-align: middle; margin-left: 5px;">
             </a>
@@ -28,6 +41,6 @@
 
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="#" onclick="Descope.logout()">Logout</a></li>
+        <li><a href="#" onclick="Descope.logout()" style="color: #cc0000;">Logout</a></li>
       </ul>
     </div></div></nav>
