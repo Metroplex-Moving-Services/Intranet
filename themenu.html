@@ -1,86 +1,34 @@
-<nav class="navbar bg-light ">
+<nav class="navbar navbar-inverse" style="background-color: #0C419a; border-color: #083075;">
   <div class="container-fluid">
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-        <span class="icon-bar" style="background-color: #0c419a"></span>
-        <span class="icon-bar" style="background-color: #0c419a"></span>
-        <span class="icon-bar" style="background-color: #0c419a"></span>
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#"> <span onclick="setiFrame('empty')">MMS INTRANET</span></a>
+      <a class="navbar-brand" href="#" onclick="setiFrame('empty')" style="color: white;">MMS Intranet</a>
     </div>
-    <div class="collapse navbar-collapse " id="myNavbar">
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li><a href="#" onclick="setiFrame('myprofile')" style="color: white;">My Profile</a></li>
+        <li><a href="#" onclick="setiFrame('clock-in')" style="color: white;">Clock In</a></li>
+        <li><a href="#" onclick="setiFrame('newcalendar')" style="color: white;">Calendar</a></li>
+        <li><a href="#" onclick="setiFrame('addmovertojob')" style="color: white;">Add Mover</a></li>
+        <li><a href="#" onclick="setiFrame('createinvoice')" style="color: white;">Invoice</a></li>
+        <li><a href="#" onclick="setiFrame('publicsite')" style="color: white;">Public Site</a></li>
+        
+        <li>
+            <a href="https://wa.me/13183324696" target="_blank" style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 14px; padding-top: 10px; padding-bottom: 5px; color: white;">
+                <span style="font-size: 12px; margin-bottom: 3px;">Whatsapp John</span>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="Whatsapp" style="width: 20px; height: 20px;">
+            </a>
+        </li>
+
+      </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li class="active">
-          <a href="#"><span onclick="setiFrame('empty')">Home</span></a>
-        </li>
-        <li class="dropdown">
-          <a class="dropdown-toggle" data-toggle="dropdown" href="#">Home Stagers<span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
-            <li>
-              <a href="#">
-                <span onclick="setiFrame('calendar')">Calendar</span>
-              </a>
-            </li>
-            <li>
-              <a href="#"></a>
-            </li>
-            <li>
-              <a href="#"></a>
-            </li>
-          </ul>
-        <li class="dropdown">
-          <a class="dropdown-toggle" data-toggle="dropdown" href="#">Movers<span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
-            <li>
-              <a href="#"><span onclick="setiFrame('addmovertojob')">Add Mover to Job</span></a>
-            </li>
-            <li>
-             <a href="#"><span onclick="setiFrame('calendar')">Calendar</span></a>
-            <li>
-              <a href="#"><span onclick="setiFrame('clock-in')">Clock In</span></a>
-            </li>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a class="dropdown-toggle" data-toggle="dropdown" href="#">Finance<span class="caret"></span>
-          </a>
-             <ul class="dropdown-menu">
-                  <li>
-                    <a href="#"><span onclick="setiFrame('calendar')">Calendar</span></a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <span onclick="setiFrame('createinvoice')">Create Invoice</span>
-                    </a>
-                  </li>               
-                  <li>
-                    <a href="#">
-                      <span onclick="setiFrame('calendar')">Payroll</span>
-                    </a>
-                  </li>
-             </ul>
-        </li>        
-        <li class="dropdown">
-          <a class="dropdown-toggle" data-toggle="dropdown" href="#">Human Resources<span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
-            <li>
-              <a href="#"><span onclick="setiFrame('myprofile')">My Profile</span></a>
-            </li>
-            <li>
-              <a href="#"><span onclick="setiFrame('jobtimesheets')">Job Timesheets</span></a>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <a href="http://www.metroplexmovingservices.com">Public Site</span></a>
-        </li>
-        <li>
-          <a href="https://wa.me/+12144506606?text=Ay, " target="_blank">WhatsApp John
-            <img src="/Intranet/logo-whatsapp-green-ball.png" alt="Headquarters" style="width: 40px; height: 40px;"></a>
-        </li>
+        <li><a href="#" onclick="Descope.logout()" style="color: white;">Logout</a></li>
       </ul>
     </div>
   </div>
