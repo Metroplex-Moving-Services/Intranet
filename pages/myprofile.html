@@ -1,46 +1,97 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script src="https://unpkg.com/@descope/web-js-sdk@latest/dist/index.umd.js"></script>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    </head>
-    <body>
-        <div id="container" style="padding: 15px;"></div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <link rel="stylesheet" href="../assets/css/mmsstyle.css">
+</head>
+<body class="page-profile">
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            
+            <div class="profile-card">
+                <div class="row">
+                    
+                    <div class="col-md-4 profile-avatar-section">
+                        <div class="avatar-circle">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <div class="profile-name" id="dispName">Loading...</div>
+                        <div class="profile-badge">Active Employee</div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 class="profile-heading">
+                                    Employee Details
+                                </h4>
+                            </div>
+
+                            <div class="col-md-6 detail-row">
+                                <div class="detail-label"><i class="fa fa-envelope"></i> Email Address</div>
+                                <div class="detail-value" id="dispEmail">-</div>
+                            </div>
+
+                            <div class="col-md-6 detail-row">
+                                <div class="detail-label"><i class="fa fa-phone"></i> Phone Number</div>
+                                <div class="detail-value" id="dispPhone">-</div>
+                            </div>
+
+                            <div class="col-md-6 detail-row">
+                                <div class="detail-label"><i class="fa fa-id-card"></i> User Role</div>
+                                <div class="detail-value" id="dispRole">-</div>
+                            </div>
+
+                            <div class="col-md-6 detail-row">
+                                <div class="detail-label"><i class="fa fa-key"></i> System ID</div>
+                                <div class="detail-value" id="dispId" style="font-size: 12px; color: #999;">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
 <script>
+    $(document).ready(function() {
+        try {
+            // Access the 'user' variable from index.html (parent window)
+            var parentUser = window.parent.user;
+            
+            if (parentUser && parentUser.data) {
+                var data = parentUser.data;
+                
+                $("#dispName").text(data.name || "Team Member");
+                $("#dispEmail").text(data.email || "No Email on File");
+                $("#dispPhone").text(data.phone || "No Phone on File");
+                $("#dispRole").text(data.roleNames ? data.roleNames.join(", ") : "Standard User");
+                $("#dispId").text(data.userId || "Unknown");
 
-
-  const sdk = Descope({
-      projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
-      persistTokens: true
-  });
-
-  container = document.getElementById("container");
-
-
-  async function DoIt() {
-
-      user = await sdk.me(localStorage.getItem("DSR"));
-      userName = user.data.name;
-      userRoles = user.data.roleNames;
-      userEmail = user.data.email;
-      userPhone = user.data.phone;
-      userPicture = user.data.picture;
-
-      const roles = userRoles.values();
-
-      // List the Keys
-      let text = "";
-      for (let x of roles) {
-          text += x + " - ";
-      }
-
-      container.innerHTML = "Name: " + userName + "<br>" + "In Roles: " + text + "<br>" + "eMail Address: " + userEmail + "<br>" + "Phone Number: " + userPhone + "<br>" + "Picture: <img src='" + userPicture + "'></img>";
-
-  }
-  DoIt()
+            } else {
+                $("#dispName").text("Session Error");
+                $(".detail-value").text("Please re-login");
+            }
+        } catch (e) {
+            console.error("Could not load user data from parent:", e);
+            $("#dispName").text("Data Error");
+        }
+    });
 </script>
 
-    </body>
+</body>
 </html>
