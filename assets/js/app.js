@@ -1,4 +1,4 @@
-/* =======================================================
+/* ======================================================= 
    app.js
    The Main Controller for the Intranet.
    Handles: Auth, User Session, Navigation (DoIt), and Logout.
