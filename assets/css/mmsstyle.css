@@ -191,3 +191,49 @@ body.page-profile {
     }
 }
 
+/* =========================================
+   TABLET MENU FIX (Force Hamburger up to 991px)
+   ========================================= */
+@media (max-width: 991px) {
+    /* 1. Make the header span the full width */
+    .navbar-header {
+        float: none;
+    }
+    
+    /* 2. Show the Hamburger Button */
+    .navbar-left, .navbar-right {
+        float: none !important;
+    }
+    .navbar-toggle {
+        display: block;
+    }
+    
+    /* 3. Reset the Collapse behavior */
+    .navbar-collapse {
+        border-top: 1px solid transparent;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .navbar-collapse.collapse {
+        display: none !important; /* Force hide */
+    }
+    
+    /* 4. Fix the alignment of the links inside the menu */
+    .navbar-nav {
+        float: none !important;
+        margin-top: 7.5px;
+    }
+    .navbar-nav > li {
+        float: none;
+    }
+    .navbar-nav > li > a {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    
+    /* 5. IMPORTANT: Allow the menu to show when clicked! */
+    .navbar-collapse.collapse.in {
+        display: block !important;
+    }
+}
+
+
