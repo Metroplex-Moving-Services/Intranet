@@ -4,11 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/mmsstyle.css">
+    <style>
+        body { background-color: #fff; text-align: center; padding-top: 50px; }
+        .hero-img { max-width: 80%; height: auto; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); margin: 20px 0; }
+    </style>
 </head>
-<body class="page-splash">
+<body>
 
-    <img id="splashImage" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg" alt="Metroplex Moving Services">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 id="welcome-msg" style="color:#0C419a; font-weight:bold;">Welcome to the Team</h1>
+                <p class="lead">Select a tool from the menu to get started.</p>
+                
+                <img src="../assets/img/logo.png" alt="Metroplex Moving Services" class="hero-img">
+                
+                <hr>
+                <p class="text-muted">
+                    &copy; <span id="year">2025</span> Metroplex Moving Services. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="../assets/js/splash.js"></script>
 
 </body>
 </html>
