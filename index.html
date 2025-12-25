@@ -111,7 +111,7 @@ async function DoIt() {
             theMenuHtml = html;
             document.getElementById('menuContainer').innerHTML = theMenuHtml;
             // Removed manual height setting to let Flexbox handle it
-            MMSiFrame.src = "splash.html";
+            MMSiFrame.src = "pages/splash.html";
         });
 }
 
@@ -128,7 +128,7 @@ function setiFrame(purpose) {
 
     if (purpose == 'newcalendar') {
         // Point to your local file
-        MMSiFrame.src = "calendar.html"; 
+        MMSiFrame.src = "pages/calendar.html"; 
         
         // Hide the loading overlay after a short delay
         setTimeout(function() {
@@ -146,7 +146,7 @@ function setiFrame(purpose) {
             setTimeout(function() {
                 $.LoadingOverlay("hide");}, 1000);
         } else {
-            MMSiFrame.src = "needmoreprivileges.html";
+            MMSiFrame.src = "pages/needmoreprivileges.html";
         }
     }
     if (purpose == 'createinvoice') {
@@ -155,24 +155,24 @@ function setiFrame(purpose) {
             setTimeout(function() {
                 $.LoadingOverlay("hide");}, 1000);
         } else {
-            MMSiFrame.src = "needmoreprivileges.html";
+            MMSiFrame.src = "pages/needmoreprivileges.html";
         }
     }
     if (purpose == 'myprofile') {
         setTimeout(function() {
             $.LoadingOverlay("hide");}, 500);
-        MMSiFrame.src = "myprofile.html";
+        MMSiFrame.src = "pages/myprofile.html";
     }
 
     if (purpose == 'empty') {
         setTimeout(function() {
             $.LoadingOverlay("hide");}, 500);
-        MMSiFrame.src = "splash.html";
+        MMSiFrame.src = "pages/splash.html";
     }
     if (purpose == 'publicsite') {
         setTimeout(function() {
             $.LoadingOverlay("hide");}, 1);
-        MMSiFrame.src = "splash.html";
+        MMSiFrame.src = "pages/splash.html";
     }
     if (purpose == 'clock-in') {
         if (userRole.includes("Hoobastank")) {                
@@ -192,7 +192,7 @@ function setiFrame(purpose) {
                 alert("Geolocation is not supported by this browser.");
             }
         } else {
-            MMSiFrame.src = "needmoreprivileges.html";
+            MMSiFrame.src = "pages/needmoreprivileges.html";
         }
     }
     window.scrollTo({
