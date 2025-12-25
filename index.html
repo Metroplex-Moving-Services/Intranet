@@ -148,6 +148,18 @@ async function successLocation(position) {
 }
 
 function error() {}
+
+    // Add this function to handle the Logout logic
+async function handleLogout() {
+    try {
+        await sdk.logout(); // Kill the session on the server
+        localStorage.removeItem("DSR"); // Clear any local keys
+        window.location.href = "login.html"; // Send them away
+    } catch (err) {
+        console.error("Logout failed", err);
+        window.location.href = "login.html"; // Send them away anyway
+    }
+}
 </script>
 
 </body>
