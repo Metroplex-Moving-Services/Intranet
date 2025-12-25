@@ -195,12 +195,10 @@ body.page-profile {
    TABLET MENU FIX (Force Hamburger up to 991px)
    ========================================= */
 @media (max-width: 991px) {
-    /* 1. Make the header span the full width */
+    /* 1. Reset Header & Toggles */
     .navbar-header {
         float: none;
     }
-    
-    /* 2. Show the Hamburger Button */
     .navbar-left, .navbar-right {
         float: none !important;
     }
@@ -208,16 +206,22 @@ body.page-profile {
         display: block;
     }
     
-    /* 3. Reset the Collapse behavior */
+    /* 2. Reset Collapse Behavior */
     .navbar-collapse {
         border-top: 1px solid transparent;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
     .navbar-collapse.collapse {
-        display: none !important; /* Force hide */
+        display: none !important;
     }
     
-    /* 4. Fix the alignment of the links inside the menu */
+    /* 3. Allow menu to show when opened */
+    .navbar-collapse.collapse.in {
+        display: block !important;
+        overflow-y: auto; /* Adds scroll if menu is too tall */
+    }
+
+    /* 4. Reset Nav Links */
     .navbar-nav {
         float: none !important;
         margin-top: 7.5px;
@@ -229,11 +233,22 @@ body.page-profile {
         padding-top: 10px;
         padding-bottom: 10px;
     }
+
+    /* 5. FIX DROPDOWNS (The "Right Side Block" Fix) */
+    /* Forces dropdowns to stack vertically inline */
+    .navbar-nav .open .dropdown-menu {
+        position: static;      /* Stop floating! */
+        float: none;
+        width: auto;
+        margin-top: 0;
+        background-color: transparent;
+        border: 0;
+        box-shadow: none;
+    }
     
-    /* 5. IMPORTANT: Allow the menu to show when clicked! */
-    .navbar-collapse.collapse.in {
-        display: block !important;
+    /* Indent sub-items so they look like a nested list */
+    .navbar-nav .open .dropdown-menu > li > a {
+        padding: 5px 15px 5px 35px; /* Extra left padding */
+        line-height: 20px;
     }
 }
-
-
