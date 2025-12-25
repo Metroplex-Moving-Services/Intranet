@@ -7,44 +7,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/mmsstyle.css">
     
-   <style>
-        /* 1. Allow scrolling if content is too tall */
-        html, body {
-            height: 100%;
-            margin: 0;
-            overflow-y: auto; /* CHANGED: Allow vertical scrolling */
-        }
-
-        /* 2. Flex Column Layout */
-        body {
-            display: flex;
-            flex-direction: column;
-            background-color: #fff;
-            text-align: center;
-        }
-
-        /* 3. Content Wrapper */
-        .content-wrapper {
-            flex: 1; 
-            display: flex;
-            align-items: flex-start; /* Keep image near top */
-            justify-content: center;
-            padding-top: 20px; /* Reduced slightly to save space */
-            padding-left: 15px;
-            padding-right: 15px;
-        }
-
-        /* 4. Responsive Image */
-        .hero-img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            /* Use a relative height so it scales with the phone screen */
-            max-height: 55vh; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        /* 5. Footer */<style>
+    <style>
         /* 1. Freeze scrolling - Everything MUST fit on one screen */
         html, body {
             height: 100%;
@@ -97,13 +60,6 @@
             padding-top: 5px;
             background-color: #fff;
             flex-shrink: 0; /* Never let the footer shrink/disappear */
-        }
-    </style>
-        .footer-section {
-            width: 100%;
-            padding-bottom: 15px;
-            padding-top: 10px;
-            background-color: #fff; /* Ensure it covers anything behind it */
         }
     </style>
 </head>
