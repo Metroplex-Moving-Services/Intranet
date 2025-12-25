@@ -4,49 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
-    <style>
-        /* 1. Ensure the body fills the iframe */
-        html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* No scrollbars */
-        }
-
-        /* 2. Flexbox for Positioning */
-        body {
-            display: flex;
-            
-            /* Center Horizontally (Left/Right) */
-            justify-content: center; 
-            
-            /* Align to Top (Up/Down) */
-            align-items: flex-start; 
-            
-            /* Add space so it isn't touching the menu */
-            padding-top: 50px;       
-            
-            /* Ensures padding doesn't create a scrollbar */
-            box-sizing: border-box;  
-        }
-
-        /* 3. Responsive Image Styling */
-        #splashImage {
-            max-width: 90%;   /* Never wider than screen */
-            max-height: 80vh; /* Never taller than screen */
-            
-            width: auto;      /* Keep aspect ratio */
-            height: auto;     /* Keep aspect ratio */
-            
-            object-fit: contain;
-            display: block;   /* Fixes occasional inline-block spacing issues */
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/mmsstyle.css">
 </head>
-<body>
+<body class="page-splash">
 
-    <img id="splashImage" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg" alt="Metroplex Moving Services">
+    <img id="splashImage" src="../assets/img/logo.png" alt="Metroplex Moving Services">
 
 </body>
 </html>

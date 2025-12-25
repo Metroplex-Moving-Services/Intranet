@@ -4,58 +4,16 @@
     <meta charset="UTF-8" />
     <script src="https://unpkg.com/@descope/web-js-sdk@1.12.1/dist/index.umd.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
-    <style>
-        /* 1. Flexbox Layout: Fixes height issues automatically */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Prevents double scrollbars */
-            display: flex;    /* Enables Flexbox */
-            flex-direction: column; /* Stack items vertically */
-        }
-        
-        /* 2. Top Header Area (Greeting + Menu) */
-        #topHeader {
-            flex: 0 0 auto; /* Only take the space it needs */
-            width: 100%;
-        }
-
-        /* 3. The Greeting Style */
-        #welcome-msg {
-            text-align: right;
-            padding: 5px 15px;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 14px;
-            color: #0C419a; /* Your Brand Blue */
-            font-weight: bold;
-            background-color: #f9f9f9;
-            border-bottom: 1px solid #ddd;
-        }
-
-        /* 4. Iframe Wrapper: Fills ALL remaining space */
-        .h_iframe {
-            flex: 1; /* Grow to fill the rest of the screen */
-            display: block;
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-        }
-        
-        #MMSiFrame {
-            width: 100%;
-            height: 100%; /* Fill the wrapper completely */
-            border: none;
-            display: block;
-        }
-    </style>
+    
+    <link rel="stylesheet" href="assets/css/mmsstyle.css">
 </head>
 
-<body>
+<body class="page-index">
 
 <div id="topHeader">
     <div id="welcome-msg"></div> <p id="menuContainer"></p>
@@ -87,106 +45,89 @@ if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))) {
 }
 
 async function DoIt() {
-    window.scrollTo({
-         top: 0,
-         left: 0,
-         behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     $("#container").width('100%');
     
-    // 1. Get User Details
     user = await sdk.me(localStorage.getItem("DSR"));
     userId = user.data.name;
     userRole = user.data.roleNames;
 
-    // 2. Set the Greeting
-    // Checks if userId exists, otherwise defaults to "Team Member"
+    // Set Greeting
     var displayName = userId || "Team Member";
     document.getElementById("welcome-msg").innerText = "👋 Hello, " + displayName;
 
     fetch('themenu.html')
         .then(response => response.text())
         .then(html => {
-            // Insert the HTML into an element
             theMenuHtml = html;
             document.getElementById('menuContainer').innerHTML = theMenuHtml;
-            // Removed manual height setting to let Flexbox handle it
+            
+            // UPDATED PATH: Pointing to pages folder
             MMSiFrame.src = "pages/splash.html";
         });
 }
 
 function setiFrame(purpose) {
-
     $.LoadingOverlay("show", {
         imageColor: "#0C419a",
         imageAnimation: "8000ms pulse"
     });
     
+    // Refresh the menu HTML just in case
     menuContainer.innerHTML = theMenuHtml;
-
     MMSiFrame.removeAttribute("src");
 
+    // --- UPDATED PATHS FOR PAGES FOLDER ---
+
     if (purpose == 'newcalendar') {
-        // Point to your local file
         MMSiFrame.src = "pages/calendar.html"; 
-        
-        // Hide the loading overlay after a short delay
-        setTimeout(function() {
-            $.LoadingOverlay("hide");
-        }, 1000); 
+        setTimeout(function() { $.LoadingOverlay("hide"); }, 1000); 
     }
+    
     if (purpose == 'calendar') {
+        // External Zoho link remains the same
         MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
-        setTimeout(function() {
-            $.LoadingOverlay("hide");}, 2000);
+        setTimeout(function() { $.LoadingOverlay("hide"); }, 2000);
     }
+    
     if (purpose == 'addmovertojob') {
         if (userRole.includes("Hoobastank")) {
             MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Add_Mover_To_Job/K94Pj9Q02ZQxseasgKf3RRvjqk8A5rC6CREEXtMW14vx3rhJx78x8JFxuke5XTgv1RDEjXm5Qv9AY9bD0rCC6wdAfvhnRTH4GVF4";
-            setTimeout(function() {
-                $.LoadingOverlay("hide");}, 1000);
+            setTimeout(function() { $.LoadingOverlay("hide"); }, 1000);
         } else {
             MMSiFrame.src = "pages/needmoreprivileges.html";
         }
     }
+    
     if (purpose == 'createinvoice') {
         if (userRole.includes("Phish")) {
             MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
-            setTimeout(function() {
-                $.LoadingOverlay("hide");}, 1000);
+            setTimeout(function() { $.LoadingOverlay("hide"); }, 1000);
         } else {
             MMSiFrame.src = "pages/needmoreprivileges.html";
         }
     }
+    
     if (purpose == 'myprofile') {
-        setTimeout(function() {
-            $.LoadingOverlay("hide");}, 500);
+        setTimeout(function() { $.LoadingOverlay("hide"); }, 500);
         MMSiFrame.src = "pages/myprofile.html";
     }
 
     if (purpose == 'empty') {
-        setTimeout(function() {
-            $.LoadingOverlay("hide");}, 500);
+        setTimeout(function() { $.LoadingOverlay("hide"); }, 500);
         MMSiFrame.src = "pages/splash.html";
     }
+    
     if (purpose == 'publicsite') {
-        setTimeout(function() {
-            $.LoadingOverlay("hide");}, 1);
+        setTimeout(function() { $.LoadingOverlay("hide"); }, 1);
         MMSiFrame.src = "pages/splash.html";
     }
+
     if (purpose == 'clock-in') {
         if (userRole.includes("Hoobastank")) {                
-
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            };
-
+            const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
             if (navigator.geolocation) {
-                setTimeout(function() {
-                    $.LoadingOverlay("hide");
-                }, 3000);
+                setTimeout(function() { $.LoadingOverlay("hide"); }, 3000);
                 none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
             } else {
                 alert("Geolocation is not supported by this browser.");
@@ -195,11 +136,8 @@ function setiFrame(purpose) {
             MMSiFrame.src = "pages/needmoreprivileges.html";
         }
     }
-    window.scrollTo({
-         top: 0,
-         left: 0,
-         behavior: 'smooth'
-    });
+    
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 }
 
 async function successLocation(position) {

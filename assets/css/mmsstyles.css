@@ -1,0 +1,100 @@
+/* =========================================
+   GLOBAL RESET
+   ========================================= */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+/* =========================================
+   INDEX.HTML (The App Shell)
+   ========================================= */
+/* Only applies if body has class="page-index" */
+body.page-index {
+    overflow: hidden;       /* Prevents double scrollbars */
+    display: flex;          /* Enables Flexbox */
+    flex-direction: column; /* Stack items vertically */
+    background-color: #ffffff;
+}
+
+.page-index #topHeader {
+    flex: 0 0 auto; /* Only take the space it needs */
+    width: 100%;
+}
+
+.page-index #welcome-msg {
+    text-align: right;
+    padding: 5px 15px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    color: #0C419a; /* Brand Blue */
+    font-weight: bold;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.page-index .h_iframe {
+    flex: 1; /* Grow to fill the rest of the screen */
+    display: block;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.page-index #MMSiFrame {
+    width: 100%;
+    height: 100%; /* Fill the wrapper completely */
+    border: none;
+    display: block;
+}
+
+/* =========================================
+   SPLASH.HTML (The Logo Page)
+   ========================================= */
+/* Only applies if body has class="page-splash" */
+body.page-splash {
+    display: flex;
+    justify-content: center; /* Center Horizontally */
+    align-items: flex-start; /* Align Top (for phone layout) */
+    padding-top: 50px;       /* Push down slightly */
+    box-sizing: border-box;
+    overflow: hidden;        /* No scrollbars */
+    background-color: #ffffff;
+}
+
+#splashImage {
+    max-width: 90%;   /* Never wider than screen */
+    max-height: 80vh; /* Never taller than screen */
+    width: auto;      /* Keep aspect ratio */
+    height: auto;     /* Keep aspect ratio */
+    object-fit: contain;
+    display: block;
+}
+
+/* =========================================
+   MENU NAVIGATION (Helpers)
+   ========================================= */
+/* Helper classes for the Whatsapp Stack in themenu.html */
+.nav-whatsapp-link {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 12px !important;
+    padding-top: 12px !important;
+    padding-bottom: 5px !important;
+    color: #333 !important;
+    text-decoration: none;
+}
+
+.nav-whatsapp-text {
+    font-size: 11px;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.nav-whatsapp-icon {
+    width: 20px;
+    height: 20px;
+}
