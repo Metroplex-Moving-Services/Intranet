@@ -1,166 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <script src="https://unpkg.com/@descope/web-js-sdk@1.12.1/dist/index.umd.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metroplex Moving - Intranet</title>
     
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js" integrity="sha256-jLFv9iIrIbqKULHpqp/jmePDqi989pKXOcOht3zgRcw=" crossorigin="anonymous"></script>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/mmsstyle.css">
 </head>
+<body>
 
-<body class="page-index">
+    <div id="loading" style="text-align:center; padding-top:100px;">
+        <h2>Loading Intranet...</h2>
+        <i class="fa fa-spinner fa-spin" style="font-size:48px; color:#0C419a;"></i>
+    </div>
 
-<div id="topHeader">
-    <div id="welcome-msg"></div> <p id="menuContainer"></p>
-</div>
+    <div id="app" style="display:none;">
+        
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#" onclick="DoIt()">
+                        <img src="assets/img/logo.png" alt="MMS" style="height:30px;">
+                    </a>
+                </div>
+                
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="#" onclick="DoIt()"><i class="fa fa-home"></i> Home</a></li>
+                        <li><a href="#" onclick="setIframe('pages/calendar.html')"><i class="fa fa-calendar"></i> Calendar</a></li>
+                        <li><a href="#" onclick="setIframe('pages/myprofile.html')"><i class="fa fa-user"></i> My Profile</a></li>
+                        
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Resources <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" onclick="setIframe('pages/training.html')">Training</a></li>
+                                <li><a href="#" onclick="setIframe('pages/docs.html')">Documents</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="#" onclick="handleLogout()" style="color:#cc0000;"><i class="fa fa-sign-out"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
 
-<div class="h_iframe">
-    <iframe id="MMSiFrame" allowfullscreen></iframe>
-</div>
+        <div id="main-content" class="container-fluid" style="padding:0; margin-top:50px; height:calc(100vh - 50px);">
+            <iframe id="contentFrame" src="" frameborder="0" style="width:100%; height:100%;"></iframe>
+        </div>
+
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
     
-<script>
-var user;
-var userId;
-var userRole;
-var theMenuHtml;
-
-const MMSiFrame = document.getElementById("MMSiFrame");
-
-const sdk = Descope({
-    projectId: "P2qXQxJA4H4hvSu2AnDB5VjKnh1d",
-    persistTokens: true
-});
-
-const sessionToken = sdk.getSessionToken()
-
-if ((sessionToken) && (!sdk.isJwtExpired(sessionToken))) {
-    DoIt()
-} else {
-    window.location.href = "/Intranet/login.html";
-}
-
-async function DoIt() {
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-    $("#container").width('100%');
+    <script src="https://unpkg.com/@descope/web-js-sdk@1.14.0/dist/index.umd.js"></script>
     
-    user = await sdk.me(localStorage.getItem("DSR"));
-    userId = user.data.name;
-    userRole = user.data.roleNames;
-
-    // Set Greeting
-    var displayName = userId || "Team Member";
-    document.getElementById("welcome-msg").innerText = "👋 Hello, " + displayName;
-
-    fetch('themenu.html')
-        .then(response => response.text())
-        .then(html => {
-            theMenuHtml = html;
-            document.getElementById('menuContainer').innerHTML = theMenuHtml;
-            
-            // UPDATED PATH: Pointing to pages folder
-            MMSiFrame.src = "pages/splash.html";
-        });
-}
-
-function setiFrame(purpose) {
-    $.LoadingOverlay("show", {
-        imageColor: "#0C419a",
-        imageAnimation: "8000ms pulse"
-    });
-    
-    // Refresh the menu HTML just in case
-    menuContainer.innerHTML = theMenuHtml;
-    MMSiFrame.removeAttribute("src");
-
-    // --- UPDATED PATHS FOR PAGES FOLDER ---
-
-    if (purpose == 'newcalendar') {
-        MMSiFrame.src = "pages/calendar.html"; 
-        setTimeout(function() { $.LoadingOverlay("hide"); }, 1000); 
-    }
-    
-    if (purpose == 'calendar') {
-        // External Zoho link remains the same
-        MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/report-embed/Current_Bookings/UVe6stDyTr0Ofd0v8d5YJhGDph0pBaGuBxAAXgnZSMXh6ZgYNTH7aQmQB3UR8G9hxwQ9w9wdeddG74rrA8H7V7TeWWVQtHP9jVzE";
-        setTimeout(function() { $.LoadingOverlay("hide"); }, 2000);
-    }
-    
-    if (purpose == 'addmovertojob') {
-        if (userRole.includes("Hoobastank")) {
-            MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Add_Mover_To_Job/K94Pj9Q02ZQxseasgKf3RRvjqk8A5rC6CREEXtMW14vx3rhJx78x8JFxuke5XTgv1RDEjXm5Qv9AY9bD0rCC6wdAfvhnRTH4GVF4";
-            setTimeout(function() { $.LoadingOverlay("hide"); }, 1000);
-        } else {
-            MMSiFrame.src = "pages/needmoreprivileges.html";
-        }
-    }
-    
-    if (purpose == 'createinvoice') {
-        if (userRole.includes("Phish")) {
-            MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Create_Stripe_Invoice1/msx9v92BZjs4KNG3QyNAPQSQxY3uOyVaCQMtSOj942pEHzSBhaUmmwvfeDpNPttGEsh3mXGJRvwh55p5Us4hTfbbabw8hZ4ZVG95";
-            setTimeout(function() { $.LoadingOverlay("hide"); }, 1000);
-        } else {
-            MMSiFrame.src = "pages/needmoreprivileges.html";
-        }
-    }
-    
-    if (purpose == 'myprofile') {
-        setTimeout(function() { $.LoadingOverlay("hide"); }, 500);
-        MMSiFrame.src = "pages/myprofile.html";
-    }
-
-    if (purpose == 'empty') {
-        setTimeout(function() { $.LoadingOverlay("hide"); }, 500);
-        MMSiFrame.src = "pages/splash.html";
-    }
-    
-    if (purpose == 'publicsite') {
-        setTimeout(function() { $.LoadingOverlay("hide"); }, 1);
-        MMSiFrame.src = '<img id="splashImage" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg" alt="Metroplex Moving Services">';
-    }
-
-    if (purpose == 'clock-in') {
-        if (userRole.includes("Hoobastank")) {                
-            const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
-            if (navigator.geolocation) {
-                setTimeout(function() { $.LoadingOverlay("hide"); }, 3000);
-                none = navigator.geolocation.getCurrentPosition(successLocation, error, options);
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        } else {
-            MMSiFrame.src = "pages/needmoreprivileges.html";
-        }
-    }
-    
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-}
-
-async function successLocation(position) {
-    let response = await fetch('https://api.ipify.org/?format=json');
-    let data = await response.text();
-    const obj = JSON.parse(data);
-    MMSiFrame.src = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/CheckIn/8O7e3kdZNJF99mA14Gm2EgTfT5DX5YWVfr3jHy451sYFaxAdUDaudFwN86ub4fTN4qxrZHU9Ez1V5Om5zzGwq57Fs0RA9Mv8Db8j?CapturedIPAddress=" + obj.ip + "&Mover_Coordinates=" + position.coords.latitude + ", " + position.coords.longitude;
-}
-
-function error() {}
-
-    // Add this function to handle the Logout logic
-async function handleLogout() {
-    try {
-        await sdk.logout(); // Kill the session on the server
-        localStorage.removeItem("DSR"); // Clear any local keys
-        window.location.href = "login.html"; // Send them away
-    } catch (err) {
-        console.error("Logout failed", err);
-        window.location.href = "login.html"; // Send them away anyway
-    }
-}
-</script>
+    <script src="assets/js/app.js"></script>
 
 </body>
 </html>
