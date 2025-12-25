@@ -19,7 +19,7 @@ function loadLoginWidget() {
 
     // 2. Set the configuration attributes
     wc.setAttribute('project-id', PROJECT_ID);
-    wc.setAttribute('flow-id', "sign-up-or-in"); // The name of your flow
+    wc.setAttribute('flow-id', "sign-in"); // The name of your flow
     wc.setAttribute('theme', "light");
 
     // 3. Add Event Listeners for Success/Error
