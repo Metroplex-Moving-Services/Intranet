@@ -32,25 +32,24 @@
             padding-top: 20px; /* Space below the menu */
             padding-left: 15px;
             padding-right: 15px;
-            overflow: hidden; /* Ensure image doesn't spill out */
+            overflow: hidden; 
         }
 
-        /* 4. THE FIX: Calculated Image Height */
+        /* 4. THE FIX: Aggressive Math Calculation */
         .hero-img {
             max-width: 100%;
             width: auto;
             border-radius: 4px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             
-            /* MATH EXPLAINED:
-               100vh (Total Screen) 
-               - 20px (Top Padding) 
-               - 80px (Footer Height estimate) 
-               - 20px (Safety Buffer)
-               = The image will NEVER push the footer off-screen.
+            /* UPDATED MATH:
+               We are now subtracting 180px instead of 120px.
+               This forces the image to be shorter, guaranteeing
+               the footer has enough room on small phones.
             */
-            max-height: calc(100vh - 120px); 
-            object-fit: contain; /* Keeps the image from stretching weirdly */
+            max-height: calc(100vh - 180px); 
+            
+            object-fit: contain; 
         }
 
         /* 5. Footer */
