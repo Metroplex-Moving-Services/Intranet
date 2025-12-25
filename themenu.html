@@ -3,44 +3,61 @@
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
         <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
+        <span class="icon-bar" style="background-color: #0c419a"></span>
+        <span class="icon-bar" style="background-color: #0c419a"></span>
+        <span class="icon-bar" style="background-color: #0c419a"></span>
       </button>
-      <a class="navbar-brand" href="#" onclick="setiFrame('empty')" style="color: #31708f; font-weight: bold;">MMS Intranet</a>
+      <a class="navbar-brand" href="#" onclick="setiFrame('empty')" style="color: #31708f; font-weight: bold;">MMS INTRANET</a>
     </div>
 
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav">
-        <li><a href="#" onclick="setiFrame('myprofile')" style="color: #333;">My Profile</a></li>
-        <li><a href="#" onclick="setiFrame('newcalendar')" style="color: #333;">Calendar</a></li>
+      <ul class="nav navbar-nav navbar-right">
         
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #333;">Movers <span class="caret"></span></a>
-          <ul class="dropdown-menu">
-            <li><a href="#" onclick="setiFrame('clock-in')">Clock In</a></li>
-            <li><a href="#" onclick="setiFrame('addmovertojob')">Add Mover to Job</a></li>
-          </ul>
-        </li>
+        <li><a href="#" onclick="setiFrame('empty')" style="color: #333;">Home</a></li>
 
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #333;">Home Stagers <span class="caret"></span></a>
           <ul class="dropdown-menu">
-            <li><a href="#" onclick="setiFrame('createinvoice')">Create Invoice</a></li>
+            <li><a href="#" onclick="setiFrame('newcalendar')">Calendar</a></li>
           </ul>
         </li>
 
-        <li><a href="#" onclick="setiFrame('publicsite')" style="color: #333;">Public Site</a></li>
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #333;">Movers <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href="#" onclick="setiFrame('addmovertojob')">Add Mover to Job</a></li>
+              <li><a href="#" onclick="setiFrame('calendar')">Calendar (Old)</a></li>
+              <li><a href="#" onclick="setiFrame('clock-in')">Clock In</a></li>
+            </ul>
+        </li>
+
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #333;">Finance <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+                <li><a href="#" onclick="setiFrame('calendar')">Calendar</a></li>
+                <li><a href="#" onclick="setiFrame('createinvoice')">Create Invoice</a></li>
+                <li><a href="#" onclick="setiFrame('calendar')">Payroll</a></li>
+            </ul>
+        </li>
+
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #333;">Human Resources <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+                <li><a href="#" onclick="setiFrame('myprofile')">My Profile</a></li>
+                <li><a href="#" onclick="setiFrame('jobtimesheets')">Job Timesheets</a></li>
+            </ul>
+        </li>
+
+        <li><a href="http://www.metroplexmovingservices.com" target="_blank" style="color: #333;">Public Site</a></li>
         
         <li>
             <a href="https://wa.me/13183324696" target="_blank" class="nav-whatsapp-link">
                 <span class="nav-whatsapp-text">Whatsapp John</span>
-                <img src="assets/img/logo-whatsapp-green-ball.png" alt="Whatsapp" class="nav-whatsapp-icon">
+                <img src="assets/img/logo.png" alt="Whatsapp" class="nav-whatsapp-icon">
             </a>
         </li>
 
-      </ul>
-      <ul class="nav navbar-nav navbar-right">
         <li><a href="#" onclick="Descope.logout()" style="color: #cc0000;">Logout</a></li>
+
       </ul>
     </div></div></nav>
