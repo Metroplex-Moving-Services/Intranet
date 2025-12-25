@@ -19,30 +19,36 @@ async function initApp() {
     
     if (sessionToken) {
         try {
-            // Fetch User
+            // 1. Fetch User Data
             const user = await window.sdk.me();
             window.user = user; 
             
-            // --- CRITICAL: Map Descope Roles to your global variable ---
-            // This ensures userRole.includes("Hoobastank") works in setiFrame
-            window.userRole = (user.data && user.data.roleNames) || user.roleNames || [];
+            // 2. Load Roles (Robust Check)
+            window.userRole = (user.data && user.data.roleNames) || user.roleNames || []; 
             console.log("User Roles loaded:", window.userRole);
 
-           if (user.data.name) {
-             const firstName = user.data.name; // Or split(" ")[0] for just first name
-             $("#welcome-msg").text("Welcome, " + firstName);
-             $("#welcome-msg").show(); // Make it visible now that we have the name
+            // 3. Set Welcome Message
+            if (user.data.name) {
+                // Use .split(" ")[0] if you only want the first name
+                const firstName = user.data.name; 
+                $("#welcome-msg").text("Welcome, " + firstName);
+                $("#welcome-msg").show();
             }
 
-            // UI Reset
+            // 4. Show the App
             $("#loading").hide();
             $("#app").show();
 
-            // Load Homepage if empty
-            const iframe = document.getElementById("contentFrame");
-            if (iframe && !iframe.src) {
-                setiFrame('empty'); // Use your function to load home
-            }
+            // --- THE FIX ---
+            // Previously, we checked 'if (!iframe.src)'. That check was failing.
+            // Now, we FORCE the Home/Splash page to load every time the app starts.
+            console.log("Forcing Home Page Load...");
+            
+            // We use a tiny delay (100ms) to ensure the iframe is visible 
+            // before we try to load the image into it.
+            setTimeout(() => {
+                setiFrame('empty');
+            }, 100);
 
         } catch (err) {
             console.error("Session invalid:", err);
