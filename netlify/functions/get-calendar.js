@@ -1,13 +1,7 @@
-const fetch = require('node-fetch');
-
-// --- ROBUST IMPORT LOGIC ---
-const descopePkg = require('@descope/node-sdk');
-// Try to grab the client from standard locations:
-const DescopeClient = descopePkg.default || descopePkg.DescopeClient || descopePkg;
-
 exports.handler = async function(event, context) {
   
-  // 1. DEFINE HEADERS FIRST (So they are available for EVERY return statement)
+  // 1. DEFINE HEADERS IMMEDIATELY
+  // This ensures that no matter what breaks, we can always return these headers.
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Requested-With",
@@ -21,7 +15,16 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    console.log("Function started. Method:", event.httpMethod);
+    // --- LOAD LIBRARIES SAFELY ---
+    // We require them INSIDE the handler. If they are missing, it triggers the 'catch' block below
+    // instead of crashing the whole server silently.
+    const fetch = require('node-fetch');
+    const descopePkg = require('@descope/node-sdk');
+    
+    // Attempt to find the correct client constructor
+    const DescopeClient = descopePkg.default || descopePkg.DescopeClient || descopePkg;
+
+    console.log("Libraries loaded. Method:", event.httpMethod);
 
     // --- SECURITY GATEWAY START ---
     const authHeader = event.headers['authorization'] || event.headers['Authorization'];
@@ -32,7 +35,7 @@ exports.handler = async function(event, context) {
 
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
-    // INITIALIZATION FIX (Wrapped in Try/Catch to prevent crashes)
+    // Initialize Descope
     let descopeClient;
     try {
         if (typeof DescopeClient === 'function') {
@@ -42,12 +45,11 @@ exports.handler = async function(event, context) {
                  descopeClient = new DescopeClient({ projectId: process.env.DESCOPE_PROJECT_ID });
              }
         } else {
-             throw new Error("Descope Library failed to load. Import type was: " + typeof DescopeClient);
+             throw new Error("Descope Library imported but is not a function/class. Type: " + typeof DescopeClient);
         }
     } catch (initErr) {
         console.error("Descope Init Error:", initErr);
-        // RETURN 500 WITH HEADERS so you see the real error, not CORS error
-        return { statusCode: 500, headers: headers, body: JSON.stringify({ error: "Security Library Error", details: initErr.message }) };
+        return { statusCode: 500, headers: headers, body: JSON.stringify({ error: "Security Library Init Failed", details: initErr.message }) };
     }
 
     // Validate Token
@@ -67,7 +69,6 @@ exports.handler = async function(event, context) {
     
     const OWNER_NAME = "information152"; 
     const APP_LINK_NAME = "household-goods-moving-services";
-    // Ensure this matches your specific report name
     const REPORT_LINK_NAME = "Current_Bookings"; 
 
     // 4. GET ACCESS TOKEN
@@ -104,11 +105,15 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error("Critical Function Error:", error);
-    // RETURN 500 WITH HEADERS so you see the real error
+    // CRITICAL: We return the headers here so the browser sees the real error message
     return {
       statusCode: 500,
       headers: headers,
-      body: JSON.stringify({ error: "Internal Server Error", details: error.message })
+      body: JSON.stringify({ 
+          error: "Internal Server Error", 
+          details: error.message,
+          hint: "Check if dependencies are installed in package.json"
+      })
     };
   }
 };
