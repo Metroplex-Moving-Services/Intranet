@@ -174,27 +174,50 @@ function handleLogout() {
 }
 
 // 5. Geolocation Helpers (You need these for Clock-In to work!)
-function successLocation(pos) {
-    const crd = pos.coords;
-    console.log('Your current position is:');
-    console.log(`Latitude : ${crd.latitude}`);
-    console.log(`Longitude: ${crd.longitude}`);
+/* =======================================================
+   GEOLOCATION LOGIC (Clock-In)
+   ======================================================= */
+
+async function successLocation(position) {
+    console.log("Location found. Fetching IP and loading Zoho...");
     
-    // Redirect to the Zoho Clock-In form WITH coordinates
-    // I am assuming a standard Zoho URL pattern here. 
-    // You might need to update this URL to your specific Clock In Form.
-    const baseUrl = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/Clock_In/ODk...??"; 
-    
-    // If you don't have the specific URL handy, we just load the page:
-    const iframe = document.getElementById("contentFrame");
-    // iframe.src = `pages/clock-in.html?lat=${crd.latitude}&lon=${crd.longitude}`; 
-    // Reverting to basic behavior until you provide the Clock-In URL logic:
-    alert(`Clock In Location Found: ${crd.latitude}, ${crd.longitude}. \n(Update app.js with the real Zoho URL)`);
+    // 1. Define the iframe (Crucial step!)
+    const MMSiFrame = document.getElementById("contentFrame");
+    if (!MMSiFrame) return;
+
+    try {
+        // 2. Fetch the User's IP Address
+        let response = await fetch('https://api.ipify.org/?format=json');
+        let data = await response.text(); // or response.json()
+        const obj = JSON.parse(data);
+        
+        // 3. Construct the Zoho URL with IP and Coordinates
+        const zohoUrl = "https://creatorapp.zohopublic.com/information152/household-goods-moving-services/form-embed/CheckIn/8O7e3kdZNJF99mA14Gm2EgTfT5DX5YWVfr3jHy451sYFaxAdUDaudFwN86ub4fTN4qxrZHU9Ez1V5Om5zzGwq57Fs0RA9Mv8Db8j";
+        
+        // Add Query Parameters
+        const fullUrl = zohoUrl + 
+            "?CapturedIPAddress=" + obj.ip + 
+            "&Mover_Coordinates=" + position.coords.latitude + ", " + position.coords.longitude;
+
+        console.log("Loading Clock-In Form...");
+
+        // 4. Load the page
+        MMSiFrame.src = fullUrl;
+        
+        // Hide loader just in case it's still spinning
+        hideLoader(1000);
+
+    } catch (err) {
+        console.error("Error fetching IP or loading frame:", err);
+        alert("Could not load Clock-In. Network error.");
+        hideLoader(0);
+    }
 }
 
 function errorLocation(err) {
     console.warn(`ERROR(${err.code}): ${err.message}`);
-    alert("Could not get location. Clock-in failed.");
+    alert("Location access denied. You must allow location to Clock In.");
+    hideLoader(0);
 }
 
 // Run Startup
