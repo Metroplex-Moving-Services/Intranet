@@ -25,7 +25,7 @@ async function initApp() {
             
             // --- CRITICAL: Map Descope Roles to your global variable ---
             // This ensures userRole.includes("Hoobastank") works in setiFrame
-            window.userRole = user.roleNames || []; 
+            window.userRole = (user.data && user.data.roleNames) || user.roleNames || [];
             console.log("User Roles loaded:", window.userRole);
 
             // UI Reset
