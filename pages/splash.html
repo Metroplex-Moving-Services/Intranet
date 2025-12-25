@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/mmsstyle.css">
     
-    <style>
-        /* 1. Full Height Setup */
+   <style>
+        /* 1. Allow scrolling if content is too tall */
         html, body {
             height: 100%;
             margin: 0;
-            overflow: hidden; /* Optional: Try to prevent scrolling if content fits */
+            overflow-y: auto; /* CHANGED: Allow vertical scrolling */
         }
 
         /* 2. Flex Column Layout */
@@ -23,34 +23,33 @@
             text-align: center;
         }
 
-        /* 3. Content Wrapper - ADJUSTED */
+        /* 3. Content Wrapper */
         .content-wrapper {
             flex: 1; 
             display: flex;
-            /* CHANGED: Align to top (flex-start) instead of center */
-            align-items: flex-start; 
+            align-items: flex-start; /* Keep image near top */
             justify-content: center;
-            /* CHANGED: Add padding to push it "just a little below the menu" */
-            padding-top: 30px; 
+            padding-top: 20px; /* Reduced slightly to save space */
             padding-left: 15px;
             padding-right: 15px;
         }
 
-        /* 4. Responsive Image - ADJUSTED */
+        /* 4. Responsive Image */
         .hero-img {
             max-width: 100%;
             height: auto;
             border-radius: 4px;
-            /* CHANGED: Reduced from 70vh to 60vh to make room for footer on small screens */
-            max-height: 60vh; 
+            /* Use a relative height so it scales with the phone screen */
+            max-height: 55vh; 
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        /* 5. Sticky Footer */
+        /* 5. Footer */
         .footer-section {
             width: 100%;
             padding-bottom: 15px;
             padding-top: 10px;
+            background-color: #fff; /* Ensure it covers anything behind it */
         }
     </style>
 </head>
