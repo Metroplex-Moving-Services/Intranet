@@ -75,28 +75,27 @@ body.page-splash {
 /* =========================================
    MENU NAVIGATION (Helpers)
    ========================================= */
-/* Helper classes for the Whatsapp Stack in themenu.html */
+/* Helper classes for the Whatsapp Link */
 .nav-whatsapp-link {
     display: flex !important;
-    flex-direction: column;
-    align-items: flex-start; /* CHANGED: Aligns items to the left */
-    justify-content: center;
-    line-height: 12px !important;
-    padding-top: 12px !important;
-    padding-bottom: 5px !important;
-    padding-left: 15px !important; /* ADDED: Matches Bootstrap's standard menu padding */
+    flex-direction: row;       /* CHANGED: Side-by-side instead of stacked */
+    align-items: center;       /* Vertically center the text and icon */
+    justify-content: flex-start; /* Align to the left */
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    padding-left: 15px !important; /* Indent to match other menu links */
     color: #333 !important;
     text-decoration: none;
 }
 
 .nav-whatsapp-text {
-    font-size: 11px;
-    margin-bottom: 4px;
+    font-size: 13px;          /* Slightly larger for readability */
+    margin-right: 8px;        /* ADDED: Space between text and icon */
     font-weight: bold;
+    margin-bottom: 0;         /* Removed the bottom margin since it's a row now */
 }
 
 .nav-whatsapp-icon {
     width: 20px;
     height: 20px;
 }
-
