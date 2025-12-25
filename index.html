@@ -8,6 +8,12 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/mmsstyle.css">
+
+    <style>
+        .navbar-custom { background-color: #d9edf7; border-color: #bce8f1; }
+        .navbar-brand-custom { color: #31708f !important; font-weight: bold; }
+        .nav-link-custom { color: #333 !important; }
+    </style>
 </head>
 <body>
 
@@ -18,37 +24,76 @@
 
     <div id="app" style="display:none;">
         
-        <nav class="navbar navbar-default navbar-fixed-top">
+        <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
                         <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
+                        <span class="icon-bar" style="background-color: #0c419a"></span>
+                        <span class="icon-bar" style="background-color: #0c419a"></span>
+                        <span class="icon-bar" style="background-color: #0c419a"></span>
                     </button>
-                    <a class="navbar-brand" href="#" onclick="DoIt()">
-                        <img src="assets/img/logo.png" alt="MMS" style="height:30px;">
+                    <a class="navbar-brand navbar-brand-custom" href="#" onclick="setiFrame('empty')">
+                        MMS INTRANET
                     </a>
                 </div>
                 
                 <div id="navbar" class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <li><a href="#" onclick="DoIt()"><i class="fa fa-home"></i> Home</a></li>
-                        <li><a href="#" onclick="setIframe('pages/calendar.html')"><i class="fa fa-calendar"></i> Calendar</a></li>
-                        <li><a href="#" onclick="setIframe('pages/myprofile.html')"><i class="fa fa-user"></i> My Profile</a></li>
+                    <ul class="nav navbar-nav navbar-right">
                         
+                        <li><a href="#" onclick="setiFrame('empty')" class="nav-link-custom">Home</a></li>
+
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Resources <span class="caret"></span></a>
+                            <a href="#" class="dropdown-toggle nav-link-custom" data-toggle="dropdown">
+                                Home Stagers <span class="caret"></span>
+                            </a>
                             <ul class="dropdown-menu">
-                                <li><a href="#" onclick="setIframe('pages/training.html')">Training</a></li>
-                                <li><a href="#" onclick="setIframe('pages/docs.html')">Documents</a></li>
+                                <li><a href="#" onclick="setiFrame('newcalendar')">Calendar</a></li>
                             </ul>
                         </li>
-                    </ul>
-                    
-                    <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#" onclick="handleLogout()" style="color:#cc0000;"><i class="fa fa-sign-out"></i> Logout</a></li>
+
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle nav-link-custom" data-toggle="dropdown">
+                                Movers <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" onclick="setiFrame('addmovertojob')">Add Mover to Job</a></li>
+                                <li><a href="#" onclick="setiFrame('calendar')">Calendar (Old)</a></li>
+                                <li><a href="#" onclick="setiFrame('clock-in')">Clock In</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle nav-link-custom" data-toggle="dropdown">
+                                Finance <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" onclick="setiFrame('calendar')">Calendar</a></li>
+                                <li><a href="#" onclick="setiFrame('createinvoice')">Create Invoice</a></li>
+                                <li><a href="#" onclick="setiFrame('calendar')">Payroll</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle nav-link-custom" data-toggle="dropdown">
+                                Human Resources <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" onclick="setiFrame('myprofile')">My Profile</a></li>
+                                <li><a href="#" onclick="setiFrame('jobtimesheets')">Job Timesheets</a></li>
+                            </ul>
+                        </li>
+
+                        <li><a href="http://www.metroplexmovingservices.com" target="_blank" class="nav-link-custom">Public Site</a></li>
+                        
+                        <li>
+                            <a href="https://wa.me/13183324696" target="_blank">
+                                <span class="nav-whatsapp-text">Whatsapp John</span>
+                                <img src="assets/img/logo.png" alt="Whatsapp" style="height:20px;">
+                            </a>
+                        </li>
+
+                        <li><a href="#" onclick="handleLogout()" style="color: #cc0000;">Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -63,8 +108,9 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
     
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+
     <script src="https://unpkg.com/@descope/web-js-sdk@1.14.0/dist/index.umd.js"></script>
-    
     <script src="assets/js/app.js"></script>
 
 </body>
