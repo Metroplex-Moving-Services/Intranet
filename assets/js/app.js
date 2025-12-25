@@ -28,6 +28,12 @@ async function initApp() {
             window.userRole = (user.data && user.data.roleNames) || user.roleNames || [];
             console.log("User Roles loaded:", window.userRole);
 
+           if (user.data.name) {
+             const firstName = user.data.name; // Or split(" ")[0] for just first name
+             $("#welcome-msg").text("Welcome, " + firstName);
+             $("#welcome-msg").show(); // Make it visible now that we have the name
+            }
+
             // UI Reset
             $("#loading").hide();
             $("#app").show();
