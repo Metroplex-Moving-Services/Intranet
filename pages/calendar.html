@@ -57,6 +57,27 @@
             }
 
         }
+        /* 1. MAKE THE POPUP WIDER */
+    .modal-dialog {
+        width: 95% !important; /* Forces it to use almost full screen width */
+        max-width: 800px;      /* Optional: Stops it from getting too huge on big desktops */
+        margin: 10px auto;     /* Reduces top/bottom margins */
+    }
+
+    /* 2. REDUCE INTERNAL PADDING (The "Margins" inside the box) */
+    .modal-body {
+        padding: 5px 10px !important; /* Top/Bottom: 5px, Left/Right: 10px */
+    }
+
+    .modal-header, .modal-footer {
+        padding: 10px !important; /* Shrink header/footer height */
+    }
+
+    /* 3. OPTIONAL: Fix scrolling for long content */
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
     </style>
 </head>
 <body>
