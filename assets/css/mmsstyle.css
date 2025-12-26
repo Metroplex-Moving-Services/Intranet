@@ -17,15 +17,13 @@ body.page-index {
     flex-direction: column; 
     background-color: #ffffff;
     width: 100%;
-    /* Removed position:fixed to allow mobile browsers to handle address bars better, 
-       but kept overflow hidden to act as an app shell */
 }
 
 .page-index #topHeader { 
     flex: 0 0 auto; 
     width: 100%; 
     z-index: 1001;
-    position: relative; /* Ensures it sits on top of content */
+    position: relative; 
 }
 
 .page-index #welcome-msg {
@@ -44,7 +42,6 @@ body.page-index {
     position: relative;
     width: 100%;
     overflow: hidden; 
-    /* No extra padding needed here because we removed navbar-fixed-top in HTML */
 }
 
 .page-index #contentFrame {
@@ -55,7 +52,6 @@ body.page-index {
     overflow: hidden; 
 }
 
-/* New Global Footer Style */
 #global-footer {
     flex: 0 0 auto;
     background-color: #f9f9f9;
@@ -69,23 +65,16 @@ body.page-index {
 }
 
 /* =========================================
-   NAVBAR & MENU FIXES
+   NAVBAR STYLES
    ========================================= */
 .navbar-custom { 
     background-color: #d9edf7; 
     border-color: #bce8f1; 
-    margin-bottom: 0; /* Important for flex layout */
+    margin-bottom: 0; 
     border-radius: 0;
 }
 .navbar-brand-custom { color: #31708f !important; font-weight: bold; }
 .nav-link-custom { color: #333 !important; }
-
-/* FIX: Ensure Dropdown Background matches Navbar on Tablets/Mobile */
-.navbar-collapse {
-    background-color: #d9edf7; /* Same as navbar-custom */
-    max-height: 80vh; /* FIX: Allow scrolling inside menu if it's too tall */
-    overflow-y: auto; /* FIX: Enable scrollbar for menu only */
-}
 
 .nav-whatsapp-link {
     display: flex !important;
@@ -103,8 +92,35 @@ body.page-index {
     margin-bottom: 0;
 }
 
+/* FIX: Tablet & Mobile Menu Logic (Force Hamburger up to 991px) */
+@media (max-width: 991px) {
+    .navbar-header { float: none; }
+    .navbar-left, .navbar-right { float: none !important; }
+    .navbar-toggle { display: block; background-color: transparent !important; border-color: #31708f; }
+    .navbar-toggle .icon-bar { background-color: #31708f !important; }
+    
+    .navbar-collapse { border-top: 1px solid transparent; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+    .navbar-collapse.collapse { display: none !important; }
+    .navbar-collapse.collapse.in { display: block !important; overflow-y: auto; max-height: 75vh; }
+    
+    .navbar-nav { float: none !important; margin-top: 7.5px; }
+    .navbar-nav > li { float: none; }
+    .navbar-nav > li > a { padding-top: 10px; padding-bottom: 10px; }
+    
+    /* Ensure dropdowns open nicely in mobile view */
+    .navbar-nav .open .dropdown-menu { 
+        position: static; 
+        float: none; 
+        width: auto; 
+        margin-top: 0; 
+        background-color: transparent; 
+        border: 0; 
+        box-shadow: none; 
+    }
+}
+
 /* =========================================
-   SPLASH.HTML (Homepage Fixes)
+   SPLASH.HTML
    ========================================= */
 body.page-splash {
     display: flex;
@@ -119,16 +135,15 @@ body.page-splash {
 .page-splash .content-wrapper {
     flex: 1;                
     display: flex;
-    align-items: flex-start; /* FIX: Moves image to top instead of center */
+    align-items: flex-start; 
     justify-content: center;
     min-height: 0;          
     padding: 10px;
-    padding-top: 40px;      /* FIX: "A little below the menu" */
+    padding-top: 40px;      
     overflow: hidden; 
 }
 
 .page-splash .hero-img {
-    /* FIX: Reduced max-height so it's not too big on Laptop/Tablet Horizontal */
     max-height: 65vh;       
     max-width: 100%;        
     width: auto;
@@ -137,11 +152,10 @@ body.page-splash {
 }
 
 /* =========================================
-   PROFILE PAGE (Spacing Fix)
+   PROFILE PAGE
    ========================================= */
 body.page-profile {
     background-color: #f5f5f5;
-    /* FIX: Increased top padding so it doesn't touch the menu */
     padding: 40px 20px 20px 20px; 
     height: auto; 
     min-height: 100%;
@@ -220,24 +234,26 @@ body.page-calendar {
 #calendar { min-height: 600px; margin: 0 2px; }
 #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
 
-/* FullCalendar Overrides */
-.fc-header-toolbar { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; margin-bottom: 1.5em !important; }
-.fc-toolbar-title { font-size: 1.75em !important; color: #333; }
+/* FullCalendar Styling */
+.fc-header-toolbar { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    padding-top: 10px; 
+    margin-bottom: 1.5em !important; 
+}
+
+.fc-toolbar-title { 
+    font-size: 1.75em !important; 
+    color: #333; 
+    display: block; /* Ensure it is displayed */
+}
+
 .fc-button-primary { background-color: #0C419a !important; border-color: #0C419a !important; }
 .fc-button-primary:hover { background-color: #082d6e !important; border-color: #082d6e !important; }
 .fc-button-active { background-color: #062252 !important; border-color: #062252 !important; }
-.fc-button-primary:disabled { opacity: 0.6; }
-.fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.selected-day { background-color: #fff9c4 !important; }
-.popup-link { color: #3085d6; text-decoration: underline; font-weight: bold; cursor: pointer; }
-.services-box { background-color: #f9f9f9; border-left: 4px solid #0C419a; padding: 10px; margin-top: 5px; font-size: 0.9em; color: #444; white-space: pre-wrap; text-align: left; min-height: 100px; max-height: 350px; overflow-y: auto; }
-div.swal2-container { align-items: flex-start !important; padding-top: 10px !important; }
-.modal-dialog { width: 95% !important; max-width: 800px; margin: 10px auto; }
-.modal-body { padding: 5px 10px !important; }
-.modal-header, .modal-footer { padding: 10px !important; }
-.modal-content { max-height: 90vh; overflow-y: auto; }
 
-/* MOBILE VIEW (Strictly Vertical Phones) */
+/* FullCalendar Mobile Adjustments */
 @media (max-width: 600px) {
     .fc-event-title { display: none !important; } 
     .fc-event-time { 
@@ -246,5 +262,25 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
         text-align: center; 
         width: 100%; 
         display: block !important; 
+    }
+    
+    /* FIX: Force Toolbar Title Visibility on Phone */
+    .fc-header-toolbar {
+        align-items: center; /* Center align everything */
+    }
+    .fc-toolbar-title {
+        font-size: 1.5em !important;
+        margin-bottom: 5px;
+        display: block !important;
+        visibility: visible !important;
+        color: #000 !important;
+        width: 100%;
+        text-align: center;
+    }
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 5px;
     }
 }
