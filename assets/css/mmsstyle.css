@@ -371,9 +371,8 @@ body.page-splash {
     background-color: #fff;
     flex-shrink: 0;
 }
-
 /* =========================================
-   CALENDAR PAGE (Merged from calendar.html)
+   CALENDAR PAGE (Scrollbar & Mobile Fix)
    ========================================= */
 /* Only applies if body has class="page-calendar" */
 body.page-calendar {
@@ -381,9 +380,23 @@ body.page-calendar {
     margin: 0; 
     padding: 0; 
     background-color: #ffffff;
+    
+    /* FIX: Kill the outer scrollbar */
+    overflow-y: hidden; 
+    height: 100vh;
 }
 
-#calendar-container { max-width: 100%; margin: 0; background: white; padding: 0; }
+#calendar-container { 
+    max-width: 100%; 
+    margin: 0; 
+    background: white; 
+    padding: 0;
+    
+    /* FIX: Allow this container to scroll internally */
+    height: 100vh;
+    overflow-y: auto; 
+}
+
 #calendar { min-height: 600px; margin: 0 2px; }
 #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
 
@@ -412,9 +425,22 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
 .modal-header, .modal-footer { padding: 10px !important; }
 .modal-content { max-height: 90vh; overflow-y: auto; }
 
-@media (max-width: 900px) {
+/* MOBILE VIEW (Strictly Vertical Phones) */
+/* Changed from 900px to 600px. 
+   - Phones in Portrait are usually < 500px (Rule Applies -> Name Hidden)
+   - Phones in Landscape are usually > 650px (Rule Fails -> Name Shown)
+   - Tablets are > 700px (Rule Fails -> Name Shown)
+*/
+@media (max-width: 600px) {
+    /* 1. HIDE the Event Name (Customer Name) */
     .fc-event-title { display: none !important; } 
-    .fc-event-time { font-weight: bold; font-size: 1.1em; text-align: center; width: 100%; display: block !important; }
+    
+    /* 2. SHOW the Time clearly */
+    .fc-event-time { 
+        font-weight: bold; 
+        font-size: 1.1em; 
+        text-align: center; 
+        width: 100%; 
+        display: block !important; 
+    }
 }
-
-
