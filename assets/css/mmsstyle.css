@@ -17,10 +17,16 @@ body.page-index {
     flex-direction: column; 
     background-color: #ffffff;
     width: 100%;
-    position: fixed;        
+    /* Removed position:fixed to allow mobile browsers to handle address bars better, 
+       but kept overflow hidden to act as an app shell */
 }
 
-.page-index #topHeader { flex: 0 0 auto; width: 100%; }
+.page-index #topHeader { 
+    flex: 0 0 auto; 
+    width: 100%; 
+    z-index: 1001;
+    position: relative; /* Ensures it sits on top of content */
+}
 
 .page-index #welcome-msg {
     text-align: right;
@@ -38,6 +44,7 @@ body.page-index {
     position: relative;
     width: 100%;
     overflow: hidden; 
+    /* No extra padding needed here because we removed navbar-fixed-top in HTML */
 }
 
 .page-index #contentFrame {
@@ -50,7 +57,7 @@ body.page-index {
 
 /* New Global Footer Style */
 #global-footer {
-    flex: 0 0 auto; /* Never shrink */
+    flex: 0 0 auto;
     background-color: #f9f9f9;
     border-top: 1px solid #ddd;
     text-align: center;
@@ -62,11 +69,23 @@ body.page-index {
 }
 
 /* =========================================
-   NAVBAR & LOGIN STYLES
+   NAVBAR & MENU FIXES
    ========================================= */
-.navbar-custom { background-color: #d9edf7; border-color: #bce8f1; }
+.navbar-custom { 
+    background-color: #d9edf7; 
+    border-color: #bce8f1; 
+    margin-bottom: 0; /* Important for flex layout */
+    border-radius: 0;
+}
 .navbar-brand-custom { color: #31708f !important; font-weight: bold; }
 .nav-link-custom { color: #333 !important; }
+
+/* FIX: Ensure Dropdown Background matches Navbar on Tablets/Mobile */
+.navbar-collapse {
+    background-color: #d9edf7; /* Same as navbar-custom */
+    max-height: 80vh; /* FIX: Allow scrolling inside menu if it's too tall */
+    overflow-y: auto; /* FIX: Enable scrollbar for menu only */
+}
 
 .nav-whatsapp-link {
     display: flex !important;
@@ -84,68 +103,46 @@ body.page-index {
     margin-bottom: 0;
 }
 
-body.page-login {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    background-color: #f5f5f5;
-    overflow: hidden; 
-}
-.login-wrapper {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 450px;
-}
-
 /* =========================================
-   SPLASH.HTML (Homepage Fix)
+   SPLASH.HTML (Homepage Fixes)
    ========================================= */
 body.page-splash {
     display: flex;
-    flex-direction: column; /* Stack top-to-bottom */
-    height: 100%;           /* Fill exactly 100% of the iframe */
-    overflow: hidden;       /* Never scroll the body */
+    flex-direction: column; 
+    height: 100%;           
+    overflow: hidden;       
     background-color: #ffffff;
     text-align: center;
     margin: 0;
 }
 
 .page-splash .content-wrapper {
-    flex: 1;                /* Take all available space */
+    flex: 1;                
     display: flex;
-    align-items: center;    /* Center image vertically */
+    align-items: flex-start; /* FIX: Moves image to top instead of center */
     justify-content: center;
-    min-height: 0;          /* CRITICAL: Allows image to shrink below its natural size */
+    min-height: 0;          
     padding: 10px;
+    padding-top: 40px;      /* FIX: "A little below the menu" */
     overflow: hidden; 
 }
 
 .page-splash .hero-img {
-    max-height: 100%;       /* Never be taller than the flexible space */
-    max-width: 100%;        /* Never be wider than screen */
+    /* FIX: Reduced max-height so it's not too big on Laptop/Tablet Horizontal */
+    max-height: 65vh;       
+    max-width: 100%;        
     width: auto;
     height: auto;
     object-fit: contain; 
 }
 
-.page-splash .footer-section {
-    flex-shrink: 0;         /* Never let the footer shrink/disappear */
-    width: 100%;
-    padding-bottom: 10px;
-    padding-top: 5px;
-    background-color: #fff;
-}
-
 /* =========================================
-   PROFILE PAGE
+   PROFILE PAGE (Spacing Fix)
    ========================================= */
 body.page-profile {
     background-color: #f5f5f5;
-    padding: 20px;
+    /* FIX: Increased top padding so it doesn't touch the menu */
+    padding: 40px 20px 20px 20px; 
     height: auto; 
     min-height: 100%;
     box-sizing: border-box; 
@@ -170,33 +167,48 @@ body.page-profile {
 .detail-label { font-weight: bold; color: #555; }
 .detail-value { color: #333; text-align: right; }
 
+/* =========================================
+   LOGIN PAGE
+   ========================================= */
+body.page-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background-color: #f5f5f5;
+    overflow: hidden; 
+}
+.login-wrapper {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 450px;
+}
 
 /* =========================================
-   CALENDAR PAGE (Footer + Scroll Fix)
+   CALENDAR PAGE
    ========================================= */
 body.page-calendar {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #ffffff;
-    /* Flexbox Layout to hold Footer at bottom */
     display: flex;
     flex-direction: column;
     height: 100%; 
-    overflow: hidden; /* Body never scrolls */
+    overflow: hidden; 
     margin: 0; 
     padding: 0;
 }
 
 #calendar-container { 
-    flex: 1; /* Take all space EXCEPT the footer */
+    flex: 1; 
     background: white; 
     padding: 0;
-    
-    /* Internal Scrolling */
     overflow-y: auto; 
-    min-height: 0; /* Safety for flex children */
+    min-height: 0; 
 }
 
-/* New Footer Style for Calendar */
 .page-calendar footer {
     flex-shrink: 0;
     background: #fff;
@@ -235,27 +247,4 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
         width: 100%; 
         display: block !important; 
     }
-}
-
-/* =========================================
-   TIMESHEETS & TABLET FIXES
-   ========================================= */
-body.page-timesheets { background-color: #f5f5f5; padding: 20px; text-align: center; }
-.timesheet-container { background: white; max-width: 600px; margin: 50px auto; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-.timesheet-icon { font-size: 60px; color: #0C419a; margin-bottom: 20px; }
-.timesheet-btn { background-color: #0C419a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 20px; }
-.timesheet-btn:hover { background-color: #082d6e; color: white; text-decoration: none; }
-
-@media (max-width: 991px) {
-    .navbar-header { float: none; }
-    .navbar-left, .navbar-right { float: none !important; }
-    .navbar-toggle { display: block; }
-    .navbar-collapse { border-top: 1px solid transparent; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
-    .navbar-collapse.collapse { display: none !important; }
-    .navbar-collapse.collapse.in { display: block !important; overflow-y: auto; }
-    .navbar-nav { float: none !important; margin-top: 7.5px; }
-    .navbar-nav > li { float: none; }
-    .navbar-nav > li > a { padding-top: 10px; padding-bottom: 10px; }
-    .navbar-nav .open .dropdown-menu { position: static; float: none; width: auto; margin-top: 0; background-color: transparent; border: 0; box-shadow: none; }
-    .navbar-nav .open .dropdown-menu > li > a { padding: 5px 15px 5px 35px; line-height: 20px; }
 }
