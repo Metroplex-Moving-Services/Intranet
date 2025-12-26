@@ -10,56 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/@descope/web-js-sdk@1.12.1/dist/index.umd.js"></script>
 
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
-        #calendar-container { max-width: 100%; margin: 0; background: white; padding: 0; }
-        #calendar { min-height: 600px; margin: 0 2px; }
-        #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
-        
-        /* Toolbar */
-        .fc-header-toolbar { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; margin-bottom: 1.5em !important; }
-        .fc-toolbar-title { font-size: 1.75em !important; color: #333; }
-        
-        /* Buttons */
-        .fc-button-primary { background-color: #0C419a !important; border-color: #0C419a !important; }
-        .fc-button-primary:hover { background-color: #082d6e !important; border-color: #082d6e !important; }
-        .fc-button-active { background-color: #062252 !important; border-color: #062252 !important; }
-        .fc-button-primary:disabled { opacity: 0.6; }
-
-        /* Events */
-        .fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .selected-day { background-color: #fff9c4 !important; }
-        
-        /* Popup Styling */
-        .popup-link { color: #3085d6; text-decoration: underline; font-weight: bold; cursor: pointer; }
-        .services-box { background-color: #f9f9f9; border-left: 4px solid #0C419a; padding: 10px; margin-top: 5px; font-size: 0.9em; color: #444; white-space: pre-wrap; text-align: left; min-height: 100px; max-height: 350px; overflow-y: auto; }
-
-        /* SweetAlert Position Fix */
-        div.swal2-container {
-            align-items: flex-start !important; 
-            padding-top: 10px !important;       
-        }
-
-        /* Modal Resizing */
-        .modal-dialog { width: 95% !important; max-width: 800px; margin: 10px auto; }
-        .modal-body { padding: 5px 10px !important; }
-        .modal-header, .modal-footer { padding: 10px !important; }
-        .modal-content { max-height: 90vh; overflow-y: auto; }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .fc-event-title { display: none !important; } 
-            .fc-event-time { 
-                font-weight: bold; 
-                font-size: 1.1em; 
-                text-align: center; 
-                width: 100%; 
-                display: block !important; 
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/mmsstyle.css">
 </head>
-<body>
+<body class="page-calendar">
 
     <div id="calendar-container">
         
