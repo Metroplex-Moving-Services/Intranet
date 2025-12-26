@@ -372,7 +372,7 @@ body.page-splash {
     flex-shrink: 0;
 }
 /* =========================================
-   CALENDAR PAGE (Scrollbar & Mobile Fix)
+   CALENDAR PAGE (Final Layout Fixes)
    ========================================= */
 /* Only applies if body has class="page-calendar" */
 body.page-calendar {
@@ -381,20 +381,20 @@ body.page-calendar {
     padding: 0; 
     background-color: #ffffff;
     
-    /* FIX: Kill the outer scrollbar */
-    overflow-y: hidden; 
-    height: 100vh;
+    /* FIX: Let the page grow naturally. Removes the double scrollbar. */
+    height: auto !important; 
+    overflow-y: visible !important;
 }
 
 #calendar-container { 
+    /* FIX: Stop trying to contain the scroll. Just let it flow. */
+    height: auto !important; 
+    overflow-y: visible !important;
+    
     max-width: 100%; 
     margin: 0; 
     background: white; 
     padding: 0;
-    
-    /* FIX: Allow this container to scroll internally */
-    height: 100vh;
-    overflow-y: auto; 
 }
 
 #calendar { min-height: 600px; margin: 0 2px; }
@@ -426,11 +426,7 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
 .modal-content { max-height: 90vh; overflow-y: auto; }
 
 /* MOBILE VIEW (Strictly Vertical Phones) */
-/* Changed from 900px to 600px. 
-   - Phones in Portrait are usually < 500px (Rule Applies -> Name Hidden)
-   - Phones in Landscape are usually > 650px (Rule Fails -> Name Shown)
-   - Tablets are > 700px (Rule Fails -> Name Shown)
-*/
+/* Rules apply only when screen is NARROWER than 600px */
 @media (max-width: 600px) {
     /* 1. HIDE the Event Name (Customer Name) */
     .fc-event-title { display: none !important; } 
