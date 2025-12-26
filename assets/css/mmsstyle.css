@@ -2,7 +2,7 @@
    GLOBAL RESET
    ========================================= */
 html, body {
-    height: 100%; /* Crucial: Sets the baseline for percentage heights */
+    height: 100%; 
     margin: 0;
     padding: 0;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -11,20 +11,16 @@ html, body {
 /* =========================================
    INDEX.HTML (The App Shell)
    ========================================= */
-/* Only applies if body has class="page-index" */
 body.page-index {
-    overflow: hidden;       /* 🔒 LOCK: No scrollbar on the main browser window */
+    overflow: hidden;       
     display: flex;
     flex-direction: column; 
     background-color: #ffffff;
     width: 100%;
-    position: fixed;        /* 🔒 LOCK: Ensures the body stays put */
+    position: fixed;        
 }
 
-.page-index #topHeader {
-    flex: 0 0 auto; 
-    width: 100%;
-}
+.page-index #topHeader { flex: 0 0 auto; width: 100%; }
 
 .page-index #welcome-msg {
     text-align: right;
@@ -41,7 +37,7 @@ body.page-index {
     display: block;
     position: relative;
     width: 100%;
-    overflow: hidden; /* 🔒 LOCK: The container of the iframe never scrolls */
+    overflow: hidden; 
 }
 
 .page-index #contentFrame {
@@ -49,23 +45,16 @@ body.page-index {
     height: 100%; 
     border: none;
     display: block;
-    overflow: hidden; /* 🔒 LOCK: The iframe element itself never scrolls */
+    overflow: hidden; 
 }
 
 /* =========================================
-   NAVBAR STYLES (Merged)
+   NAVBAR & LOGIN STYLES
    ========================================= */
-.navbar-custom { 
-    background-color: #d9edf7; 
-    border-color: #bce8f1; 
-}
-.navbar-brand-custom { 
-    color: #31708f !important; 
-    font-weight: bold; 
-}
-.nav-link-custom { 
-    color: #333 !important; 
-}
+.navbar-custom { background-color: #d9edf7; border-color: #bce8f1; }
+.navbar-brand-custom { color: #31708f !important; font-weight: bold; }
+.nav-link-custom { color: #333 !important; }
+
 .nav-whatsapp-link {
     display: flex !important;
     flex-direction: row;
@@ -82,9 +71,6 @@ body.page-index {
     margin-bottom: 0;
 }
 
-/* =========================================
-   LOGIN PAGE STYLES
-   ========================================= */
 body.page-login {
     display: flex;
     justify-content: center;
@@ -103,56 +89,54 @@ body.page-login {
 }
 
 /* =========================================
-   SPLASH.HTML (The Logo Page)
+   SPLASH.HTML (Homepage Fix)
    ========================================= */
 body.page-splash {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start; 
-    align-items: center; 
-    height: 100%;       
-    overflow: hidden;    
+    flex-direction: column; /* Stack top-to-bottom */
+    height: 100%;           /* Fill exactly 100% of the iframe */
+    overflow: hidden;       /* Never scroll the body */
     background-color: #ffffff;
     text-align: center;
+    margin: 0;
 }
+
 .page-splash .content-wrapper {
-    flex: 1;
+    flex: 1;                /* Take all available space */
     display: flex;
-    align-items: flex-start;
+    align-items: center;    /* Center image vertically */
     justify-content: center;
-    padding-top: 20px;
-    padding-left: 15px;
-    padding-right: 15px;
+    min-height: 0;          /* CRITICAL: Allows image to shrink below its natural size */
+    padding: 10px;
     overflow: hidden; 
 }
+
 .page-splash .hero-img {
-    max-width: 100%;
+    max-height: 100%;       /* Never be taller than the flexible space */
+    max-width: 100%;        /* Never be wider than screen */
     width: auto;
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    max-height: calc(100vh - 180px); 
+    height: auto;
     object-fit: contain; 
 }
+
 .page-splash .footer-section {
+    flex-shrink: 0;         /* Never let the footer shrink/disappear */
     width: 100%;
     padding-bottom: 10px;
     padding-top: 5px;
     background-color: #fff;
-    flex-shrink: 0;
 }
 
 /* =========================================
-   PROFILE PAGE (Scrollbar Fix)
+   PROFILE PAGE
    ========================================= */
 body.page-profile {
     background-color: #f5f5f5;
     padding: 20px;
-    /* Allow natural scrolling, but respect parent height */
     height: auto; 
     min-height: 100%;
-    box-sizing: border-box; /* Includes padding in width calculation */
+    box-sizing: border-box; 
 }
-
 .profile-card {
     background: white;
     border-radius: 8px;
@@ -161,60 +145,51 @@ body.page-profile {
     max-width: 600px;
     margin: 0 auto;
 }
-.profile-header {
-    background-color: #0C419a; 
-    color: white;
-    padding: 30px 20px;
-    text-align: center;
-}
+.profile-header { background-color: #0C419a; color: white; padding: 30px 20px; text-align: center; }
 #avatarContainer {
-    width: 100px;
-    height: 100px;
-    background-color: rgba(255,255,255,0.2);
-    border-radius: 50%;
-    margin: 0 auto 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    overflow: hidden;
+    width: 100px; height: 100px; background-color: rgba(255,255,255,0.2);
+    border-radius: 50%; margin: 0 auto 15px; display: flex;
+    align-items: center; justify-content: center; font-size: 40px; overflow: hidden;
 }
 .profile-body { padding: 20px; }
-.detail-row {
-    border-bottom: 1px solid #eee;
-    padding: 12px 0;
-    display: flex;
-    justify-content: space-between;
-}
+.detail-row { border-bottom: 1px solid #eee; padding: 12px 0; display: flex; justify-content: space-between; }
 .detail-row:last-child { border-bottom: none; }
 .detail-label { font-weight: bold; color: #555; }
 .detail-value { color: #333; text-align: right; }
 
 
 /* =========================================
-   CALENDAR PAGE (Double Scrollbar Fix - FINAL)
+   CALENDAR PAGE (Footer + Scroll Fix)
    ========================================= */
 body.page-calendar {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #ffffff;
-    
-    /* FIX: Use 100% instead of 100vh. 
-       This fits exactly into the iframe without overflowing. */
+    /* Flexbox Layout to hold Footer at bottom */
+    display: flex;
+    flex-direction: column;
     height: 100%; 
-    overflow: hidden; /* The body itself must not scroll */
+    overflow: hidden; /* Body never scrolls */
     margin: 0; 
     padding: 0;
 }
 
 #calendar-container { 
-    max-width: 100%; 
+    flex: 1; /* Take all space EXCEPT the footer */
     background: white; 
     padding: 0;
     
-    /* FIX: This is the ONLY scrollable element. 
-       It fills the body exactly. */
-    height: 100%;
+    /* Internal Scrolling */
     overflow-y: auto; 
+    min-height: 0; /* Safety for flex children */
+}
+
+/* New Footer Style for Calendar */
+.page-calendar footer {
+    flex-shrink: 0;
+    background: #fff;
+    padding: 10px;
+    text-align: center;
+    border-top: 1px solid #eee;
 }
 
 #calendar { min-height: 600px; margin: 0 2px; }
@@ -250,68 +225,24 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
 }
 
 /* =========================================
-   TIMESHEETS PAGE
+   TIMESHEETS & TABLET FIXES
    ========================================= */
-body.page-timesheets {
-    background-color: #f5f5f5;
-    padding: 20px;
-    text-align: center;
-}
-.timesheet-container {
-    background: white;
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-.timesheet-icon {
-    font-size: 60px;
-    color: #0C419a;
-    margin-bottom: 20px;
-}
-.timesheet-btn {
-    background-color: #0C419a;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 4px;
-    font-weight: bold;
-    display: inline-block;
-    margin-top: 20px;
-}
+body.page-timesheets { background-color: #f5f5f5; padding: 20px; text-align: center; }
+.timesheet-container { background: white; max-width: 600px; margin: 50px auto; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.timesheet-icon { font-size: 60px; color: #0C419a; margin-bottom: 20px; }
+.timesheet-btn { background-color: #0C419a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 20px; }
 .timesheet-btn:hover { background-color: #082d6e; color: white; text-decoration: none; }
 
-/* =========================================
-   TABLET MENU FIX
-   ========================================= */
 @media (max-width: 991px) {
     .navbar-header { float: none; }
     .navbar-left, .navbar-right { float: none !important; }
     .navbar-toggle { display: block; }
-    
-    .navbar-collapse {
-        border-top: 1px solid transparent;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
-    }
+    .navbar-collapse { border-top: 1px solid transparent; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
     .navbar-collapse.collapse { display: none !important; }
     .navbar-collapse.collapse.in { display: block !important; overflow-y: auto; }
-
     .navbar-nav { float: none !important; margin-top: 7.5px; }
     .navbar-nav > li { float: none; }
     .navbar-nav > li > a { padding-top: 10px; padding-bottom: 10px; }
-    
-    .navbar-nav .open .dropdown-menu {
-        position: static;      
-        float: none;
-        width: auto;
-        margin-top: 0;
-        background-color: transparent;
-        border: 0;
-        box-shadow: none;
-    }
-    .navbar-nav .open .dropdown-menu > li > a {
-        padding: 5px 15px 5px 35px; 
-        line-height: 20px;
-    }
+    .navbar-nav .open .dropdown-menu { position: static; float: none; width: auto; margin-top: 0; background-color: transparent; border: 0; box-shadow: none; }
+    .navbar-nav .open .dropdown-menu > li > a { padding: 5px 15px 5px 35px; line-height: 20px; }
 }
