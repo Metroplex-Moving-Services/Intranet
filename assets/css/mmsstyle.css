@@ -1,13 +1,10 @@
 /* =========================================
    GLOBAL RESET
    ========================================= */
-html {
-    height: 100%;
-}
-body {
+html, body {
+    height: 100%; /* Crucial: Sets the baseline for percentage heights */
     margin: 0;
     padding: 0;
-    min-height: 100%; 
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
@@ -16,11 +13,12 @@ body {
    ========================================= */
 /* Only applies if body has class="page-index" */
 body.page-index {
-    overflow: hidden;       /* This KILLS the main window scrollbar forever */
-    display: flex;          /* Enables Flexbox */
-    flex-direction: column; /* Stack items vertically */
+    overflow: hidden;       /* 🔒 LOCK: No scrollbar on the main browser window */
+    display: flex;
+    flex-direction: column; 
     background-color: #ffffff;
-    height: 100vh;          /* Force full height */
+    width: 100%;
+    position: fixed;        /* 🔒 LOCK: Ensures the body stays put */
 }
 
 .page-index #topHeader {
@@ -32,18 +30,18 @@ body.page-index {
     text-align: right;
     padding: 5px 15px;
     font-size: 14px;
-    color: #0C419a; /* Brand Blue */
+    color: #0C419a; 
     font-weight: bold;
     background-color: #f9f9f9;
     border-bottom: 1px solid #ddd;
 }
 
 .page-index #main-content {
-    flex: 1; /* Grow to fill the rest of the screen */
+    flex: 1; 
     display: block;
     position: relative;
     width: 100%;
-    overflow: hidden; /* Prevent scroll on the container, let iframe handle it */
+    overflow: hidden; /* 🔒 LOCK: The container of the iframe never scrolls */
 }
 
 .page-index #contentFrame {
@@ -51,10 +49,11 @@ body.page-index {
     height: 100%; 
     border: none;
     display: block;
+    overflow: hidden; /* 🔒 LOCK: The iframe element itself never scrolls */
 }
 
 /* =========================================
-   NAVBAR STYLES (Merged from index.html)
+   NAVBAR STYLES (Merged)
    ========================================= */
 .navbar-custom { 
     background-color: #d9edf7; 
@@ -67,8 +66,6 @@ body.page-index {
 .nav-link-custom { 
     color: #333 !important; 
 }
-
-/* Helper classes for the Whatsapp Link */
 .nav-whatsapp-link {
     display: flex !important;
     flex-direction: row;
@@ -86,18 +83,16 @@ body.page-index {
 }
 
 /* =========================================
-   LOGIN PAGE STYLES (Merged from login.html)
+   LOGIN PAGE STYLES
    ========================================= */
-/* Only applies if body has class="page-login" */
 body.page-login {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 100%;
     background-color: #f5f5f5;
     overflow: hidden; 
 }
-
 .login-wrapper {
     background: #fff;
     padding: 20px;
@@ -110,19 +105,16 @@ body.page-login {
 /* =========================================
    SPLASH.HTML (The Logo Page)
    ========================================= */
-/* Only applies if body has class="page-splash" */
 body.page-splash {
     display: flex;
     flex-direction: column;
     justify-content: flex-start; 
     align-items: center; 
-    height: 100vh;       
+    height: 100%;       
     overflow: hidden;    
     background-color: #ffffff;
     text-align: center;
-    margin: 0;
 }
-
 .page-splash .content-wrapper {
     flex: 1;
     display: flex;
@@ -133,16 +125,14 @@ body.page-splash {
     padding-right: 15px;
     overflow: hidden; 
 }
-
 .page-splash .hero-img {
     max-width: 100%;
     width: auto;
     border-radius: 4px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    max-height: calc(100vh - 180px); /* Aggressive math for mobile */
+    max-height: calc(100vh - 180px); 
     object-fit: contain; 
 }
-
 .page-splash .footer-section {
     width: 100%;
     padding-bottom: 10px;
@@ -154,16 +144,13 @@ body.page-splash {
 /* =========================================
    PROFILE PAGE (Scrollbar Fix)
    ========================================= */
-/* Only applies if body has class="page-profile" */
 body.page-profile {
     background-color: #f5f5f5;
     padding: 20px;
-    
-    /* FIX: Don't force 100% height here. 
-       Let the content dictate the height so the iframe 
-       generates exactly ONE natural scrollbar. */
-    height: auto !important; 
-    overflow-y: auto !important;
+    /* Allow natural scrolling, but respect parent height */
+    height: auto; 
+    min-height: 100%;
+    box-sizing: border-box; /* Includes padding in width calculation */
 }
 
 .profile-card {
@@ -174,14 +161,12 @@ body.page-profile {
     max-width: 600px;
     margin: 0 auto;
 }
-
 .profile-header {
     background-color: #0C419a; 
     color: white;
     padding: 30px 20px;
     text-align: center;
 }
-
 #avatarContainer {
     width: 100px;
     height: 100px;
@@ -194,41 +179,29 @@ body.page-profile {
     font-size: 40px;
     overflow: hidden;
 }
-
-.profile-body { 
-    padding: 20px; 
-}
-
+.profile-body { padding: 20px; }
 .detail-row {
     border-bottom: 1px solid #eee;
     padding: 12px 0;
     display: flex;
     justify-content: space-between;
 }
-.detail-row:last-child {
-    border-bottom: none;
-}
-.detail-label {
-    font-weight: bold;
-    color: #555;
-}
-.detail-value {
-    color: #333;
-    text-align: right;
-}
+.detail-row:last-child { border-bottom: none; }
+.detail-label { font-weight: bold; color: #555; }
+.detail-value { color: #333; text-align: right; }
 
 
 /* =========================================
-   CALENDAR PAGE (Double Scrollbar Fix)
+   CALENDAR PAGE (Double Scrollbar Fix - FINAL)
    ========================================= */
-/* Only applies if body has class="page-calendar" */
 body.page-calendar {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #ffffff;
     
-    /* FIX: Lock the body so it NEVER scrolls. */
-    height: 100vh !important; 
-    overflow: hidden !important; 
+    /* FIX: Use 100% instead of 100vh. 
+       This fits exactly into the iframe without overflowing. */
+    height: 100%; 
+    overflow: hidden; /* The body itself must not scroll */
     margin: 0; 
     padding: 0;
 }
@@ -238,47 +211,35 @@ body.page-calendar {
     background: white; 
     padding: 0;
     
-    /* FIX: This is the ONLY thing that should scroll.
-       We force it to fill the screen exactly. */
-    height: 100vh;
+    /* FIX: This is the ONLY scrollable element. 
+       It fills the body exactly. */
+    height: 100%;
     overflow-y: auto; 
 }
 
 #calendar { min-height: 600px; margin: 0 2px; }
 #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
 
-/* FullCalendar Toolbar Overrides */
+/* FullCalendar Overrides */
 .fc-header-toolbar { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; margin-bottom: 1.5em !important; }
 .fc-toolbar-title { font-size: 1.75em !important; color: #333; }
-
-/* Calendar Buttons */
 .fc-button-primary { background-color: #0C419a !important; border-color: #0C419a !important; }
 .fc-button-primary:hover { background-color: #082d6e !important; border-color: #082d6e !important; }
 .fc-button-active { background-color: #062252 !important; border-color: #062252 !important; }
 .fc-button-primary:disabled { opacity: 0.6; }
-
-/* Events & Popups */
 .fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .selected-day { background-color: #fff9c4 !important; }
 .popup-link { color: #3085d6; text-decoration: underline; font-weight: bold; cursor: pointer; }
 .services-box { background-color: #f9f9f9; border-left: 4px solid #0C419a; padding: 10px; margin-top: 5px; font-size: 0.9em; color: #444; white-space: pre-wrap; text-align: left; min-height: 100px; max-height: 350px; overflow-y: auto; }
-
-/* SweetAlert Position Fix */
 div.swal2-container { align-items: flex-start !important; padding-top: 10px !important; }
-
-/* Modal Resizing */
 .modal-dialog { width: 95% !important; max-width: 800px; margin: 10px auto; }
 .modal-body { padding: 5px 10px !important; }
 .modal-header, .modal-footer { padding: 10px !important; }
 .modal-content { max-height: 90vh; overflow-y: auto; }
 
 /* MOBILE VIEW (Strictly Vertical Phones) */
-/* Rules apply only when screen is NARROWER than 600px */
 @media (max-width: 600px) {
-    /* 1. HIDE the Event Name (Customer Name) */
     .fc-event-title { display: none !important; } 
-    
-    /* 2. SHOW the Time clearly */
     .fc-event-time { 
         font-weight: bold; 
         font-size: 1.1em; 
@@ -289,14 +250,13 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
 }
 
 /* =========================================
-   TIMESHEETS PAGE (New)
+   TIMESHEETS PAGE
    ========================================= */
 body.page-timesheets {
     background-color: #f5f5f5;
     padding: 20px;
     text-align: center;
 }
-
 .timesheet-container {
     background: white;
     max-width: 600px;
@@ -305,13 +265,11 @@ body.page-timesheets {
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-
 .timesheet-icon {
     font-size: 60px;
     color: #0C419a;
     margin-bottom: 20px;
 }
-
 .timesheet-btn {
     background-color: #0C419a;
     color: white;
@@ -322,14 +280,10 @@ body.page-timesheets {
     display: inline-block;
     margin-top: 20px;
 }
-.timesheet-btn:hover {
-    background-color: #082d6e;
-    color: white; 
-    text-decoration: none;
-}
+.timesheet-btn:hover { background-color: #082d6e; color: white; text-decoration: none; }
 
 /* =========================================
-   TABLET MENU FIX (Force Hamburger up to 991px)
+   TABLET MENU FIX
    ========================================= */
 @media (max-width: 991px) {
     .navbar-header { float: none; }
@@ -341,22 +295,12 @@ body.page-timesheets {
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
     .navbar-collapse.collapse { display: none !important; }
-    .navbar-collapse.collapse.in {
-        display: block !important;
-        overflow-y: auto; 
-    }
+    .navbar-collapse.collapse.in { display: block !important; overflow-y: auto; }
 
-    .navbar-nav {
-        float: none !important;
-        margin-top: 7.5px;
-    }
+    .navbar-nav { float: none !important; margin-top: 7.5px; }
     .navbar-nav > li { float: none; }
-    .navbar-nav > li > a {
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-
-    /* FIX DROPDOWNS (The "Right Side Block" Fix) */
+    .navbar-nav > li > a { padding-top: 10px; padding-bottom: 10px; }
+    
     .navbar-nav .open .dropdown-menu {
         position: static;      
         float: none;
