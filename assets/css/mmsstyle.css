@@ -1,10 +1,14 @@
 /* =========================================
    GLOBAL RESET
    ========================================= */
-html, body {
+html {
+    height: 100%;
+}
+body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%; 
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 /* =========================================
@@ -12,21 +16,21 @@ html, body {
    ========================================= */
 /* Only applies if body has class="page-index" */
 body.page-index {
-    overflow: hidden;       /* Prevents double scrollbars */
+    overflow: hidden;       /* This KILLS the main window scrollbar forever */
     display: flex;          /* Enables Flexbox */
     flex-direction: column; /* Stack items vertically */
     background-color: #ffffff;
+    height: 100vh;          /* Force full height */
 }
 
 .page-index #topHeader {
-    flex: 0 0 auto; /* Only take the space it needs */
+    flex: 0 0 auto; 
     width: 100%;
 }
 
 .page-index #welcome-msg {
     text-align: right;
     padding: 5px 15px;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 14px;
     color: #0C419a; /* Brand Blue */
     font-weight: bold;
@@ -34,223 +38,19 @@ body.page-index {
     border-bottom: 1px solid #ddd;
 }
 
-.page-index .h_iframe {
+.page-index #main-content {
     flex: 1; /* Grow to fill the rest of the screen */
     display: block;
     position: relative;
     width: 100%;
-    overflow: hidden;
+    overflow: hidden; /* Prevent scroll on the container, let iframe handle it */
 }
 
-.page-index #MMSiFrame {
+.page-index #contentFrame {
     width: 100%;
-    height: 100%; /* Fill the wrapper completely */
+    height: 100%; 
     border: none;
     display: block;
-}
-
-/* =========================================
-   SPLASH.HTML (The Logo Page)
-   ========================================= */
-/* Only applies if body has class="page-splash" */
-body.page-splash {
-    display: flex;
-    justify-content: center; /* Center Horizontally */
-    align-items: flex-start; /* Align Top (for phone layout) */
-    padding-top: 50px;       /* Push down slightly */
-    box-sizing: border-box;
-    overflow: hidden;        /* No scrollbars */
-    background-color: #ffffff;
-}
-
-#splashImage {
-    max-width: 90%;   /* Never wider than screen */
-    max-height: 80vh; /* Never taller than screen */
-    width: auto;      /* Keep aspect ratio */
-    height: auto;     /* Keep aspect ratio */
-    object-fit: contain;
-    display: block;
-}
-
-/* =========================================
-   MENU NAVIGATION (Helpers)
-   ========================================= */
-/* Helper classes for the Whatsapp Link */
-.nav-whatsapp-link {
-    display: flex !important;
-    flex-direction: row;       /* CHANGED: Side-by-side instead of stacked */
-    align-items: center;       /* Vertically center the text and icon */
-    justify-content: flex-start; /* Align to the left */
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-    padding-left: 15px !important; /* Indent to match other menu links */
-    color: #333 !important;
-    text-decoration: none;
-}
-
-.nav-whatsapp-text {
-    font-size: 13px;          /* Slightly larger for readability */
-    margin-right: 8px;        /* ADDED: Space between text and icon */
-    font-weight: bold;
-    margin-bottom: 0;         /* Removed the bottom margin since it's a row now */
-}
-
-.nav-whatsapp-icon {
-    width: 20px;
-    height: 20px;
-}
-
-/* =========================================
-   MY PROFILE PAGE
-   ========================================= */
-/* Setup the background for the iframe body */
-body.page-profile {
-    background-color: #f5f5f5;
-    padding: 20px;
-}
-
-.profile-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Soft shadow for depth */
-    padding: 30px;
-    margin-top: 20px;
-}
-
-.profile-avatar-section {
-    text-align: center;
-    border-right: 1px solid #eee;
-}
-
-.avatar-circle {
-    width: 120px;
-    height: 120px;
-    background-color: #0C419a; /* Brand Blue */
-    color: #fff;
-    border-radius: 50%; /* Makes it a perfect circle */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    font-weight: bold;
-    margin-bottom: 15px;
-}
-
-.profile-name {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-    margin-top: 10px;
-}
-
-.profile-badge {
-    display: inline-block;
-    padding: 5px 10px;
-    background-color: #dff0d8; /* Light Green */
-    color: #3c763d; /* Dark Green Text */
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: bold;
-    margin-top: 5px;
-}
-
-.detail-row {
-    margin-bottom: 20px;
-    border-bottom: 1px solid #f9f9f9;
-    padding-bottom: 10px;
-}
-
-.detail-label {
-    font-weight: bold;
-    color: #777;
-    text-transform: uppercase;
-    font-size: 11px;
-    margin-bottom: 5px;
-}
-
-.detail-value {
-    font-size: 16px;
-    color: #333;
-}
-
-.profile-heading {
-    margin-top: 0; 
-    color: #0C419a; 
-    border-bottom: 2px solid #0C419a; 
-    padding-bottom: 10px; 
-    margin-bottom: 20px;
-}
-
-/* Mobile Fix: Remove vertical border on small screens */
-@media (max-width: 768px) {
-    .profile-avatar-section { 
-        border-right: none; 
-        border-bottom: 1px solid #eee; 
-        padding-bottom: 20px; 
-        margin-bottom: 20px; 
-    }
-}
-
-/* =========================================
-   TABLET MENU FIX (Force Hamburger up to 991px)
-   ========================================= */
-@media (max-width: 991px) {
-    /* 1. Reset Header & Toggles */
-    .navbar-header {
-        float: none;
-    }
-    .navbar-left, .navbar-right {
-        float: none !important;
-    }
-    .navbar-toggle {
-        display: block;
-    }
-    
-    /* 2. Reset Collapse Behavior */
-    .navbar-collapse {
-        border-top: 1px solid transparent;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
-    }
-    .navbar-collapse.collapse {
-        display: none !important;
-    }
-    
-    /* 3. Allow menu to show when opened */
-    .navbar-collapse.collapse.in {
-        display: block !important;
-        overflow-y: auto; /* Adds scroll if menu is too tall */
-    }
-
-    /* 4. Reset Nav Links */
-    .navbar-nav {
-        float: none !important;
-        margin-top: 7.5px;
-    }
-    .navbar-nav > li {
-        float: none;
-    }
-    .navbar-nav > li > a {
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-
-    /* 5. FIX DROPDOWNS (The "Right Side Block" Fix) */
-    /* Forces dropdowns to stack vertically inline */
-    .navbar-nav .open .dropdown-menu {
-        position: static;      /* Stop floating! */
-        float: none;
-        width: auto;
-        margin-top: 0;
-        background-color: transparent;
-        border: 0;
-        box-shadow: none;
-    }
-    
-    /* Indent sub-items so they look like a nested list */
-    .navbar-nav .open .dropdown-menu > li > a {
-        padding: 5px 15px 5px 35px; /* Extra left padding */
-        line-height: 20px;
-    }
 }
 
 /* =========================================
@@ -268,6 +68,23 @@ body.page-profile {
     color: #333 !important; 
 }
 
+/* Helper classes for the Whatsapp Link */
+.nav-whatsapp-link {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 15px !important;
+    color: #333 !important;
+    text-decoration: none;
+}
+.nav-whatsapp-text {
+    font-size: 13px;
+    margin-right: 8px;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
 /* =========================================
    LOGIN PAGE STYLES (Merged from login.html)
    ========================================= */
@@ -278,7 +95,7 @@ body.page-login {
     align-items: center;
     height: 100vh;
     background-color: #f5f5f5;
-    overflow: hidden; /* Prevents scrollbars on login */
+    overflow: hidden; 
 }
 
 .login-wrapper {
@@ -291,12 +108,62 @@ body.page-login {
 }
 
 /* =========================================
-   PROFILE PAGE (Merged from myprofile.html)
+   SPLASH.HTML (The Logo Page)
+   ========================================= */
+/* Only applies if body has class="page-splash" */
+body.page-splash {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; 
+    align-items: center; 
+    height: 100vh;       
+    overflow: hidden;    
+    background-color: #ffffff;
+    text-align: center;
+    margin: 0;
+}
+
+.page-splash .content-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
+    overflow: hidden; 
+}
+
+.page-splash .hero-img {
+    max-width: 100%;
+    width: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    max-height: calc(100vh - 180px); /* Aggressive math for mobile */
+    object-fit: contain; 
+}
+
+.page-splash .footer-section {
+    width: 100%;
+    padding-bottom: 10px;
+    padding-top: 5px;
+    background-color: #fff;
+    flex-shrink: 0;
+}
+
+/* =========================================
+   PROFILE PAGE (Scrollbar Fix)
    ========================================= */
 /* Only applies if body has class="page-profile" */
 body.page-profile {
     background-color: #f5f5f5;
     padding: 20px;
+    
+    /* FIX: Don't force 100% height here. 
+       Let the content dictate the height so the iframe 
+       generates exactly ONE natural scrollbar. */
+    height: auto !important; 
+    overflow-y: auto !important;
 }
 
 .profile-card {
@@ -309,7 +176,7 @@ body.page-profile {
 }
 
 .profile-header {
-    background-color: #0C419a; /* Metroplex Blue */
+    background-color: #0C419a; 
     color: white;
     padding: 30px 20px;
     text-align: center;
@@ -328,73 +195,53 @@ body.page-profile {
     overflow: hidden;
 }
 
-.profile-body { padding: 20px; }
+.profile-body { 
+    padding: 20px; 
+}
+
+.detail-row {
+    border-bottom: 1px solid #eee;
+    padding: 12px 0;
+    display: flex;
+    justify-content: space-between;
+}
+.detail-row:last-child {
+    border-bottom: none;
+}
+.detail-label {
+    font-weight: bold;
+    color: #555;
+}
+.detail-value {
+    color: #333;
+    text-align: right;
+}
+
 
 /* =========================================
-   SPLASH PAGE (Merged from splash.html)
-   ========================================= */
-/* Only applies if body has class="page-splash" */
-body.page-splash {
-    height: 100%;
-    margin: 0;
-    overflow: hidden; /* No scrollbars allowed */
-    display: flex;
-    flex-direction: column;
-    background-color: #fff;
-    text-align: center;
-}
-
-.content-wrapper {
-    flex: 1;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 20px;
-    padding-left: 15px;
-    padding-right: 15px;
-    overflow: hidden; 
-}
-
-.hero-img {
-    max-width: 100%;
-    width: auto;
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    max-height: calc(100vh - 180px); /* Aggressive math for mobile */
-    object-fit: contain; 
-}
-
-.footer-section {
-    width: 100%;
-    padding-bottom: 10px;
-    padding-top: 5px;
-    background-color: #fff;
-    flex-shrink: 0;
-}
-/* =========================================
-   CALENDAR PAGE (Final Layout Fixes)
+   CALENDAR PAGE (Double Scrollbar Fix)
    ========================================= */
 /* Only applies if body has class="page-calendar" */
 body.page-calendar {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    margin: 0; 
-    padding: 0; 
     background-color: #ffffff;
     
-    /* FIX: Let the page grow naturally. Removes the double scrollbar. */
-    height: auto !important; 
-    overflow-y: visible !important;
+    /* FIX: Lock the body so it NEVER scrolls. */
+    height: 100vh !important; 
+    overflow: hidden !important; 
+    margin: 0; 
+    padding: 0;
 }
 
 #calendar-container { 
-    /* FIX: Stop trying to contain the scroll. Just let it flow. */
-    height: auto !important; 
-    overflow-y: visible !important;
-    
     max-width: 100%; 
-    margin: 0; 
     background: white; 
     padding: 0;
+    
+    /* FIX: This is the ONLY thing that should scroll.
+       We force it to fill the screen exactly. */
+    height: 100vh;
+    overflow-y: auto; 
 }
 
 #calendar { min-height: 600px; margin: 0 2px; }
@@ -438,5 +285,89 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
         text-align: center; 
         width: 100%; 
         display: block !important; 
+    }
+}
+
+/* =========================================
+   TIMESHEETS PAGE (New)
+   ========================================= */
+body.page-timesheets {
+    background-color: #f5f5f5;
+    padding: 20px;
+    text-align: center;
+}
+
+.timesheet-container {
+    background: white;
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.timesheet-icon {
+    font-size: 60px;
+    color: #0C419a;
+    margin-bottom: 20px;
+}
+
+.timesheet-btn {
+    background-color: #0C419a;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 20px;
+}
+.timesheet-btn:hover {
+    background-color: #082d6e;
+    color: white; 
+    text-decoration: none;
+}
+
+/* =========================================
+   TABLET MENU FIX (Force Hamburger up to 991px)
+   ========================================= */
+@media (max-width: 991px) {
+    .navbar-header { float: none; }
+    .navbar-left, .navbar-right { float: none !important; }
+    .navbar-toggle { display: block; }
+    
+    .navbar-collapse {
+        border-top: 1px solid transparent;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .navbar-collapse.collapse { display: none !important; }
+    .navbar-collapse.collapse.in {
+        display: block !important;
+        overflow-y: auto; 
+    }
+
+    .navbar-nav {
+        float: none !important;
+        margin-top: 7.5px;
+    }
+    .navbar-nav > li { float: none; }
+    .navbar-nav > li > a {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    /* FIX DROPDOWNS (The "Right Side Block" Fix) */
+    .navbar-nav .open .dropdown-menu {
+        position: static;      
+        float: none;
+        width: auto;
+        margin-top: 0;
+        background-color: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+    .navbar-nav .open .dropdown-menu > li > a {
+        padding: 5px 15px 5px 35px; 
+        line-height: 20px;
     }
 }
