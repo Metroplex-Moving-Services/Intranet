@@ -4,69 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile</title>
-    
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
     <link rel="stylesheet" href="../assets/css/mmsstyle.css">
+
+    <style>
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .profile-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .profile-header {
+            background-color: #0C419a; /* Metroplex Blue */
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        /* This is where the JS puts the image */
+        #avatarContainer {
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            overflow: hidden;
+        }
+        .profile-body {
+            padding: 20px;
+        }
+        .detail-row {
+            border-bottom: 1px solid #eee;
+            padding: 12px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .detail-value {
+            color: #333;
+            text-align: right;
+        }
+    </style>
 </head>
-<body class="page-profile">
+<body>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            
-            <div class="profile-card">
-                <div class="row">
-                    
-                    <div class="col-md-4 profile-avatar-section">
-                        <div class="avatar-circle" id="avatarContainer">
-                            <i class="fa fa-user"></i>
-                        </div>
-                        <div class="profile-name" id="dispName">Loading...</div>
-                        <div class="profile-badge">Active Employee</div>
-                    </div>
-
-                    <div class="col-md-8">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h4 class="profile-heading">
-                                    Employee Details
-                                </h4>
-                            </div>
-
-                            <div class="col-md-6 detail-row">
-                                <div class="detail-label"><i class="fa fa-envelope"></i> Email Address</div>
-                                <div class="detail-value" id="dispEmail">-</div>
-                            </div>
-
-                            <div class="col-md-6 detail-row">
-                                <div class="detail-label"><i class="fa fa-phone"></i> Phone Number</div>
-                                <div class="detail-value" id="dispPhone">-</div>
-                            </div>
-
-                            <div class="col-md-6 detail-row">
-                                <div class="detail-label"><i class="fa fa-id-card"></i> User Role</div>
-                                <div class="detail-value" id="dispRole">-</div>
-                            </div>
-
-                            <div class="col-md-6 detail-row">
-                                <div class="detail-label"><i class="fa fa-key"></i> System ID</div>
-                                <div class="detail-value" id="dispId" style="font-size: 12px; color: #999;">-</div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+    <div class="container">
+        
+        <div class="profile-card">
+            <div class="profile-header">
+                <div id="avatarContainer">
+                    <i class="fa fa-user"></i> </div>
+                <h3 id="dispName" style="margin:0; font-weight:bold;">Loading...</h3>
+                <p id="dispRole" style="opacity:0.8; margin-top:5px;">...</p>
             </div>
 
-        </div>
-    </div>
-</div>
+            <div class="profile-body">
+                
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fa fa-envelope"></i> Email</span>
+                    <span id="dispEmail" class="detail-value">-</span>
+                </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-<script src="../assets/js/profile.js"></script>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fa fa-phone"></i> Phone</span>
+                    <span id="dispPhone" class="detail-value">-</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fa fa-id-badge"></i> User ID</span>
+                    <span id="dispId" class="detail-value">-</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fa fa-shield"></i> Access Status</span>
+                    <span class="detail-value" style="color:green;"><i class="fa fa-check-circle"></i> Active</span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    
+    <script src="../assets/js/profile.js"></script>
 
 </body>
 </html>

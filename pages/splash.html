@@ -4,11 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/mmsstyle.css">
-</head>
-<body class="page-splash">
+    
+    <style>
+        /* 1. Freeze scrolling - Everything MUST fit on one screen */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* No scrollbars allowed */
+        }
 
-    <img id="splashImage" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg" alt="Metroplex Moving Services">
+        /* 2. Vertical Layout */
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            text-align: center;
+        }
+
+        /* 3. Content Wrapper */
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: flex-start; /* Keep image at the top */
+            justify-content: center;
+            padding-top: 20px; /* Space below the menu */
+            padding-left: 15px;
+            padding-right: 15px;
+            overflow: hidden; 
+        }
+
+        /* 4. THE FIX: Aggressive Math Calculation */
+        .hero-img {
+            max-width: 100%;
+            width: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            
+            /* UPDATED MATH:
+               We are now subtracting 180px instead of 120px.
+               This forces the image to be shorter, guaranteeing
+               the footer has enough room on small phones.
+            */
+            max-height: calc(100vh - 180px); 
+            
+            object-fit: contain; 
+        }
+
+        /* 5. Footer */
+        .footer-section {
+            width: 100%;
+            padding-bottom: 10px;
+            padding-top: 5px;
+            background-color: #fff;
+            flex-shrink: 0; /* Never let the footer shrink/disappear */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content-wrapper">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <img src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg" alt="Metroplex Moving Services" class="hero-img">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <hr style="margin-top: 0; margin-bottom: 10px;">
+                    <p class="text-muted" style="margin-bottom: 0;">
+                        &copy; <span id="year">2025</span> Metroplex Moving Services. All Rights Reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="../assets/js/splash.js"></script>
 
 </body>
 </html>
