@@ -23,7 +23,6 @@
     </div>
 
     <div id="app" style="display:none;">
-        
         <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
             <div class="container-fluid">
                 <div class="navbar-header">
@@ -39,9 +38,13 @@
                 </div>
                 
                 <div id="navbar" class="navbar-collapse collapse">
-                    <p id="welcome-msg" class="navbar-text" style="color: #31708f; font-weight: bold; margin-right: 10px; display:none;">
-                        Welcome back
+                    
+                    <p class="navbar-text" style="color: #31708f; font-weight: bold; display:none;" id="user-info-block">
+                        <span id="welcome-msg">Welcome back</span>
+                        &nbsp;|&nbsp;
+                        <a onclick="handleLogout()" style="color: #cc0000; text-decoration: underline; cursor: pointer;">Logout</a>
                     </p>   
+
                     <ul class="nav navbar-nav navbar-right">
                         
                         <li><a href="#" onclick="setiFrame('empty')" class="nav-link-custom">Home</a></li>
@@ -96,8 +99,7 @@
                             </a>
                         </li>
 
-                        <li><a href="#" onclick="handleLogout()" style="color: #cc0000;">Logout</a></li>
-                    </ul>
+                        </ul>
                 </div>
             </div>
         </nav>
