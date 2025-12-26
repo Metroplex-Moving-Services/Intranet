@@ -234,27 +234,38 @@ body.page-calendar {
 #calendar { min-height: 600px; margin: 0 2px; }
 #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
 
-/* FullCalendar Styling */
+/* --- FullCalendar Styling --- */
+
+/* 1. Global Toolbar Layout (Desktop First) */
 .fc-header-toolbar { 
     display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
+    flex-wrap: wrap; 
+    justify-content: space-between; 
+    align-items: center;
     padding-top: 10px; 
     margin-bottom: 1.5em !important; 
 }
 
+/* 2. Title Styling */
 .fc-toolbar-title { 
     font-size: 1.75em !important; 
     color: #333; 
-    display: block; /* Ensure it is displayed */
+    font-weight: bold;
 }
 
+/* 3. Button Colors */
 .fc-button-primary { background-color: #0C419a !important; border-color: #0C419a !important; }
 .fc-button-primary:hover { background-color: #082d6e !important; border-color: #082d6e !important; }
 .fc-button-active { background-color: #062252 !important; border-color: #062252 !important; }
 
-/* FullCalendar Mobile Adjustments */
+/* 4. Event Styling */
+.fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.selected-day { background-color: #fff9c4 !important; }
+
+/* --- PHONE VIEW ADJUSTMENTS --- */
 @media (max-width: 600px) {
+    
+    /* Strict layout for events on phone */
     .fc-event-title { display: none !important; } 
     .fc-event-time { 
         font-weight: bold; 
@@ -263,24 +274,41 @@ body.page-calendar {
         width: 100%; 
         display: block !important; 
     }
-    
+
     /* FIX: Force Toolbar Title Visibility on Phone */
+    
+    /* 1. Stack the toolbar vertically */
     .fc-header-toolbar {
-        align-items: center; /* Center align everything */
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 10px !important;
     }
-    .fc-toolbar-title {
-        font-size: 1.5em !important;
-        margin-bottom: 5px;
-        display: block !important;
-        visibility: visible !important;
-        color: #000 !important;
-        width: 100%;
-        text-align: center;
-    }
+
+    /* 2. Ensure the 'chunks' (groups of buttons) are full width or auto */
     .fc-toolbar-chunk {
         display: flex;
         justify-content: center;
         width: 100%;
+        order: 2; /* Move buttons below title by default */
+    }
+
+    /* 3. Target the chunk containing the title and move it to top */
+    .fc-toolbar-chunk:has(.fc-toolbar-title), /* Modern browsers */
+    .fc-toolbar-chunk:first-child { /* Fallback usually works because title is often first/left */
+        order: 1 !important; 
         margin-bottom: 5px;
+    }
+
+    /* 4. Force the Title itself to be visible */
+    .fc-toolbar-title {
+        font-size: 1.5em !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #000 !important;
+        text-align: center;
+        width: 100%;
+        white-space: normal; /* Allow wrapping if month name is huge */
     }
 }
