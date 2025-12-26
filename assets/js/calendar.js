@@ -9,7 +9,7 @@ const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: 
 document.addEventListener('DOMContentLoaded', async function() {
     
     // --- FEATURE: STALE DATA TIMER (1 Hour) ---
-    const STALE_THRESHOLD = 60 * 60 * 1000; 
+    const STALE_THRESHOLD = 60 * 2 * 1000; 
     const startTime = new Date().getTime();
     setInterval(function() {
         if ((new Date().getTime() - startTime) > STALE_THRESHOLD) {
