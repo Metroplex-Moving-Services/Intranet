@@ -29,10 +29,11 @@ async function initApp() {
 
             // 3. Set Welcome Message
             if (user.data.name) {
-                // Use .split(" ")[0] if you only want the first name
                 const firstName = user.data.name; 
                 $("#welcome-msg").text("Welcome, " + firstName);
-                $("#welcome-msg").show();
+                
+                // CHANGE: Show the parent block so the Logout button appears too
+                $("#user-info-block").show(); 
             }
 
             // 4. Show the App
