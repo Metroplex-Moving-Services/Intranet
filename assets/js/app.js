@@ -126,17 +126,6 @@ window.setiFrame = function(purpose) {
          MMSiFrame.src = "pages/jobtimesheets.html";
          hideLoader(500);
     }
-    
-    else if (purpose == 'publicsite') {
-        hideLoader(1);
-        // Special case: Write HTML directly to iframe for image display
-        // Note: Writing raw HTML to src isn't standard, better to load a page or set content
-        // But keeping your logic:
-        MMSiFrame.src = "about:blank";
-        setTimeout(() => {
-            MMSiFrame.contentDocument.write('<img id="splashImage" src="https://images.squarespace-cdn.com/content/v1/5ae8afd73917ee3150d25ec8/a9dc2415-e7d7-4e32-b6dc-9f810d0edbb7/image-asset.jpeg" style="width:100%">');
-        }, 100);
-    }
 
     else if (purpose == 'clock-in') {
         if (checkRole("Hoobastank")) {                
