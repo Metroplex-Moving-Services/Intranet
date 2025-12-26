@@ -103,18 +103,17 @@ body.page-index {
     .navbar-collapse.collapse { display: none !important; }
     .navbar-collapse.collapse.in { display: block !important; overflow-y: auto; max-height: 75vh; }
     
-    /* FIX: Force Welcome Message to own line & ensure it doesn't overlap Home link */
+    /* FIX: Left Justify Welcome Message on Phone/Tablet */
     #user-info-block {
         display: block !important;
         float: none !important;
         width: 100%;
-        text-align: right; /* Or 'left' if you prefer */
+        text-align: left; /* CHANGED to LEFT */
         margin: 0;
-        padding: 10px 15px;
-        border-bottom: 1px solid #bce8f1; /* Add separator line */
+        padding: 10px 15px; /* Matches standard bootstrap nav link padding */
+        border-bottom: 1px solid #bce8f1; 
     }
 
-    /* Adjust navbar-nav to sit cleanly below the welcome message */
     .navbar-nav { 
         float: none !important; 
         margin-top: 0; 
@@ -123,7 +122,6 @@ body.page-index {
     .navbar-nav > li { float: none; }
     .navbar-nav > li > a { padding-top: 10px; padding-bottom: 10px; }
     
-    /* Ensure dropdowns open nicely in mobile view */
     .navbar-nav .open .dropdown-menu { 
         position: static; 
         float: none; 
