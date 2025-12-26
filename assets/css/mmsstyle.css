@@ -48,6 +48,19 @@ body.page-index {
     overflow: hidden; 
 }
 
+/* New Global Footer Style */
+#global-footer {
+    flex: 0 0 auto; /* Never shrink */
+    background-color: #f9f9f9;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    padding: 10px;
+    font-size: 13px;
+    color: #777;
+    width: 100%;
+    z-index: 999;
+}
+
 /* =========================================
    NAVBAR & LOGIN STYLES
    ========================================= */
