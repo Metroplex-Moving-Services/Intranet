@@ -150,7 +150,7 @@ function initCalendar(authToken) {
                 var endTimeStr = info.event.end ? formatPopupTime(info.event.end) : "Unknown";
                 var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
                 
-                // Helper internal to the popup logic
+                // Address Helpers
                 function getDisplayAddr(addrObj) {
                     if (!addrObj) return "Unknown";
                     if (typeof addrObj === 'string') return addrObj;
@@ -181,21 +181,24 @@ function initCalendar(authToken) {
                 var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=t";
                 var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=t";
 
-                // --- NEW "ADD ME" BUTTON LOGIC (REFINED) ---
+                // --- ADD ME BUTTON LOGIC ---
                 var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
                 var isHoobastank = parentRole.includes("Hoobastank");
                 var needsMover = props.actualCount < props.moverCount;
+                
+                // FIX 1: Check if the job is in the future
+                var isFuture = info.event.start > new Date();
 
-                // Create a Small Inline Button
+                // Create Inline Button HTML if conditions met
                 var addMeBtnHtml = "";
-                if (isHoobastank && needsMover) {
+                if (isHoobastank && needsMover && isFuture) {
                     addMeBtnHtml = `
                         <button id="btn-add-me" style="margin-left: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.85em; font-weight: bold; cursor: pointer; vertical-align: middle;">
                             Add Me
                         </button>
                     `;
                 }
-                // -------------------------------------------
+                // ---------------------------
 
                 Swal.fire({
                     title: props.name,
@@ -244,7 +247,9 @@ function initCalendar(authToken) {
                         const btn = document.getElementById('btn-add-me');
                         if (btn) {
                             btn.addEventListener('click', () => {
-                                Swal.close(); // Close details
+                                // FIX 2: Do NOT call Swal.close() here.
+                                // Calling Swal.fire again will naturally replace the current modal content
+                                // without the visual flicker of closing and reopening.
 
                                 // Date Format for Confirmation
                                 const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
@@ -263,7 +268,6 @@ function initCalendar(authToken) {
                                     cancelButtonColor: '#d33'
                                 }).then((result) => {
                                     if (result.isConfirmed) {
-                                        // TODO: Call your Add Mover API here
                                         Swal.fire('Added!', 'You have been added to the job.', 'success');
                                     }
                                 });
