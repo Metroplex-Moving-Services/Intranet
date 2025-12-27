@@ -187,7 +187,7 @@ function initCalendar(authToken) {
                 var needsMover = props.actualCount < props.moverCount;
                 var isFuture = info.event.start > new Date();
 
-                // Create Inline Button HTML if conditions met
+                // Create Inline Button HTML
                 var addMeBtnHtml = "";
                 if (isHoobastank && needsMover && isFuture) {
                     addMeBtnHtml = `
@@ -244,18 +244,15 @@ function initCalendar(authToken) {
                         const btn = document.getElementById('btn-add-me');
                         if (btn) {
                             btn.addEventListener('click', () => {
-                                // Date Format for Confirmation
+                                // Confirm Date Strings
                                 const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
                                 const niceDate = info.event.start.toLocaleDateString('en-US', dateOptions);
                                 const niceTime = formatPopupTime(info.event.start);
                                 const niceEnd  = info.event.end ? formatPopupTime(info.event.end) : "?";
 
-                                // --- START: OVERLAY CONFIRMATION LOGIC ---
-                                // Instead of firing a new Swal (which closes the current one),
-                                // we inject a custom overlay div on top of the current popup.
-                                
+                                // --- OVERLAY LOGIC ---
                                 const popup = Swal.getPopup();
-                                // Create overlay container
+                                
                                 const overlayHtml = `
                                     <div id="confirm-overlay" style="
                                         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
@@ -288,23 +285,37 @@ function initCalendar(authToken) {
                                 
                                 const overlayDiv = document.createElement('div');
                                 overlayDiv.innerHTML = overlayHtml;
-                                // We ensure the popup allows absolute positioning
-                                popup.style.position = 'relative';
+                                popup.style.position = 'relative'; // Ensure proper positioning
                                 popup.appendChild(overlayDiv);
 
-                                // Add Overlay Event Listeners
+                                // -- Handle "Yes, I'm In" --
                                 document.getElementById('btn-confirm-yes').addEventListener('click', () => {
-                                    // Remove overlay and close everything to show success
-                                    overlayDiv.remove();
-                                    Swal.fire('Added!', 'You have been added to the job.', 'success');
-                                    // Here you would also add your API Call logic
+                                    
+                                    // 1. Swap Overlay Content to SUCCESS State (Checkmark)
+                                    overlayDiv.innerHTML = `
+                                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: fadeIn 0.2s;">
+                                            <div style="
+                                                width: 70px; height: 70px; border-radius: 50%; background: #28a745; 
+                                                display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+                                                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                                            ">
+                                                <span style="color: white; font-size: 40px; font-weight: bold;">&#10003;</span>
+                                            </div>
+                                            <h2 style="color: #555; margin: 0;">Added!</h2>
+                                        </div>
+                                    `;
+
+                                    // 2. Wait 0.5s, then remove overlay to reveal Calendar Details
+                                    setTimeout(() => {
+                                        overlayDiv.remove();
+                                        // TODO: Trigger your API/Zoho update here if needed
+                                    }, 500);
                                 });
 
+                                // -- Handle "Cancel" --
                                 document.getElementById('btn-confirm-no').addEventListener('click', () => {
-                                    // Just remove the overlay to reveal the Calendar Popup again
-                                    overlayDiv.remove();
+                                    overlayDiv.remove(); // Just go back to details
                                 });
-                                // --- END: OVERLAY CONFIRMATION LOGIC ---
                             });
                         }
                     }
