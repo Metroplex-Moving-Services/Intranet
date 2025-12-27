@@ -7,8 +7,8 @@ const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
 
 const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
-const REPORT_MOVERS = "All_Movers";         // To find Mover ID
-const REPORT_JOBS = "Current_Bookings";     // To get AND update the job record
+const REPORT_MOVERS = "All_Movers";         
+const REPORT_JOBS = "Current_Bookings";     
 
 exports.handler = async function(event, context) {
     // 1. CORS Headers
@@ -43,63 +43,71 @@ exports.handler = async function(event, context) {
             console.error("Token Error:", tokenData);
             throw new Error("Could not generate Zoho Access Token");
         }
-        const accessToken = tokenData.access_token;
-        const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
+        const authHeader = { 'Authorization': `Zoho-oauthtoken ${tokenData.access_token}` };
+        const baseUrl = "https://creator.zoho.com/api/v2";
 
         // 3. STEP A: Find Mover ID by Email
-        // Note: Using creatorapp.zoho.com or creator.zoho.com depending on your account. 
-        // Standard API is creator.zoho.com. If this fails with 1000 again, try creatorapp.zoho.com
-        const baseUrl = "https://creator.zoho.com/api/v2";
-        
         const findMoverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${email}")`;
         const moverRes = await fetch(findMoverUrl, { headers: authHeader });
         const moverData = await moverRes.json();
 
         if (moverData.code !== 3000 || !moverData.data || moverData.data.length === 0) {
-            console.error("Mover Search Failed:", moverData);
             throw new Error(`Mover not found in Zoho with email: ${email}`);
         }
         
         const moverRecord = moverData.data[0];
         const moverId = moverRecord.ID;
 
-        // 4. STEP B: Get Current Job (to preserve existing team)
+        // 4. STEP B: Get Current Job Details
         const jobUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
         const jobRes = await fetch(jobUrl, { headers: authHeader });
         const jobData = await jobRes.json();
 
         if (jobData.code !== 3000) {
-            console.error("Job Search Failed:", jobData);
-            throw new Error("Could not find Job Record in 'Current_Bookings'");
+            throw new Error("Could not find Job Record");
         }
 
-        // Logic to merge Movers2 list
         const currentRecord = jobData.data;
-        let existingMovers = [];
+        
+        // --- LOGIC CHECKS ---
 
-        // Handle different Zoho response formats (Array of objects vs String)
+        // A. Normalize the current Movers list into an Array of IDs
+        let existingMovers = [];
         if (Array.isArray(currentRecord.Movers2)) {
             existingMovers = currentRecord.Movers2.map(m => (typeof m === 'object' ? m.ID : m));
         } else if (typeof currentRecord.Movers2 === 'string' && currentRecord.Movers2.trim() !== "") {
              existingMovers = currentRecord.Movers2.split(',');
         }
 
-        // Check if already added to prevent duplicates
+        // B. Check if User is ALREADY on the job
         if (existingMovers.includes(moverId)) {
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify({ message: "Mover already assigned", success: true })
+                // We return success: true so the frontend doesn't show an error popup, 
+                // but we don't actually modify the database.
+                body: JSON.stringify({ success: true, message: "You are already assigned to this job." })
             };
         }
 
-        // Add new ID
+        // C. Check if Job is FULL
+        const targetCount = parseInt(currentRecord.Mover_Count) || 0;
+        const currentCount = existingMovers.length;
+
+        if (currentCount >= targetCount) {
+            return {
+                statusCode: 409, // 409 Conflict indicates the state of the resource forbids this action
+                headers,
+                body: JSON.stringify({ error: "This job is already full." })
+            };
+        }
+
+        // ---------------------
+
+        // 5. STEP C: Add User and Update
         existingMovers.push(moverId);
 
-        // 5. STEP C: Update Job Record
-        // FIX: We must update via the REPORT URL (REPORT_JOBS), not the Form URL
         const updateUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
-        
         const updateBody = {
             "data": {
                 "Movers2": existingMovers
