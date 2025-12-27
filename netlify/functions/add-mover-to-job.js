@@ -1,5 +1,3 @@
-
-
 // --- ZOHO CONFIGURATION ---
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
 const ZOHO_CLIENT_ID = process.env.ZOHO_CLIENT_ID;
@@ -8,7 +6,7 @@ const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
 const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
 const REPORT_MOVERS = "All_Movers";         
-const REPORT_JOBS = "Proposal_Contract_Report";     
+const REPORT_JOBS = "Proposal_Contract_Report"; // Correct Report Name
 
 exports.handler = async function(event, context) {
     // 1. CORS Headers
@@ -67,7 +65,11 @@ exports.handler = async function(event, context) {
             throw new Error("Could not find Job Record");
         }
 
-        const currentRecord = jobData.data;
+        // --- CRITICAL FIX: Handle Zoho Array Response ---
+        let currentRecord = jobData.data;
+        if (Array.isArray(currentRecord)) {
+            currentRecord = currentRecord[0]; // Grab the first object from the array
+        }
         
         // --- LOGIC CHECKS ---
 
@@ -84,8 +86,7 @@ exports.handler = async function(event, context) {
             return {
                 statusCode: 200,
                 headers,
-                // We return success: true so the frontend doesn't show an error popup, 
-                // but we don't actually modify the database.
+                // We return success: true so the frontend doesn't show an error popup
                 body: JSON.stringify({ success: true, message: "You are already assigned to this job." })
             };
         }
@@ -94,9 +95,12 @@ exports.handler = async function(event, context) {
         const targetCount = parseInt(currentRecord.Mover_Count) || 0;
         const currentCount = existingMovers.length;
 
+        // Log capacity for debugging
+        console.log(`Checking Capacity: Current=${currentCount}, Target=${targetCount}`);
+
         if (currentCount >= targetCount) {
             return {
-                statusCode: 409, // 409 Conflict indicates the state of the resource forbids this action
+                statusCode: 409, // 409 Conflict
                 headers,
                 body: JSON.stringify({ error: "This job is already full." })
             };
