@@ -9,7 +9,7 @@ const NETLIFY_ADD_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netli
 
 document.addEventListener('DOMContentLoaded', async function() {
     
-    // --- FEATURE: STALE DATA TIMER (1 Hour) ---
+    // --- STALE DATA TIMER (1 Hour) ---
     const STALE_THRESHOLD = 60 * 60 * 1000; 
     const startTime = new Date().getTime();
     setInterval(function() {
@@ -20,9 +20,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, 60000); 
     // ------------------------------------------
 
-    // 2. Check Auth Token
     const sessionToken = sdk.getSessionToken();
-
     if (!sessionToken || sdk.isJwtExpired(sessionToken)) {
         window.top.location.href = "/Intranet/login.html";
     } else {
@@ -30,7 +28,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-// Global reference to calendar to allow refreshing
 let calendarInstance = null;
 let currentAuthToken = null;
 
@@ -40,7 +37,6 @@ function initCalendar(authToken) {
     loadingMsg.innerText = "Loading calendar data...";
     const calendarEl = document.getElementById('calendar');
 
-    // Fetch Initial Data
     fetchCalendarData(authToken)
     .then(records => {
         loadingMsg.style.display = 'none';
@@ -48,7 +44,7 @@ function initCalendar(authToken) {
     })
     .catch(err => {
         loadingMsg.innerHTML = `<span style='color:red'><strong>Error:</strong> ${err.message}</span>`;
-        console.error("Full Error Details:", err);
+        console.error("Init Error:", err);
     });
 }
 
@@ -61,17 +57,9 @@ function fetchCalendarData(token) {
             const text = await response.text();
             throw new Error(`Server Error: ${response.status}`);
         }
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            throw new Error("Received HTML instead of JSON.");
-        }
         return response.json();
     })
-    .then(data => {
-        const records = data.data || [];
-        if (records.length === 0) console.warn("No events returned from Zoho.");
-        return records;
-    });
+    .then(data => data.data || []);
 }
 
 function renderCalendar(calendarEl, records) {
@@ -105,10 +93,76 @@ function renderCalendar(calendarEl, records) {
         },
         eventClick: function(info) {
             info.jsEvent.preventDefault(); 
+            // 1. Open Popup immediately with existing data
             openJobPopup(info.event);
+            
+            // 2. Trigger background refresh for THIS specific job
+            refreshSingleJobData(info.event);
         }
     });
     calendarInstance.render();
+}
+
+// --- INTELLIGENT JOB REFRESH ---
+async function refreshSingleJobData(calendarEvent) {
+    const jobId = calendarEvent.extendedProps.id;
+    
+    // Show a small "Refreshing..." indicator inside the popup if open
+    const teamContainer = document.getElementById(`team-container-${jobId}`);
+    if(teamContainer) {
+        teamContainer.innerHTML += ` <span style="font-size:0.8em; color:#888;">(Checking for updates...)</span>`;
+    }
+
+    try {
+        // Fetch fresh data
+        const freshRecords = await fetchCalendarData(currentAuthToken);
+        const freshRecord = freshRecords.find(r => r.ID === jobId);
+
+        if (freshRecord) {
+            // Convert the fresh record into an Event object (calculates colors, counts, etc.)
+            const dummyEvent = mapRecordsToEvents([freshRecord])[0]; 
+            
+            // A. Update Visuals (Color) on the Main Calendar
+            // This satisfies "change jobs from blue to orange" dynamically!
+            calendarEvent.setProp('backgroundColor', dummyEvent.backgroundColor);
+            calendarEvent.setProp('borderColor', dummyEvent.borderColor);
+
+            // B. Update Data Props
+            calendarEvent.setExtendedProp('team', dummyEvent.extendedProps.team);
+            calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
+            calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
+            
+            // C. Update Popup Content (if still open)
+            const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
+            if (openPopupId) {
+                updatePopupContentInPlace(calendarEvent);
+            }
+        }
+    } catch (err) {
+        console.error("Background refresh failed", err);
+    }
+}
+
+function updatePopupContentInPlace(eventObj) {
+    const props = eventObj.extendedProps;
+    const start = eventObj.start;
+    const end = eventObj.end;
+    
+    // Re-evaluate "Add Me" button logic (e.g., did it just become full?)
+    var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
+    var isHoobastank = parentRole.includes("Hoobastank");
+    var needsMover = props.actualCount < props.moverCount;
+    var isFuture = start > new Date();
+    var showAddButton = isHoobastank && needsMover && isFuture;
+
+    const htmlContent = generatePopupHtml(props, start, end, showAddButton);
+    
+    // Replace content inside SweetAlert
+    const contentContainer = Swal.getHtmlContainer();
+    if(contentContainer) {
+        contentContainer.innerHTML = htmlContent;
+        attachAddMeListener(eventObj); // Re-attach listener to the new button
+    }
 }
 
 // --- DATA MAPPING ---
@@ -116,7 +170,6 @@ function mapRecordsToEvents(records) {
     return records.map(function(record) {
         var startRaw = record.Agreed_Start_Date_Time;
         var endRaw = record.Estimate_End_Date_Time;
-
         var startISO = parseZohoDate(startRaw);
         var endISO = parseZohoDate(endRaw);
         
@@ -135,12 +188,13 @@ function mapRecordsToEvents(records) {
         var actualMoversCount = countMovers(record.Movers2); 
         var servicesRaw = getZohoVal(record.Services_Provided);
 
-        var bgColor = '#0C419a'; 
+        // COLOR LOGIC
+        var bgColor = '#0C419a'; // Default Blue (Full)
         var bdColor = '#0C419a';
         if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) {
-            bgColor = '#28a745'; bdColor = '#28a745';
+            bgColor = '#28a745'; bdColor = '#28a745'; // Green
         } else if (actualMoversCount < requiredCount) {
-            bgColor = '#fd7e14'; bdColor = '#fd7e14';
+            bgColor = '#fd7e14'; bdColor = '#fd7e14'; // Orange (Needs Movers)
         }
 
         return {
@@ -151,7 +205,7 @@ function mapRecordsToEvents(records) {
             borderColor: bdColor, 
             textColor: '#ffffff',
             extendedProps: { 
-                id: record.ID, // Critical for API updates
+                id: record.ID, 
                 name: safeName, 
                 origin: record.Origination_Address, 
                 destination: record.Destination_Address,
@@ -170,15 +224,12 @@ function openJobPopup(eventObj) {
     const start = eventObj.start;
     const end = eventObj.end;
     
-    // Check "Add Me" Conditions
     var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
     var isHoobastank = parentRole.includes("Hoobastank");
     var needsMover = props.actualCount < props.moverCount;
-    var isFuture = start > new Date(); 
-    
+    var isFuture = start > new Date();
     var showAddButton = isHoobastank && needsMover && isFuture;
 
-    // Generate HTML
     const htmlContent = generatePopupHtml(props, start, end, showAddButton);
 
     Swal.fire({
@@ -213,7 +264,11 @@ function generatePopupHtml(props, start, end, showAddButton) {
         `;
     }
 
+    // Hidden ID to track open popup
+    const hiddenIdCheck = `<div id="popup-job-id-${props.id}" style="display:none;"></div>`;
+
     return `
+        ${hiddenIdCheck}
         <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
             <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
                 📅 ${fullTimeHeader}
@@ -242,7 +297,7 @@ function generatePopupHtml(props, start, end, showAddButton) {
                 <strong>👥 Team:</strong> ${addMeBtnHtml}
             </div>
 
-            <div style="margin-top: 5px; color: #333; font-weight: 500;">
+            <div id="team-container-${props.id}" style="margin-top: 5px; color: #333; font-weight: 500;">
                 ${props.team || "None assigned"}
             </div>
             <div style="margin-top: 4px; color: #666; font-size: 0.9em;">
@@ -275,8 +330,8 @@ function attachAddMeListener(eventObj) {
                         The job is on <strong>${niceDate}</strong><br>${niceTime} - ${niceEnd}
                     </p>
                     <div style="display: flex; gap: 10px;">
-                        <button id="btn-confirm-yes" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Yes, I'm In</button>
-                        <button id="btn-confirm-no" style="background-color: #d33; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancel</button>
+                        <button id="btn-confirm-yes" class="btn btn-success" style="background-color:#28a745; color:white; border:none; padding:10px 20px;">Yes, I'm In</button>
+                        <button id="btn-confirm-no" class="btn btn-danger" style="background-color:#d33; color:white; border:none; padding:10px 20px;">Cancel</button>
                     </div>
                 </div>
             `;
@@ -288,12 +343,10 @@ function attachAddMeListener(eventObj) {
 
             // HANDLE "YES"
             document.getElementById('btn-confirm-yes').addEventListener('click', async () => {
-                // 1. Show Loading State
                 overlayDiv.innerHTML = `<h3 style="color:#0C419a;">Adding you to job...</h3>`;
 
                 try {
                     // FIX: GET EMAIL SAFELY
-                    // We check multiple locations because Descope's response structure can vary
                     let userEmail = null;
                     const parentUser = window.parent.user;
                     
@@ -303,17 +356,12 @@ function attachAddMeListener(eventObj) {
                         } else if (parentUser.email) {
                             userEmail = parentUser.email;
                         } else if (parentUser.data && parentUser.data.loginIds && parentUser.data.loginIds.length > 0) {
-                            // Fallback: LoginID is often the email
                             userEmail = parentUser.data.loginIds[0];
                         }
                     }
 
-                    if(!userEmail) {
-                        console.error("Debug User Object:", parentUser); // Log for debugging
-                        throw new Error("Could not find user email. Check console.");
-                    }
+                    if(!userEmail) throw new Error("Could not find user email.");
 
-                    // 2. CALL API (Netlify Function -> Zoho)
                     const apiResponse = await fetch(NETLIFY_ADD_ENDPOINT, {
                         method: 'POST',
                         headers: { 
@@ -321,66 +369,34 @@ function attachAddMeListener(eventObj) {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            jobId: eventObj.extendedProps.id, // Zoho Record ID
+                            jobId: eventObj.extendedProps.id, 
                             email: userEmail
                         })
                     });
 
                     if(!apiResponse.ok) {
                         const errText = await apiResponse.text();
-                        throw new Error("Update failed: " + errText);
+                        try {
+                            const errObj = JSON.parse(errText);
+                            throw new Error(errObj.error || errObj.message || "Update failed");
+                        } catch(e) {
+                            throw new Error(errText || "Update failed");
+                        }
                     }
 
-                    // 3. Show "Added" State
+                    // Success UI
                     overlayDiv.innerHTML = `
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: fadeIn 0.2s;">
-                            <div style="width: 70px; height: 70px; border-radius: 50%; background: #28a745; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-                                <span style="color: white; font-size: 40px; font-weight: bold;">✓</span>
-                            </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 50px; color: #28a745;">✓</div>
                             <h2 style="color: #555; margin: 0;">Added!</h2>
                         </div>
                     `;
 
-                    // 4. Background Refresh & Repopulate
-                    setTimeout(async () => {
-                        overlayDiv.remove(); // Remove overlay
-                        
-                        // A. Fetch fresh data
-                        const freshRecords = await fetchCalendarData(currentAuthToken);
-                        
-                        // B. Update Calendar Events
-                        const freshEvents = mapRecordsToEvents(freshRecords);
-                        
-                        // C. Update the Calendar Object (removes old, adds new)
-                        calendarInstance.removeAllEvents();
-                        calendarInstance.addEventSource(freshEvents);
-
-                        // D. Find the specific updated event
-                        const updatedEventDef = freshEvents.find(e => e.extendedProps.id === eventObj.extendedProps.id);
-
-                        if (updatedEventDef) {
-                            // E. Repopulate the Popup content in place
-                            const swalContainer = Swal.getHtmlContainer();
-                            if (swalContainer) {
-                                const props = updatedEventDef.extendedProps;
-                                var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
-                                var isHoobastank = parentRole.includes("Hoobastank");
-                                var needsMover = props.actualCount < props.moverCount;
-                                var isFuture = new Date(updatedEventDef.start) > new Date();
-                                var showAdd = isHoobastank && needsMover && isFuture;
-
-                                const startObj = new Date(updatedEventDef.start);
-                                const endObj = new Date(updatedEventDef.end);
-
-                                // Replace HTML
-                                swalContainer.innerHTML = generatePopupHtml(props, startObj, endObj, showAdd);
-                                
-                                // Re-attach listener if the button exists again
-                                attachAddMeListener({ start: startObj, end: endObj, extendedProps: props });
-                            }
-                        }
-
-                    }, 1000); // 1000ms timeout per your request
+                    // REFRESH DATA & COLORS AFTER ADDING
+                    setTimeout(() => {
+                        overlayDiv.remove(); 
+                        refreshSingleJobData(eventObj); // This triggers the color update!
+                    }, 1000); 
 
                 } catch (err) {
                     console.error(err);
@@ -388,14 +404,13 @@ function attachAddMeListener(eventObj) {
                         <div style="padding:20px;">
                             <h3 style="color:red;">Error</h3>
                             <p>${err.message}</p>
-                            <button id="btn-error-close" class="btn btn-default">Close</button>
+                            <button id="btn-error-close" class="btn btn-default" style="margin-top:10px;">Close</button>
                         </div>
                     `;
                     document.getElementById('btn-error-close').addEventListener('click', () => Swal.close());
                 }
             });
 
-            // HANDLE "NO"
             document.getElementById('btn-confirm-no').addEventListener('click', () => {
                 overlayDiv.remove();
             });
@@ -403,7 +418,7 @@ function attachAddMeListener(eventObj) {
     }
 }
 
-// --- HELPERS ---
+// --- HELPERS (Unchanged) ---
 function parseZohoDate(dateStr) {
     if (!dateStr) return null;
     dateStr = dateStr.trim();
