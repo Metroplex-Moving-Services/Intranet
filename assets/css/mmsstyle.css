@@ -276,15 +276,24 @@ body.page-calendar {
 .fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .selected-day { background-color: #fff9c4 !important; }
 
-/* 5. SweetAlert2 Popup MAXIMIZATION */
-.swal2-popup { 
-    /* Keep the outer popup large */
-    padding-left: 5px !important; 
-    padding-right: 5px !important; 
+/* 5. SweetAlert2 Popup Adjustments */
+.swal2-popup {
+    /* Tighten top padding to move name up */
+    padding-top: 10px !important;   
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    padding-bottom: 10px !important;
+}
+
+.swal2-title {
+    /* Remove default top space and add bottom space */
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    margin-bottom: 20px !important; /* Space between Name and Date */
+    font-size: 1.5em !important;
 }
 
 .swal2-html-container { 
-    /* Remove internal spacing so text fills the box */
     margin: 0 !important;       
     padding: 0 5px !important;  
     width: 100% !important;     
