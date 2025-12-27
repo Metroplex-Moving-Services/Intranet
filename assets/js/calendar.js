@@ -34,7 +34,17 @@ let currentAuthToken = null;
 function initCalendar(authToken) {
     currentAuthToken = authToken;
     const loadingMsg = document.getElementById('loading');
-    loadingMsg.innerText = "Loading calendar data...";
+    
+    // Only show loading text if calendar isn't already visible (first load)
+    if (!calendarInstance) {
+        loadingMsg.innerText = "Loading calendar data...";
+        loadingMsg.style.display = 'block';
+    } else {
+        // Optional: Show a subtle loading indicator for refreshes?
+        // loadingMsg.innerText = "Refreshing...";
+        // loadingMsg.style.display = 'block';
+    }
+
     const calendarEl = document.getElementById('calendar');
 
     fetchCalendarData(authToken)
@@ -65,6 +75,14 @@ function fetchCalendarData(token) {
 function renderCalendar(calendarEl, records) {
     var calendarEvents = mapRecordsToEvents(records);
 
+    // If calendar already exists, just update the events and return
+    // This prevents the UI from "flashing" or resetting the view unnecessarily
+    if (calendarInstance) {
+        calendarInstance.removeAllEvents();
+        calendarInstance.addEventSource(calendarEvents);
+        return;
+    }
+
     calendarInstance = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         eventDisplay: 'block', 
@@ -73,9 +91,16 @@ function renderCalendar(calendarEl, records) {
             resetToday: {
                 text: 'Today',
                 click: function() {
+                    // 1. Move view to Today
                     calendarInstance.today();
+                    
+                    // 2. Clear selection styles
                     document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
                     updateTodayButton(false);
+
+                    // 3. FORCE REFRESH: Pull fresh data from Zoho
+                    console.log("Refreshing data...");
+                    initCalendar(currentAuthToken);
                 }
             }
         },
@@ -93,10 +118,7 @@ function renderCalendar(calendarEl, records) {
         },
         eventClick: function(info) {
             info.jsEvent.preventDefault(); 
-            // 1. Open Popup immediately with existing data
             openJobPopup(info.event);
-            
-            // 2. Trigger background refresh for THIS specific job
             refreshSingleJobData(info.event);
         }
     });
@@ -107,32 +129,24 @@ function renderCalendar(calendarEl, records) {
 async function refreshSingleJobData(calendarEvent) {
     const jobId = calendarEvent.extendedProps.id;
     
-    // Show a small "Refreshing..." indicator inside the popup if open
     const teamContainer = document.getElementById(`team-container-${jobId}`);
     if(teamContainer) {
         teamContainer.innerHTML += ` <span style="font-size:0.8em; color:#888;">(Checking for updates...)</span>`;
     }
 
     try {
-        // Fetch fresh data
         const freshRecords = await fetchCalendarData(currentAuthToken);
         const freshRecord = freshRecords.find(r => r.ID === jobId);
 
         if (freshRecord) {
-            // Convert the fresh record into an Event object (calculates colors, counts, etc.)
             const dummyEvent = mapRecordsToEvents([freshRecord])[0]; 
             
-            // A. Update Visuals (Color) on the Main Calendar
-            // This satisfies "change jobs from blue to orange" dynamically!
             calendarEvent.setProp('backgroundColor', dummyEvent.backgroundColor);
             calendarEvent.setProp('borderColor', dummyEvent.borderColor);
-
-            // B. Update Data Props
             calendarEvent.setExtendedProp('team', dummyEvent.extendedProps.team);
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
             
-            // C. Update Popup Content (if still open)
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
             if (openPopupId) {
                 updatePopupContentInPlace(calendarEvent);
@@ -148,7 +162,6 @@ function updatePopupContentInPlace(eventObj) {
     const start = eventObj.start;
     const end = eventObj.end;
     
-    // Re-evaluate "Add Me" button logic (e.g., did it just become full?)
     var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
     var isHoobastank = parentRole.includes("Hoobastank");
     var needsMover = props.actualCount < props.moverCount;
@@ -157,11 +170,10 @@ function updatePopupContentInPlace(eventObj) {
 
     const htmlContent = generatePopupHtml(props, start, end, showAddButton);
     
-    // Replace content inside SweetAlert
     const contentContainer = Swal.getHtmlContainer();
     if(contentContainer) {
         contentContainer.innerHTML = htmlContent;
-        attachAddMeListener(eventObj); // Re-attach listener to the new button
+        attachAddMeListener(eventObj); 
     }
 }
 
@@ -188,13 +200,12 @@ function mapRecordsToEvents(records) {
         var actualMoversCount = countMovers(record.Movers2); 
         var servicesRaw = getZohoVal(record.Services_Provided);
 
-        // COLOR LOGIC
-        var bgColor = '#0C419a'; // Default Blue (Full)
+        var bgColor = '#0C419a'; 
         var bdColor = '#0C419a';
         if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) {
-            bgColor = '#28a745'; bdColor = '#28a745'; // Green
+            bgColor = '#28a745'; bdColor = '#28a745'; 
         } else if (actualMoversCount < requiredCount) {
-            bgColor = '#fd7e14'; bdColor = '#fd7e14'; // Orange (Needs Movers)
+            bgColor = '#fd7e14'; bdColor = '#fd7e14'; 
         }
 
         return {
@@ -264,7 +275,6 @@ function generatePopupHtml(props, start, end, showAddButton) {
         `;
     }
 
-    // Hidden ID to track open popup
     const hiddenIdCheck = `<div id="popup-job-id-${props.id}" style="display:none;"></div>`;
 
     return `
@@ -316,7 +326,6 @@ function attachAddMeListener(eventObj) {
             const niceTime = formatPopupTime(eventObj.start);
             const niceEnd  = eventObj.end ? formatPopupTime(eventObj.end) : "?";
 
-            // --- CONFIRMATION OVERLAY ---
             const popup = Swal.getPopup();
             const overlayHtml = `
                 <div id="confirm-overlay" style="
@@ -341,12 +350,10 @@ function attachAddMeListener(eventObj) {
             popup.style.position = 'relative';
             popup.appendChild(overlayDiv);
 
-            // HANDLE "YES"
             document.getElementById('btn-confirm-yes').addEventListener('click', async () => {
                 overlayDiv.innerHTML = `<h3 style="color:#0C419a;">Adding you to job...</h3>`;
 
                 try {
-                    // FIX: GET EMAIL SAFELY
                     let userEmail = null;
                     const parentUser = window.parent.user;
                     
@@ -384,7 +391,6 @@ function attachAddMeListener(eventObj) {
                         }
                     }
 
-                    // Success UI
                     overlayDiv.innerHTML = `
                         <div style="display: flex; flex-direction: column; align-items: center;">
                             <div style="font-size: 50px; color: #28a745;">✓</div>
@@ -392,10 +398,9 @@ function attachAddMeListener(eventObj) {
                         </div>
                     `;
 
-                    // REFRESH DATA & COLORS AFTER ADDING
                     setTimeout(() => {
                         overlayDiv.remove(); 
-                        refreshSingleJobData(eventObj); // This triggers the color update!
+                        refreshSingleJobData(eventObj); 
                     }, 1000); 
 
                 } catch (err) {
