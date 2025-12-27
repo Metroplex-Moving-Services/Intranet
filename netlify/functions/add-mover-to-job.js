@@ -8,7 +8,7 @@ const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
 const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
 const REPORT_MOVERS = "All_Movers";         
-const REPORT_JOBS = "Current_Bookings";     
+const REPORT_JOBS = "Proposal_Contract_Report";     
 
 exports.handler = async function(event, context) {
     // 1. CORS Headers

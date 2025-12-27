@@ -30,7 +30,7 @@ exports.handler = async function(event, context) {
 
         const APP_OWNER = "information152";
         const APP_LINK = "household-goods-moving-services";
-        const REPORT_NAME = "Current_Bookings"; 
+        const REPORT_NAME = "Proposal_Contract_Report"; 
 
         // 3. Get Access Token
         const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`;
