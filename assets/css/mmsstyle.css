@@ -276,9 +276,21 @@ body.page-calendar {
 .fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .selected-day { background-color: #fff9c4 !important; }
 
-/* 5. SweetAlert2 Popup Adjustments (Reduced Margins) */
-.swal2-popup { padding-left: 5px !important; padding-right: 5px !important; }
-.swal2-html-container { margin: 5px !important; width: auto !important; }
+/* 5. SweetAlert2 Popup MAXIMIZATION */
+.swal2-popup { 
+    /* Keep the outer popup large */
+    padding-left: 5px !important; 
+    padding-right: 5px !important; 
+}
+
+.swal2-html-container { 
+    /* Remove internal spacing so text fills the box */
+    margin: 0 !important;       
+    padding: 0 5px !important;  
+    width: 100% !important;     
+    max-width: 100% !important;
+}
+
 div.swal2-container { align-items: flex-start !important; padding-top: 10px !important; }
 .modal-dialog { width: 95% !important; max-width: 800px; margin: 10px auto; }
 .modal-body { padding: 5px 10px !important; }
