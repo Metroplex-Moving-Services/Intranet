@@ -174,7 +174,7 @@ function openJobPopup(eventObj) {
     var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
     var isHoobastank = parentRole.includes("Hoobastank");
     var needsMover = props.actualCount < props.moverCount;
-    var isFuture = start > new Date(); // Only future jobs
+    var isFuture = start > new Date(); 
     
     var showAddButton = isHoobastank && needsMover && isFuture;
 
@@ -292,12 +292,28 @@ function attachAddMeListener(eventObj) {
                 overlayDiv.innerHTML = `<h3 style="color:#0C419a;">Adding you to job...</h3>`;
 
                 try {
-                    // 2. CALL API (Netlify Function -> Zoho)
-                    const userEmail = (window.parent.user && window.parent.user.email) ? window.parent.user.email : "";
+                    // FIX: GET EMAIL SAFELY
+                    // We check multiple locations because Descope's response structure can vary
+                    let userEmail = null;
+                    const parentUser = window.parent.user;
                     
-                    if(!userEmail) throw new Error("Could not find user email.");
+                    if (parentUser) {
+                        if (parentUser.data && parentUser.data.email) {
+                            userEmail = parentUser.data.email;
+                        } else if (parentUser.email) {
+                            userEmail = parentUser.email;
+                        } else if (parentUser.data && parentUser.data.loginIds && parentUser.data.loginIds.length > 0) {
+                            // Fallback: LoginID is often the email
+                            userEmail = parentUser.data.loginIds[0];
+                        }
+                    }
 
-                    // This fetch assumes you have created 'add-mover-to-job' in Netlify
+                    if(!userEmail) {
+                        console.error("Debug User Object:", parentUser); // Log for debugging
+                        throw new Error("Could not find user email. Check console.");
+                    }
+
+                    // 2. CALL API (Netlify Function -> Zoho)
                     const apiResponse = await fetch(NETLIFY_ADD_ENDPOINT, {
                         method: 'POST',
                         headers: { 
@@ -310,7 +326,10 @@ function attachAddMeListener(eventObj) {
                         })
                     });
 
-                    if(!apiResponse.ok) throw new Error("Update failed.");
+                    if(!apiResponse.ok) {
+                        const errText = await apiResponse.text();
+                        throw new Error("Update failed: " + errText);
+                    }
 
                     // 3. Show "Added" State
                     overlayDiv.innerHTML = `
@@ -343,7 +362,6 @@ function attachAddMeListener(eventObj) {
                             // E. Repopulate the Popup content in place
                             const swalContainer = Swal.getHtmlContainer();
                             if (swalContainer) {
-                                // Since generatePopupHtml needs 'showAddButton' logic again:
                                 const props = updatedEventDef.extendedProps;
                                 var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
                                 var isHoobastank = parentRole.includes("Hoobastank");
