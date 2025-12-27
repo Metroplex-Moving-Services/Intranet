@@ -185,8 +185,6 @@ function initCalendar(authToken) {
                 var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
                 var isHoobastank = parentRole.includes("Hoobastank");
                 var needsMover = props.actualCount < props.moverCount;
-                
-                // FIX 1: Check if the job is in the future
                 var isFuture = info.event.start > new Date();
 
                 // Create Inline Button HTML if conditions met
@@ -198,7 +196,6 @@ function initCalendar(authToken) {
                         </button>
                     `;
                 }
-                // ---------------------------
 
                 Swal.fire({
                     title: props.name,
@@ -247,30 +244,67 @@ function initCalendar(authToken) {
                         const btn = document.getElementById('btn-add-me');
                         if (btn) {
                             btn.addEventListener('click', () => {
-                                // FIX 2: Do NOT call Swal.close() here.
-                                // Calling Swal.fire again will naturally replace the current modal content
-                                // without the visual flicker of closing and reopening.
-
                                 // Date Format for Confirmation
                                 const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
                                 const niceDate = info.event.start.toLocaleDateString('en-US', dateOptions);
                                 const niceTime = formatPopupTime(info.event.start);
                                 const niceEnd  = info.event.end ? formatPopupTime(info.event.end) : "?";
 
-                                Swal.fire({
-                                    title: 'Are you sure?',
-                                    text: `The job is on ${niceDate}, ${niceTime} - ${niceEnd}`,
-                                    icon: 'question',
-                                    showCancelButton: true,
-                                    confirmButtonText: "Yes, I'm In",
-                                    cancelButtonText: "Cancel",
-                                    confirmButtonColor: '#28a745',
-                                    cancelButtonColor: '#d33'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        Swal.fire('Added!', 'You have been added to the job.', 'success');
-                                    }
+                                // --- START: OVERLAY CONFIRMATION LOGIC ---
+                                // Instead of firing a new Swal (which closes the current one),
+                                // we inject a custom overlay div on top of the current popup.
+                                
+                                const popup = Swal.getPopup();
+                                // Create overlay container
+                                const overlayHtml = `
+                                    <div id="confirm-overlay" style="
+                                        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+                                        background: rgba(255,255,255,0.95); 
+                                        z-index: 1000; 
+                                        display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                                        text-align: center; border-radius: 5px; animation: fadeIn 0.2s;
+                                    ">
+                                        <div style="margin-bottom: 20px;">
+                                            <div style="font-size: 3em; color: #888; margin-bottom: 10px;">?</div>
+                                            <h3 style="margin: 0; color: #333;">Are you sure?</h3>
+                                        </div>
+                                        <p style="margin-bottom: 25px; color: #555; padding: 0 20px; font-size: 1.1em;">
+                                            The job is on <strong>${niceDate}</strong><br>
+                                            ${niceTime} - ${niceEnd}
+                                        </p>
+                                        <div style="display: flex; gap: 10px;">
+                                            <button id="btn-confirm-yes" style="
+                                                background-color: #28a745; color: white; border: none; 
+                                                padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em;
+                                            ">Yes, I'm In</button>
+                                            
+                                            <button id="btn-confirm-no" style="
+                                                background-color: #d33; color: white; border: none; 
+                                                padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em;
+                                            ">Cancel</button>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                const overlayDiv = document.createElement('div');
+                                overlayDiv.innerHTML = overlayHtml;
+                                // We ensure the popup allows absolute positioning
+                                popup.style.position = 'relative';
+                                popup.appendChild(overlayDiv);
+
+                                // Add Overlay Event Listeners
+                                document.getElementById('btn-confirm-yes').addEventListener('click', () => {
+                                    // Remove overlay and close everything to show success
+                                    overlayDiv.remove();
+                                    Swal.fire('Added!', 'You have been added to the job.', 'success');
+                                    // Here you would also add your API Call logic
                                 });
+
+                                document.getElementById('btn-confirm-no').addEventListener('click', () => {
+                                    // Just remove the overlay to reveal the Calendar Popup again
+                                    overlayDiv.remove();
+                                });
+                                // --- END: OVERLAY CONFIRMATION LOGIC ---
                             });
                         }
                     }
