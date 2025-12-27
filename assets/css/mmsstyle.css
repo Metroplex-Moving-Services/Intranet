@@ -131,6 +131,12 @@ body.page-index {
         border: 0; 
         box-shadow: none; 
     }
+
+    /* NEW FIX: Improve visibility of dropdown links on mobile */
+    .navbar-nav .open .dropdown-menu > li > a {
+        color: #333 !important; 
+        font-weight: 600 !important; /* Make them bolder and darker */
+    }
 }
 
 /* =========================================

@@ -3,8 +3,9 @@
    Handles Descope Auth, Zoho Data Fetching, and FullCalendar
    ============================================================ */
 
-// 1. Initialize Descope
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
+const NETLIFY_GET_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar";
+const NETLIFY_ADD_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/add-mover-to-job";
 
 document.addEventListener('DOMContentLoaded', async function() {
     
@@ -29,15 +30,31 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+// Global reference to calendar to allow refreshing
+let calendarInstance = null;
+let currentAuthToken = null;
+
 function initCalendar(authToken) {
+    currentAuthToken = authToken;
     const loadingMsg = document.getElementById('loading');
     loadingMsg.innerText = "Loading calendar data...";
     const calendarEl = document.getElementById('calendar');
-    const NETLIFY_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar";
 
-    // --- FETCH DATA ---
-    fetch(NETLIFY_ENDPOINT, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+    // Fetch Initial Data
+    fetchCalendarData(authToken)
+    .then(records => {
+        loadingMsg.style.display = 'none';
+        renderCalendar(calendarEl, records);
+    })
+    .catch(err => {
+        loadingMsg.innerHTML = `<span style='color:red'><strong>Error:</strong> ${err.message}</span>`;
+        console.error("Full Error Details:", err);
+    });
+}
+
+function fetchCalendarData(token) {
+    return fetch(NETLIFY_GET_ENDPOINT, {
+        headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(async response => {
         if (!response.ok) {
@@ -46,305 +63,340 @@ function initCalendar(authToken) {
         }
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-            throw new Error("Received HTML instead of JSON. Check Network Tab.");
+            throw new Error("Received HTML instead of JSON.");
         }
         return response.json();
     })
     .then(data => {
-        loadingMsg.style.display = 'none';
-
-        const records = data.data || []; 
-        
-        if (records.length === 0) {
-             console.warn("No events returned from Zoho.");
-        }
-
-        var calendarEvents = records.map(function(record) {
-            var startRaw = record.Agreed_Start_Date_Time;
-            var endRaw = record.Estimate_End_Date_Time;
-
-            var startISO = parseZohoDate(startRaw);
-            var endISO = parseZohoDate(endRaw);
-            
-            // Fallback logic for end dates
-            if (!endISO && startRaw && endRaw) {
-                try {
-                    var dateOnly = startRaw.trim().split(/\s+/)[0]; 
-                    var combined = dateOnly + " " + endRaw;
-                    endISO = parseZohoDate(combined);
-                } catch(e) {}
-            }
-            
-            if (!startISO) return null;
-
-            var safeName = getZohoVal(record.Customer_Name) || "Unknown";
-            var shortName = getShortName(safeName);
-            var originObj = record.Origination_Address; 
-            var destObj = record.Destination_Address;
-            var servicesRaw = getZohoVal(record.Services_Provided);
-            
-            var requiredCount = parseInt(record.Mover_Count) || 0; 
-            var actualMoversCount = countMovers(record.Movers2); 
-            var moversListString = getMoversString(record.Movers2);
-
-            var bgColor = '#0C419a'; 
-            var bdColor = '#0C419a';
-            if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) {
-                bgColor = '#28a745'; bdColor = '#28a745';
-            } else if (actualMoversCount < requiredCount) {
-                bgColor = '#fd7e14'; bdColor = '#fd7e14';
-            }
-
-            return {
-                title: shortName, start: startISO, end: endISO,
-                backgroundColor: bgColor, borderColor: bdColor, textColor: '#ffffff',
-                extendedProps: { 
-                    name: safeName, 
-                    origin: originObj, 
-                    destination: destObj,
-                    services: servicesRaw, 
-                    team: moversListString,
-                    moverCount: requiredCount,
-                    actualCount: actualMoversCount 
-                }
-            };
-        }).filter(event => event !== null);
-
-        // --- RENDER FULLCALENDAR (V5) ---
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            eventDisplay: 'block', 
-            height: 'auto',
-            customButtons: {
-                resetToday: {
-                    text: 'Today',
-                    click: function() {
-                        calendar.today();
-                        document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
-                        var todayEl = document.querySelector('.fc-day-today');
-                        if (todayEl) todayEl.style.backgroundColor = '';
-                        updateTodayButton(false);
-                    }
-                }
-            },
-            headerToolbar: { left: 'title', center: '', right: 'prev,next resetToday' },
-            events: calendarEvents,
-            datesSet: function(info) {
-                var today = new Date(); today.setHours(0,0,0,0);
-                if (today >= info.start && today < info.end) updateTodayButton(false);
-                else updateTodayButton(true);
-            },
-            dateClick: function(info) {
-                document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
-                info.dayEl.classList.add('selected-day');
-                var todayEl = document.querySelector('.fc-day-today');
-                if (todayEl) todayEl.style.backgroundColor = 'transparent';
-                updateTodayButton(true);
-            },
-            eventClick: function(info) {
-                info.jsEvent.preventDefault(); 
-                var props = info.event.extendedProps;
-                
-                var dateStr = formatPopupDate(info.event.start);
-                var startTimeStr = formatPopupTime(info.event.start);
-                var endTimeStr = info.event.end ? formatPopupTime(info.event.end) : "Unknown";
-                var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
-                
-                // Address Helpers
-                function getDisplayAddr(addrObj) {
-                    if (!addrObj) return "Unknown";
-                    if (typeof addrObj === 'string') return addrObj;
-                    let parts = [];
-                    if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
-                    if (addrObj.address_line_2) parts.push(addrObj.address_line_2);
-                    if (addrObj.district_city)  parts.push(addrObj.district_city);
-                    return parts.join(", ");
-                }
-
-                function getMapAddr(addrObj) {
-                    if (!addrObj) return "";
-                    if (typeof addrObj === 'string') return addrObj;
-                    let parts = [];
-                    if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
-                    if (addrObj.district_city)  parts.push(addrObj.district_city);
-                    if (addrObj.state_province) parts.push(addrObj.state_province);
-                    if (addrObj.postal_code)    parts.push(addrObj.postal_code);
-                    return parts.join(", ");
-                }
-
-                var originDisplay = getDisplayAddr(props.origin);
-                var destDisplay   = getDisplayAddr(props.destination);
-                var originMapStr  = getMapAddr(props.origin);
-                var destMapStr    = getMapAddr(props.destination);
-                
-                var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-                var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=t";
-                var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=t";
-
-                // --- ADD ME BUTTON LOGIC ---
-                var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
-                var isHoobastank = parentRole.includes("Hoobastank");
-                var needsMover = props.actualCount < props.moverCount;
-                var isFuture = info.event.start > new Date();
-
-                // Create Inline Button HTML
-                var addMeBtnHtml = "";
-                if (isHoobastank && needsMover && isFuture) {
-                    addMeBtnHtml = `
-                        <button id="btn-add-me" style="margin-left: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.85em; font-weight: bold; cursor: pointer; vertical-align: middle;">
-                            Add Me
-                        </button>
-                    `;
-                }
-
-                Swal.fire({
-                    title: props.name,
-                    width: 600,
-                    showCloseButton: true,
-                    showConfirmButton: false, 
-                    html: `
-                        <div style="text-align: left; font-size: 1.1em;">
-                            <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
-                                📅 ${fullTimeHeader}
-                            </div>
-
-                            <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
-                                <strong style="min-width: 80px; color: #333; margin-right: 10px;">📍 Pickup:</strong>
-                                <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
-                                    ${originDisplay}
-                                </a>
-                            </div>
-
-                            <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
-                                <strong style="min-width: 80px; color: #333; margin-right: 10px;">🏁 Dropoff:</strong>
-                                <a href="${destLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
-                                    ${destDisplay}
-                                </a>
-                            </div>
-
-                            <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-                            <strong>🛠 Services Provided:</strong>
-                            <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
-                            <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-                            
-                            <div style="margin-top: 5px;">
-                                <strong>👥 Team:</strong> ${addMeBtnHtml}
-                            </div>
-
-                            <div style="margin-top: 5px; color: #333; font-weight: 500;">
-                                ${props.team || "None assigned"}
-                            </div>
-                            <div style="margin-top: 4px; color: #666; font-size: 0.9em;">
-                                Target Size: <strong>${props.moverCount || 0} Movers</strong>
-                            </div>
-                        </div>
-                    `,
-                    didOpen: () => {
-                        // Attach Click Event
-                        const btn = document.getElementById('btn-add-me');
-                        if (btn) {
-                            btn.addEventListener('click', () => {
-                                // Confirm Date Strings
-                                const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
-                                const niceDate = info.event.start.toLocaleDateString('en-US', dateOptions);
-                                const niceTime = formatPopupTime(info.event.start);
-                                const niceEnd  = info.event.end ? formatPopupTime(info.event.end) : "?";
-
-                                // --- OVERLAY LOGIC ---
-                                const popup = Swal.getPopup();
-                                
-                                const overlayHtml = `
-                                    <div id="confirm-overlay" style="
-                                        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-                                        background: rgba(255,255,255,0.95); 
-                                        z-index: 1000; 
-                                        display: flex; flex-direction: column; justify-content: center; align-items: center; 
-                                        text-align: center; border-radius: 5px; animation: fadeIn 0.2s;
-                                    ">
-                                        <div style="margin-bottom: 20px;">
-                                            <div style="font-size: 3em; color: #888; margin-bottom: 10px;">?</div>
-                                            <h3 style="margin: 0; color: #333;">Are you sure?</h3>
-                                        </div>
-                                        <p style="margin-bottom: 25px; color: #555; padding: 0 20px; font-size: 1.1em;">
-                                            The job is on <strong>${niceDate}</strong><br>
-                                            ${niceTime} - ${niceEnd}
-                                        </p>
-                                        <div style="display: flex; gap: 10px;">
-                                            <button id="btn-confirm-yes" style="
-                                                background-color: #28a745; color: white; border: none; 
-                                                padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em;
-                                            ">Yes, I'm In</button>
-                                            
-                                            <button id="btn-confirm-no" style="
-                                                background-color: #d33; color: white; border: none; 
-                                                padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em;
-                                            ">Cancel</button>
-                                        </div>
-                                    </div>
-                                `;
-                                
-                                const overlayDiv = document.createElement('div');
-                                overlayDiv.innerHTML = overlayHtml;
-                                popup.style.position = 'relative'; // Ensure proper positioning
-                                popup.appendChild(overlayDiv);
-
-                                // -- Handle "Yes, I'm In" --
-                                document.getElementById('btn-confirm-yes').addEventListener('click', () => {
-                                    
-                                    // 1. Swap Overlay Content to SUCCESS State (Checkmark)
-                                    overlayDiv.innerHTML = `
-                                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: fadeIn 0.2s;">
-                                            <div style="
-                                                width: 70px; height: 70px; border-radius: 50%; background: #28a745; 
-                                                display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
-                                                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                                            ">
-                                                <span style="color: white; font-size: 40px; font-weight: bold;">&#10003;</span>
-                                            </div>
-                                            <h2 style="color: #555; margin: 0;">Added!</h2>
-                                        </div>
-                                    `;
-
-                                    // 2. Wait 0.5s, then remove overlay to reveal Calendar Details
-                                    setTimeout(() => {
-                                        overlayDiv.remove();
-                                        // TODO: Trigger your API/Zoho update here if needed
-                                    }, 500);
-                                });
-
-                                // -- Handle "Cancel" --
-                                document.getElementById('btn-confirm-no').addEventListener('click', () => {
-                                    overlayDiv.remove(); // Just go back to details
-                                });
-                            });
-                        }
-                    }
-                });
-            }
-        });
-        calendar.render();
-    })
-    .catch(err => {
-        loadingMsg.innerHTML = `<span style='color:red'><strong>Error:</strong> ${err.message}</span>`;
-        console.error("Full Error Details:", err);
+        const records = data.data || [];
+        if (records.length === 0) console.warn("No events returned from Zoho.");
+        return records;
     });
 }
 
-// --- HELPER FUNCTIONS ---
+function renderCalendar(calendarEl, records) {
+    var calendarEvents = mapRecordsToEvents(records);
+
+    calendarInstance = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        eventDisplay: 'block', 
+        height: 'auto',
+        customButtons: {
+            resetToday: {
+                text: 'Today',
+                click: function() {
+                    calendarInstance.today();
+                    document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
+                    updateTodayButton(false);
+                }
+            }
+        },
+        headerToolbar: { left: 'title', center: '', right: 'prev,next resetToday' },
+        events: calendarEvents,
+        datesSet: function(info) {
+            var today = new Date(); today.setHours(0,0,0,0);
+            if (today >= info.start && today < info.end) updateTodayButton(false);
+            else updateTodayButton(true);
+        },
+        dateClick: function(info) {
+            document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
+            info.dayEl.classList.add('selected-day');
+            updateTodayButton(true);
+        },
+        eventClick: function(info) {
+            info.jsEvent.preventDefault(); 
+            openJobPopup(info.event);
+        }
+    });
+    calendarInstance.render();
+}
+
+// --- DATA MAPPING ---
+function mapRecordsToEvents(records) {
+    return records.map(function(record) {
+        var startRaw = record.Agreed_Start_Date_Time;
+        var endRaw = record.Estimate_End_Date_Time;
+
+        var startISO = parseZohoDate(startRaw);
+        var endISO = parseZohoDate(endRaw);
+        
+        if (!endISO && startRaw && endRaw) {
+            try {
+                var dateOnly = startRaw.trim().split(/\s+/)[0]; 
+                var combined = dateOnly + " " + endRaw;
+                endISO = parseZohoDate(combined);
+            } catch(e) {}
+        }
+        
+        if (!startISO) return null;
+
+        var safeName = getZohoVal(record.Customer_Name) || "Unknown";
+        var requiredCount = parseInt(record.Mover_Count) || 0; 
+        var actualMoversCount = countMovers(record.Movers2); 
+        var servicesRaw = getZohoVal(record.Services_Provided);
+
+        var bgColor = '#0C419a'; 
+        var bdColor = '#0C419a';
+        if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) {
+            bgColor = '#28a745'; bdColor = '#28a745';
+        } else if (actualMoversCount < requiredCount) {
+            bgColor = '#fd7e14'; bdColor = '#fd7e14';
+        }
+
+        return {
+            title: getShortName(safeName), 
+            start: startISO, 
+            end: endISO,
+            backgroundColor: bgColor, 
+            borderColor: bdColor, 
+            textColor: '#ffffff',
+            extendedProps: { 
+                id: record.ID, // Critical for API updates
+                name: safeName, 
+                origin: record.Origination_Address, 
+                destination: record.Destination_Address,
+                services: servicesRaw, 
+                team: getMoversString(record.Movers2),
+                moverCount: requiredCount,
+                actualCount: actualMoversCount 
+            }
+        };
+    }).filter(event => event !== null);
+}
+
+// --- POPUP LOGIC ---
+function openJobPopup(eventObj) {
+    const props = eventObj.extendedProps;
+    const start = eventObj.start;
+    const end = eventObj.end;
+    
+    // Check "Add Me" Conditions
+    var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
+    var isHoobastank = parentRole.includes("Hoobastank");
+    var needsMover = props.actualCount < props.moverCount;
+    var isFuture = start > new Date(); // Only future jobs
+    
+    var showAddButton = isHoobastank && needsMover && isFuture;
+
+    // Generate HTML
+    const htmlContent = generatePopupHtml(props, start, end, showAddButton);
+
+    Swal.fire({
+        title: props.name,
+        width: 600,
+        showCloseButton: true,
+        showConfirmButton: false, 
+        html: htmlContent,
+        didOpen: () => {
+            attachAddMeListener(eventObj);
+        }
+    });
+}
+
+function generatePopupHtml(props, start, end, showAddButton) {
+    var dateStr = formatPopupDate(start);
+    var startTimeStr = formatPopupTime(start);
+    var endTimeStr = end ? formatPopupTime(end) : "Unknown";
+    var fullTimeHeader = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
+
+    var originDisplay = getDisplayAddr(props.origin);
+    var destDisplay   = getDisplayAddr(props.destination);
+    var originLink    = getMapLink(props.origin);
+    var destLink      = getMapLink(props.destination);
+
+    var addMeBtnHtml = "";
+    if (showAddButton) {
+        addMeBtnHtml = `
+            <button id="btn-add-me" style="margin-left: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.85em; font-weight: bold; cursor: pointer; vertical-align: middle;">
+                Add Me
+            </button>
+        `;
+    }
+
+    return `
+        <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
+            <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
+                📅 ${fullTimeHeader}
+            </div>
+
+            <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+                <strong style="min-width: 80px; color: #333; margin-right: 10px;">📍 Pickup:</strong>
+                <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
+                    ${originDisplay}
+                </a>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
+                <strong style="min-width: 80px; color: #333; margin-right: 10px;">🏁 Dropoff:</strong>
+                <a href="${destLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
+                    ${destDisplay}
+                </a>
+            </div>
+
+            <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+            <strong>🛠 Services Provided:</strong>
+            <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
+            <hr style="border-top: 1px solid #eee; margin: 15px 0;">
+            
+            <div style="margin-top: 5px;">
+                <strong>👥 Team:</strong> ${addMeBtnHtml}
+            </div>
+
+            <div style="margin-top: 5px; color: #333; font-weight: 500;">
+                ${props.team || "None assigned"}
+            </div>
+            <div style="margin-top: 4px; color: #666; font-size: 0.9em;">
+                Target Size: <strong>${props.moverCount || 0} Movers</strong>
+            </div>
+        </div>
+    `;
+}
+
+function attachAddMeListener(eventObj) {
+    const btn = document.getElementById('btn-add-me');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
+            const niceDate = eventObj.start.toLocaleDateString('en-US', dateOptions);
+            const niceTime = formatPopupTime(eventObj.start);
+            const niceEnd  = eventObj.end ? formatPopupTime(eventObj.end) : "?";
+
+            // --- CONFIRMATION OVERLAY ---
+            const popup = Swal.getPopup();
+            const overlayHtml = `
+                <div id="confirm-overlay" style="
+                    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(255,255,255,0.95); z-index: 1000; 
+                    display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                    text-align: center; border-radius: 5px; animation: fadeIn 0.2s;
+                ">
+                    <h3 style="margin: 0 0 10px 0; color: #333;">Are you sure?</h3>
+                    <p style="margin-bottom: 25px; color: #555; padding: 0 20px; font-size: 1.1em;">
+                        The job is on <strong>${niceDate}</strong><br>${niceTime} - ${niceEnd}
+                    </p>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-confirm-yes" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Yes, I'm In</button>
+                        <button id="btn-confirm-no" style="background-color: #d33; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            const overlayDiv = document.createElement('div');
+            overlayDiv.innerHTML = overlayHtml;
+            popup.style.position = 'relative';
+            popup.appendChild(overlayDiv);
+
+            // HANDLE "YES"
+            document.getElementById('btn-confirm-yes').addEventListener('click', async () => {
+                // 1. Show Loading State
+                overlayDiv.innerHTML = `<h3 style="color:#0C419a;">Adding you to job...</h3>`;
+
+                try {
+                    // 2. CALL API (Netlify Function -> Zoho)
+                    const userEmail = (window.parent.user && window.parent.user.email) ? window.parent.user.email : "";
+                    
+                    if(!userEmail) throw new Error("Could not find user email.");
+
+                    // This fetch assumes you have created 'add-mover-to-job' in Netlify
+                    const apiResponse = await fetch(NETLIFY_ADD_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${currentAuthToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            jobId: eventObj.extendedProps.id, // Zoho Record ID
+                            email: userEmail
+                        })
+                    });
+
+                    if(!apiResponse.ok) throw new Error("Update failed.");
+
+                    // 3. Show "Added" State
+                    overlayDiv.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: fadeIn 0.2s;">
+                            <div style="width: 70px; height: 70px; border-radius: 50%; background: #28a745; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                                <span style="color: white; font-size: 40px; font-weight: bold;">✓</span>
+                            </div>
+                            <h2 style="color: #555; margin: 0;">Added!</h2>
+                        </div>
+                    `;
+
+                    // 4. Background Refresh & Repopulate
+                    setTimeout(async () => {
+                        overlayDiv.remove(); // Remove overlay
+                        
+                        // A. Fetch fresh data
+                        const freshRecords = await fetchCalendarData(currentAuthToken);
+                        
+                        // B. Update Calendar Events
+                        const freshEvents = mapRecordsToEvents(freshRecords);
+                        
+                        // C. Update the Calendar Object (removes old, adds new)
+                        calendarInstance.removeAllEvents();
+                        calendarInstance.addEventSource(freshEvents);
+
+                        // D. Find the specific updated event
+                        const updatedEventDef = freshEvents.find(e => e.extendedProps.id === eventObj.extendedProps.id);
+
+                        if (updatedEventDef) {
+                            // E. Repopulate the Popup content in place
+                            const swalContainer = Swal.getHtmlContainer();
+                            if (swalContainer) {
+                                // Since generatePopupHtml needs 'showAddButton' logic again:
+                                const props = updatedEventDef.extendedProps;
+                                var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
+                                var isHoobastank = parentRole.includes("Hoobastank");
+                                var needsMover = props.actualCount < props.moverCount;
+                                var isFuture = new Date(updatedEventDef.start) > new Date();
+                                var showAdd = isHoobastank && needsMover && isFuture;
+
+                                const startObj = new Date(updatedEventDef.start);
+                                const endObj = new Date(updatedEventDef.end);
+
+                                // Replace HTML
+                                swalContainer.innerHTML = generatePopupHtml(props, startObj, endObj, showAdd);
+                                
+                                // Re-attach listener if the button exists again
+                                attachAddMeListener({ start: startObj, end: endObj, extendedProps: props });
+                            }
+                        }
+
+                    }, 1000); // 1000ms timeout per your request
+
+                } catch (err) {
+                    console.error(err);
+                    overlayDiv.innerHTML = `
+                        <div style="padding:20px;">
+                            <h3 style="color:red;">Error</h3>
+                            <p>${err.message}</p>
+                            <button id="btn-error-close" class="btn btn-default">Close</button>
+                        </div>
+                    `;
+                    document.getElementById('btn-error-close').addEventListener('click', () => Swal.close());
+                }
+            });
+
+            // HANDLE "NO"
+            document.getElementById('btn-confirm-no').addEventListener('click', () => {
+                overlayDiv.remove();
+            });
+        });
+    }
+}
+
+// --- HELPERS ---
 function parseZohoDate(dateStr) {
     if (!dateStr) return null;
     dateStr = dateStr.trim();
     const parts = dateStr.split(/\s+/); 
     const dateRaw = parts[0].replace(/\//g, '-');
     const dateParts = dateRaw.split('-'); 
-
     if (dateParts.length < 3) return null;
-
     let month = parseInt(dateParts[0], 10);
     let day   = parseInt(dateParts[1], 10);
     let year  = parseInt(dateParts[2], 10);
     if (year < 100) year += 2000;
-
     let hour = 0;
     let minute = 0;
     if (parts.length > 1) {
@@ -404,4 +456,33 @@ function updateTodayButton(shouldEnable) {
         btn.disabled = !shouldEnable;
         btn.style.cursor = shouldEnable ? 'pointer' : 'default';
     }
+}
+
+function getDisplayAddr(addrObj) {
+    if (!addrObj) return "Unknown";
+    if (typeof addrObj === 'string') return addrObj;
+    let parts = [];
+    if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
+    if (addrObj.address_line_2) parts.push(addrObj.address_line_2);
+    if (addrObj.district_city)  parts.push(addrObj.district_city);
+    return parts.join(", ");
+}
+
+function getMapLink(addrObj) {
+    if (!addrObj) return "#";
+    var mapAddr = "";
+    if (typeof addrObj === 'string') mapAddr = addrObj;
+    else {
+        let parts = [];
+        if (addrObj.address_line_1) parts.push(addrObj.address_line_1);
+        if (addrObj.district_city)  parts.push(addrObj.district_city);
+        if (addrObj.state_province) parts.push(addrObj.state_province);
+        if (addrObj.postal_code)    parts.push(addrObj.postal_code);
+        mapAddr = parts.join(", ");
+    }
+    
+    var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+    return isApple ? 
+        "http://maps.apple.com/?daddr=" + encodeURIComponent(mapAddr) + "&dirflg=d" : 
+        "https://www.google.com/maps?daddr=" + encodeURIComponent(mapAddr) + "&dirflg=t";
 }
