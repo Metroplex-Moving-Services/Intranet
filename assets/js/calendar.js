@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setInterval(function() {
         if ((new Date().getTime() - startTime) > STALE_THRESHOLD) {
             const btn = document.getElementById("staleDataBtn");
-            if(btn) btn.style.display = "inline-block"; // Show button if it exists
+            if(btn) btn.style.display = "inline-block"; 
         }
     }, 60000); 
     // ------------------------------------------
@@ -23,10 +23,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const sessionToken = sdk.getSessionToken();
 
     if (!sessionToken || sdk.isJwtExpired(sessionToken)) {
-        // Not logged in? Redirect parent window to login
         window.top.location.href = "/Intranet/login.html";
     } else {
-        // Logged in? Start the Calendar
         initCalendar(sessionToken);
     }
 });
@@ -44,12 +42,10 @@ function initCalendar(authToken) {
     .then(async response => {
         if (!response.ok) {
             const text = await response.text();
-            throw new Error(`Server Error: ${response.status} ${response.statusText} \nResponse: ${text.substring(0, 100)}...`);
+            throw new Error(`Server Error: ${response.status}`);
         }
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-            const text = await response.text();
-            console.error("Received HTML instead of JSON:", text); 
             throw new Error("Received HTML instead of JSON. Check Network Tab.");
         }
         return response.json();
@@ -108,7 +104,8 @@ function initCalendar(authToken) {
                     destination: destObj,
                     services: servicesRaw, 
                     team: moversListString,
-                    moverCount: requiredCount
+                    moverCount: requiredCount,
+                    actualCount: actualMoversCount // Passed for logic checks
                 }
             };
         }).filter(event => event !== null);
@@ -184,6 +181,27 @@ function initCalendar(authToken) {
                 var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=t";
                 var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=t";
 
+                // --- NEW "ADD ME" BUTTON LOGIC ---
+                // 1. Get Role from Parent Window
+                var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
+                var isHoobastank = parentRole.includes("Hoobastank");
+                
+                // 2. Check Capacity
+                var needsMover = props.actualCount < props.moverCount;
+
+                // 3. Build Button HTML
+                var addMeBtnHtml = "";
+                if (isHoobastank && needsMover) {
+                    addMeBtnHtml = `
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button id="btn-add-me" class="btn btn-success" style="width: 100%; padding: 10px; font-weight: bold; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Add Me
+                            </button>
+                        </div>
+                    `;
+                }
+                // ---------------------------------
+
                 Swal.fire({
                     title: props.name,
                     width: 600,
@@ -210,19 +228,54 @@ function initCalendar(authToken) {
                             </div>
 
                             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-                            <strong>📋 Services Provided:</strong>
+                            <strong>🛠 Services Provided:</strong>
                             <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
                             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
                             
-                            <strong>👷 Team:</strong>
+                            <strong>👥 Team:</strong>
                             <div style="margin-top: 5px; color: #333; font-weight: 500;">
                                 ${props.team || "None assigned"}
                             </div>
                             <div style="margin-top: 4px; color: #666; font-size: 0.9em;">
                                 Target Size: <strong>${props.moverCount || 0} Movers</strong>
                             </div>
+
+                            ${addMeBtnHtml}
                         </div>
-                    `
+                    `,
+                    didOpen: () => {
+                        // Attach Click Event for the "Add Me" button
+                        const btn = document.getElementById('btn-add-me');
+                        if (btn) {
+                            btn.addEventListener('click', () => {
+                                // Close the details popup first
+                                Swal.close();
+                                
+                                // Format Date for Confirmation: "Monday, Jan 12"
+                                const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
+                                const niceDate = info.event.start.toLocaleDateString('en-US', dateOptions);
+                                const niceTime = formatPopupTime(info.event.start);
+                                const niceEnd  = info.event.end ? formatPopupTime(info.event.end) : "?";
+
+                                // Show Confirmation Popup
+                                Swal.fire({
+                                    title: 'Are you sure?',
+                                    text: `The job is on ${niceDate}, ${niceTime} - ${niceEnd}`,
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes, I'm In",
+                                    cancelButtonText: "Cancel",
+                                    confirmButtonColor: '#28a745',
+                                    cancelButtonColor: '#d33'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        // PLACEHOLDER: Trigger API or Zoho function to actually add the mover
+                                        Swal.fire('Added!', 'You have been added to the job.', 'success');
+                                    }
+                                });
+                            });
+                        }
+                    }
                 });
             }
         });
@@ -238,11 +291,7 @@ function initCalendar(authToken) {
 function parseZohoDate(dateStr) {
     if (!dateStr) return null;
     dateStr = dateStr.trim();
-    
-    // 1. Split Date and Time "01-09-26 11:00 AM"
     const parts = dateStr.split(/\s+/); 
-    
-    // 2. Parse the Date Part (01-09-26)
     const dateRaw = parts[0].replace(/\//g, '-');
     const dateParts = dateRaw.split('-'); 
 
@@ -251,32 +300,23 @@ function parseZohoDate(dateStr) {
     let month = parseInt(dateParts[0], 10);
     let day   = parseInt(dateParts[1], 10);
     let year  = parseInt(dateParts[2], 10);
-
-    // Handle 2-digit years
     if (year < 100) year += 2000;
 
-    // 3. Parse the Time Part
     let hour = 0;
     let minute = 0;
-
     if (parts.length > 1) {
-        const timeRaw = parts[1]; // "11:00"
+        const timeRaw = parts[1]; 
         const timeParts = timeRaw.split(':');
         hour = parseInt(timeParts[0], 10);
         minute = parseInt(timeParts[1], 10);
-
-        // Handle AM/PM
         if (parts.length > 2) {
             const meridian = parts[2].toUpperCase(); 
             if (meridian === "PM" && hour < 12) hour += 12;
             if (meridian === "AM" && hour === 12) hour = 0;
         }
     }
-
-    // 4. Format ISO
     const isoDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     const isoTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
-
     return `${isoDate}T${isoTime}`;
 }
 
