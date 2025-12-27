@@ -108,9 +108,9 @@ body.page-index {
         display: block !important;
         float: none !important;
         width: 100%;
-        text-align: left; /* CHANGED to LEFT */
+        text-align: left; 
         margin: 0;
-        padding: 10px 15px; /* Matches standard bootstrap nav link padding */
+        padding: 10px 15px; 
         border-bottom: 1px solid #bce8f1; 
     }
 
@@ -248,9 +248,9 @@ body.page-calendar {
 #calendar { min-height: 600px; margin: 0 2px; }
 #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
 
-/* --- FullCalendar Styling --- */
+/* --- FullCalendar & SweetAlert2 Styling --- */
 
-/* 1. Global Toolbar Layout (Desktop First) */
+/* 1. Global Toolbar Layout */
 .fc-header-toolbar { 
     display: flex; 
     flex-wrap: wrap; 
@@ -276,10 +276,17 @@ body.page-calendar {
 .fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .selected-day { background-color: #fff9c4 !important; }
 
+/* 5. SweetAlert2 Popup Adjustments (Reduced Margins) */
+.swal2-popup { padding-left: 5px !important; padding-right: 5px !important; }
+.swal2-html-container { margin: 5px !important; width: auto !important; }
+div.swal2-container { align-items: flex-start !important; padding-top: 10px !important; }
+.modal-dialog { width: 95% !important; max-width: 800px; margin: 10px auto; }
+.modal-body { padding: 5px 10px !important; }
+.services-box { background-color: #f9f9f9; border-left: 4px solid #0C419a; padding: 10px; margin-top: 5px; font-size: 0.9em; color: #444; white-space: pre-wrap; text-align: left; min-height: 100px; max-height: 350px; overflow-y: auto; }
+
+
 /* --- PHONE VIEW ADJUSTMENTS --- */
 @media (max-width: 600px) {
-    
-    /* Strict layout for events on phone */
     .fc-event-title { display: none !important; } 
     .fc-event-time { 
         font-weight: bold; 
@@ -289,40 +296,36 @@ body.page-calendar {
         display: block !important; 
     }
 
-    /* FIX: Force Toolbar Title Visibility on Phone */
-    
-    /* 1. Stack the toolbar vertically */
+    /* FIX: Force Toolbar to stay on ONE LINE on Phone */
     .fc-header-toolbar {
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important; /* Horizontal layout */
         align-items: center !important;
-        gap: 10px !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important; /* Do not wrap */
+        gap: 5px !important;
     }
 
-    /* 2. Ensure the 'chunks' (groups of buttons) are full width or auto */
+    /* Adjust chunks to fit side-by-side */
     .fc-toolbar-chunk {
         display: flex;
-        justify-content: center;
-        width: 100%;
-        order: 2; /* Move buttons below title by default */
+        align-items: center;
+        width: auto !important;
+        order: unset !important; /* Reset any ordering hacks */
+        margin: 0 !important;
     }
 
-    /* 3. Target the chunk containing the title and move it to top */
-    .fc-toolbar-chunk:has(.fc-toolbar-title), /* Modern browsers */
-    .fc-toolbar-chunk:first-child { /* Fallback usually works because title is often first/left */
-        order: 1 !important; 
-        margin-bottom: 5px;
-    }
-
-    /* 4. Force the Title itself to be visible */
+    /* Scale down the Title text to fit */
     .fc-toolbar-title {
-        font-size: 1.5em !important;
+        font-size: 1.1em !important; 
         display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        color: #000 !important;
-        text-align: center;
-        width: 100%;
-        white-space: normal; /* Allow wrapping if month name is huge */
+        white-space: nowrap !important;
+        margin: 0 !important;
+    }
+
+    /* Scale down Buttons slightly */
+    .fc-button {
+        padding: 4px 8px !important;
+        font-size: 0.85em !important;
     }
 }
