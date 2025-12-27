@@ -105,7 +105,7 @@ function initCalendar(authToken) {
                     services: servicesRaw, 
                     team: moversListString,
                     moverCount: requiredCount,
-                    actualCount: actualMoversCount // Passed for logic checks
+                    actualCount: actualMoversCount 
                 }
             };
         }).filter(event => event !== null);
@@ -181,26 +181,21 @@ function initCalendar(authToken) {
                 var originLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(originMapStr) + "&dirflg=t";
                 var destLink = isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(destMapStr) + "&dirflg=t";
 
-                // --- NEW "ADD ME" BUTTON LOGIC ---
-                // 1. Get Role from Parent Window
+                // --- NEW "ADD ME" BUTTON LOGIC (REFINED) ---
                 var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
                 var isHoobastank = parentRole.includes("Hoobastank");
-                
-                // 2. Check Capacity
                 var needsMover = props.actualCount < props.moverCount;
 
-                // 3. Build Button HTML
+                // Create a Small Inline Button
                 var addMeBtnHtml = "";
                 if (isHoobastank && needsMover) {
                     addMeBtnHtml = `
-                        <div style="margin-top: 15px; text-align: center;">
-                            <button id="btn-add-me" class="btn btn-success" style="width: 100%; padding: 10px; font-weight: bold; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                                Add Me
-                            </button>
-                        </div>
+                        <button id="btn-add-me" style="margin-left: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.85em; font-weight: bold; cursor: pointer; vertical-align: middle;">
+                            Add Me
+                        </button>
                     `;
                 }
-                // ---------------------------------
+                // -------------------------------------------
 
                 Swal.fire({
                     title: props.name,
@@ -232,32 +227,31 @@ function initCalendar(authToken) {
                             <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
                             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
                             
-                            <strong>👥 Team:</strong>
+                            <div style="margin-top: 5px;">
+                                <strong>👥 Team:</strong> ${addMeBtnHtml}
+                            </div>
+
                             <div style="margin-top: 5px; color: #333; font-weight: 500;">
                                 ${props.team || "None assigned"}
                             </div>
                             <div style="margin-top: 4px; color: #666; font-size: 0.9em;">
                                 Target Size: <strong>${props.moverCount || 0} Movers</strong>
                             </div>
-
-                            ${addMeBtnHtml}
                         </div>
                     `,
                     didOpen: () => {
-                        // Attach Click Event for the "Add Me" button
+                        // Attach Click Event
                         const btn = document.getElementById('btn-add-me');
                         if (btn) {
                             btn.addEventListener('click', () => {
-                                // Close the details popup first
-                                Swal.close();
-                                
-                                // Format Date for Confirmation: "Monday, Jan 12"
+                                Swal.close(); // Close details
+
+                                // Date Format for Confirmation
                                 const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
                                 const niceDate = info.event.start.toLocaleDateString('en-US', dateOptions);
                                 const niceTime = formatPopupTime(info.event.start);
                                 const niceEnd  = info.event.end ? formatPopupTime(info.event.end) : "?";
 
-                                // Show Confirmation Popup
                                 Swal.fire({
                                     title: 'Are you sure?',
                                     text: `The job is on ${niceDate}, ${niceTime} - ${niceEnd}`,
@@ -269,7 +263,7 @@ function initCalendar(authToken) {
                                     cancelButtonColor: '#d33'
                                 }).then((result) => {
                                     if (result.isConfirmed) {
-                                        // PLACEHOLDER: Trigger API or Zoho function to actually add the mover
+                                        // TODO: Call your Add Mover API here
                                         Swal.fire('Added!', 'You have been added to the job.', 'success');
                                     }
                                 });
