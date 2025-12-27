@@ -4,7 +4,6 @@
   "description": "Calendar backend function",
   "main": "index.js",
   "dependencies": {
-    "node-fetch": "^2.6.7",
     "@descope/node-sdk": "^1.0.10"
   }
 }

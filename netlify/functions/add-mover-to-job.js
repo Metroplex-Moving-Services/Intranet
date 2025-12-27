@@ -1,20 +1,17 @@
-const fetch = require('node-fetch');
+const fetch = require('node-fetch'); // Remove this line if using Node 18+ in Netlify
 
 // --- ZOHO CONFIGURATION ---
-// Ensure these match your existing get-calendar config in Netlify Environment Variables
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
 const ZOHO_CLIENT_ID = process.env.ZOHO_CLIENT_ID;
 const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
 
-// Update these if your App Owner / Link Names differ
 const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
 const REPORT_MOVERS = "All_Movers";         // To find Mover ID
-const REPORT_JOBS = "Current_Bookings";     // To get current team
-const FORM_UPDATE = "Proposal_Contract";    // To update the record
+const REPORT_JOBS = "Current_Bookings";     // To get AND update the job record
 
 exports.handler = async function(event, context) {
-    // 1. Handle CORS (Allow browser requests)
+    // 1. CORS Headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -43,53 +40,56 @@ exports.handler = async function(event, context) {
         const tokenData = await tokenRes.json();
         
         if (!tokenData.access_token) {
+            console.error("Token Error:", tokenData);
             throw new Error("Could not generate Zoho Access Token");
         }
         const accessToken = tokenData.access_token;
         const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
 
         // 3. STEP A: Find Mover ID by Email
-        const findMoverUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${email}")`;
+        // Note: Using creatorapp.zoho.com or creator.zoho.com depending on your account. 
+        // Standard API is creator.zoho.com. If this fails with 1000 again, try creatorapp.zoho.com
+        const baseUrl = "https://creator.zoho.com/api/v2";
+        
+        const findMoverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${email}")`;
         const moverRes = await fetch(findMoverUrl, { headers: authHeader });
         const moverData = await moverRes.json();
 
-        if (moverData.code === 3000 && moverData.data.length > 0) {
-            // Mover Found!
-        } else {
-            throw new Error(`Mover not found with email: ${email}`);
+        if (moverData.code !== 3000 || !moverData.data || moverData.data.length === 0) {
+            console.error("Mover Search Failed:", moverData);
+            throw new Error(`Mover not found in Zoho with email: ${email}`);
         }
         
         const moverRecord = moverData.data[0];
         const moverId = moverRecord.ID;
 
         // 4. STEP B: Get Current Job (to preserve existing team)
-        const jobUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
+        const jobUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
         const jobRes = await fetch(jobUrl, { headers: authHeader });
         const jobData = await jobRes.json();
 
         if (jobData.code !== 3000) {
-            throw new Error("Could not find Job Record");
+            console.error("Job Search Failed:", jobData);
+            throw new Error("Could not find Job Record in 'Current_Bookings'");
         }
 
         // Logic to merge Movers2 list
         const currentRecord = jobData.data;
         let existingMovers = [];
 
-        // Zoho returns Multi-Select lookups as an Array of Objects OR Strings depending on version
+        // Handle different Zoho response formats (Array of objects vs String)
         if (Array.isArray(currentRecord.Movers2)) {
-            // If it's objects, map to ID. If strings, keep as is.
             existingMovers = currentRecord.Movers2.map(m => (typeof m === 'object' ? m.ID : m));
         } else if (typeof currentRecord.Movers2 === 'string' && currentRecord.Movers2.trim() !== "") {
-             // Sometimes returns comma separated string
              existingMovers = currentRecord.Movers2.split(',');
         }
 
-        // Check if already added
+        // Check if already added to prevent duplicates
         if (existingMovers.includes(moverId)) {
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify({ message: "Mover already assigned" })
+                body: JSON.stringify({ message: "Mover already assigned", success: true })
             };
         }
 
@@ -97,7 +97,9 @@ exports.handler = async function(event, context) {
         existingMovers.push(moverId);
 
         // 5. STEP C: Update Job Record
-        const updateUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/form/${FORM_UPDATE}/${jobId}`;
+        // FIX: We must update via the REPORT URL (REPORT_JOBS), not the Form URL
+        const updateUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
+        
         const updateBody = {
             "data": {
                 "Movers2": existingMovers
@@ -119,11 +121,12 @@ exports.handler = async function(event, context) {
                 body: JSON.stringify({ success: true, message: "Added to job" })
             };
         } else {
+            console.error("Update Response:", updateData);
             throw new Error(`Zoho Update Failed: ${JSON.stringify(updateData)}`);
         }
 
     } catch (error) {
-        console.error(error);
+        console.error("Handler Error:", error);
         return {
             statusCode: 500,
             headers,
