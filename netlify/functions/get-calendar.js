@@ -32,7 +32,10 @@ exports.handler = async function(event, context) {
         const APP_LINK = "household-goods-moving-services";
         const REPORT_NAME = "Proposal_Contract_Report"; 
 
-        // 3. Get Access Token
+        // 3. Check for Specific Job ID (Optimization)
+        const requestedId = event.queryStringParameters ? event.queryStringParameters.id : null;
+
+        // 4. Get Access Token
         const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`;
         
         const tokenResponse = await fetch(tokenUrl, { method: 'POST' });
@@ -40,8 +43,10 @@ exports.handler = async function(event, context) {
 
         if (tokenData.error) {
             console.error("Zoho Token Refusal:", JSON.stringify(tokenData));
+            // Return 429 if rate limited, or 500 otherwise
+            const status = tokenData.error === "Access Denied" ? 429 : 500;
             return { 
-                statusCode: 500, 
+                statusCode: status, 
                 headers, 
                 body: JSON.stringify({ error: "Zoho rejected the login.", details: tokenData }) 
             };
@@ -49,15 +54,22 @@ exports.handler = async function(event, context) {
 
         const accessToken = tokenData.access_token;
 
-        // 4. Fetch Calendar Data
-        const dataUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_NAME}`;
+        // 5. Construct URL (All vs Single)
+        let dataUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_NAME}`;
+        
+        if (requestedId) {
+            // OPTIMIZATION: Only fetch the specific record to save bandwidth/API calls
+            dataUrl += `?criteria=(ID == "${requestedId}")`;
+        }
+
+        // 6. Fetch Data
         const dataResponse = await fetch(dataUrl, {
             headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
         });
 
         const json = await dataResponse.json();
 
-        // 5. Success
+        // 7. Success
         return {
             statusCode: 200,
             headers,
