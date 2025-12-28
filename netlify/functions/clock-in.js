@@ -1,7 +1,7 @@
 /* ============================================================
    netlify/functions/clock-in.js
    Handles Geocoding, Distance Calculation, and Zoho Check-In
-   (v1.6 - Fixed Date Format to US Numeric 12-Hour)
+   (v1.7 - Fixed Date Format to dd-MMM-yyyy hh:mm:ss a + CST Timezone)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -29,12 +29,17 @@ async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
     }
 }
 
-// --- HELPER: DATE FORMATTER (MM/dd/yyyy hh:mm:ss AM/PM) ---
-// UPDATED: Now uses US Numeric Date + 12h AM/PM
-// Example: "12/28/2025 04:54:12 PM"
-function formatZohoDate(date) {
+// --- HELPER: DATE FORMATTER ---
+// FORMAT: dd-MMM-yyyy hh:mm:ss a (e.g. 28-Dec-2025 05:30:00 PM)
+// TIMEZONE: Converts UTC to Dallas/Central Time
+function formatZohoDate() {
+    // 1. Get current time in Dallas/Central Time
+    const dallasDateString = new Date().toLocaleString("en-US", {timeZone: "America/Chicago"});
+    const date = new Date(dallasDateString);
+
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const d = date.getDate().toString().padStart(2, '0');
-    const m = (date.getMonth() + 1).toString().padStart(2, '0'); // Numeric Month (1-12)
+    const m = months[date.getMonth()];
     const y = date.getFullYear();
     
     let h = date.getHours();
@@ -44,11 +49,11 @@ function formatZohoDate(date) {
     // AM/PM Conversion
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12;
-    h = h ? h : 12; // the hour '0' should be '12'
+    h = h ? h : 12; // '0' becomes '12'
     const hStr = h.toString().padStart(2, '0');
 
-    // Result: "12/28/2025 04:54:12 PM"
-    return `${m}/${d}/${y} ${hStr}:${min}:${s} ${ampm}`;
+    // Result: "28-Dec-2025 05:30:00 PM"
+    return `${d}-${m}-${y} ${hStr}:${min}:${s} ${ampm}`;
 }
 
 // --- HELPER: HAVERSINE DISTANCE ---
@@ -138,11 +143,15 @@ exports.handler = async function(event, context) {
         // 6. Submit Check-In
         const checkInUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/form/${FORM_CHECKIN}`;
         
+        // Generate the formatted date once
+        const clockInTime = formatZohoDate(); 
+        console.log("Submitting Time:", clockInTime); // Log this so we can see it in Netlify logs if it fails
+
         const checkInBody = {
             "data": {
                 "JobId": jobId,                    
                 "Add_Mover": moverId,              
-                "Actual_Clock_in_Time1": formatZohoDate(new Date()), // US Format 12hr
+                "Actual_Clock_in_Time1": clockInTime, // Using dd-MMM-yyyy hh:mm:ss a
                 "Mover_Coordinates": `${userLat}, ${userLon}`,
                 "Job_Coordinates": `${jobLat}, ${jobLon}`,
                 "Distance": distanceMiles.toFixed(4),
