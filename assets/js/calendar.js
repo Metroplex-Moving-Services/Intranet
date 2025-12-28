@@ -386,34 +386,35 @@ function generatePopupHtml(props, start, end, showAddButton) {
 
     const hiddenIdCheck = `<div id="popup-job-id-${props.id}" style="display:none;"></div>`;
 
+    // FIX: Replaced corrupted "Chinese symbols" with standard Emojis
     return `
         ${hiddenIdCheck}
         <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
             <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
-                套 ${fullTimeHeader}
+                📅 ${fullTimeHeader}
             </div>
 
             <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
-                <strong style="min-width: 80px; color: #333; margin-right: 10px;">桃 Pickup:</strong>
+                <strong style="min-width: 80px; color: #333; margin-right: 10px;">📍 Pickup:</strong>
                 <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
                     ${originDisplay}
                 </a>
             </div>
 
             <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
-                <strong style="min-width: 80px; color: #333; margin-right: 10px;">潤 Dropoff:</strong>
+                <strong style="min-width: 80px; color: #333; margin-right: 10px;">🏁 Dropoff:</strong>
                 <a href="${destLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
                     ${destDisplay}
                 </a>
             </div>
 
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-            <strong>屏 Services Provided:</strong>
+            <strong>📋 Services Provided:</strong>
             <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
             
             <div style="margin-top: 5px;">
-                <strong>則 Team:</strong> ${addMeBtnHtml}
+                <strong>👷 Team:</strong> ${addMeBtnHtml}
             </div>
 
             <div id="team-container-${props.id}" style="margin-top: 5px; color: #333; font-weight: 500;">
@@ -514,12 +515,13 @@ function attachAddMeListener(eventObj) {
 
                     overlayDiv.innerHTML = `
                         <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="font-size: 50px; color: #28a745;">笨/div>
+                            <div style="font-size: 50px; color: #28a745;">✅</div>
                             <h2 style="color: #555; margin: 0;">Added!</h2>
                         </div>
                     `;
 
-                    // --- OPTIMISTIC UI UPDATE (FIXES THE "NONE ASSIGNED" BUG) ---
+                    // --- OPTIMISTIC UI UPDATE (FIXES "NONE ASSIGNED" & "ORANGE COLOR" BUG) ---
+                    
                     // 1. Get current team string
                     let currentTeam = eventObj.extendedProps.team || "";
                     if (currentTeam === "None assigned") currentTeam = "";
@@ -529,18 +531,25 @@ function attachAddMeListener(eventObj) {
                     
                     // 3. Increment Count
                     const newCount = (eventObj.extendedProps.actualCount || 0) + 1;
+                    const requiredCount = eventObj.extendedProps.moverCount || 0;
 
                     // 4. Update Event Props internally
                     eventObj.setExtendedProp('team', newTeam);
                     eventObj.setExtendedProp('actualCount', newCount);
 
-                    // 5. Re-render Popup IMMEDIATELY with new data
+                    // 5. COLOR CHANGE LOGIC (Immediate)
+                    // If we now have enough movers, turn the event BLUE immediately
+                    if (newCount >= requiredCount) {
+                        eventObj.setProp('backgroundColor', '#0C419a'); // Blue
+                        eventObj.setProp('borderColor', '#0C419a');
+                    }
+
+                    // 6. Re-render Popup IMMEDIATELY with new data
                     setTimeout(() => {
                         overlayDiv.remove(); 
                         updatePopupContentInPlace(eventObj); // Force UI update
                         
-                        // 6. Trigger background refresh (just to be safe)
-                        // Increased delay to 2000ms to allow Zoho DB to catch up
+                        // 7. Trigger background refresh (just to be safe)
                         setTimeout(() => refreshSingleJobData(eventObj), 2000); 
                     }, 1000);
 
