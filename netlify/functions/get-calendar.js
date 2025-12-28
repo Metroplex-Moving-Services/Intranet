@@ -64,8 +64,9 @@ exports.handler = async function(event, context) {
 
         // 2. Construct URL
         let dataUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_NAME}`;
+        
         if (requestedId) {
-            dataUrl += `?criteria=(ID == "${requestedId}")`;
+            dataUrl += `?criteria=(ID == ${requestedId})`;
         }
 
         // 3. Fetch Data
