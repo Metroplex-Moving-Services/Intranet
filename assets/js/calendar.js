@@ -390,30 +390,30 @@ function generatePopupHtml(props, start, end, showAddButton) {
         ${hiddenIdCheck}
         <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
             <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
-                📅 ${fullTimeHeader}
+                套 ${fullTimeHeader}
             </div>
 
             <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
-                <strong style="min-width: 80px; color: #333; margin-right: 10px;">📍 Pickup:</strong>
+                <strong style="min-width: 80px; color: #333; margin-right: 10px;">桃 Pickup:</strong>
                 <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
                     ${originDisplay}
                 </a>
             </div>
 
             <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
-                <strong style="min-width: 80px; color: #333; margin-right: 10px;">🏁 Dropoff:</strong>
+                <strong style="min-width: 80px; color: #333; margin-right: 10px;">潤 Dropoff:</strong>
                 <a href="${destLink}" target="_blank" class="popup-link" style="flex: 1; word-wrap: break-word; line-height: 1.4;">
                     ${destDisplay}
                 </a>
             </div>
 
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-            <strong>🛠 Services Provided:</strong>
+            <strong>屏 Services Provided:</strong>
             <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
             
             <div style="margin-top: 5px;">
-                <strong>👥 Team:</strong> ${addMeBtnHtml}
+                <strong>則 Team:</strong> ${addMeBtnHtml}
             </div>
 
             <div id="team-container-${props.id}" style="margin-top: 5px; color: #333; font-weight: 500;">
@@ -470,6 +470,7 @@ function attachAddMeListener(eventObj) {
 
                 try {
                     let userEmail = null;
+                    let userName = "Me"; // Default name fallback
                     const parentUser = window.parent.user;
                     
                     if (parentUser) {
@@ -479,6 +480,11 @@ function attachAddMeListener(eventObj) {
                             userEmail = parentUser.email;
                         } else if (parentUser.data && parentUser.data.loginIds && parentUser.data.loginIds.length > 0) {
                             userEmail = parentUser.data.loginIds[0];
+                        }
+                        
+                        // Get Name for UI update
+                        if (parentUser.data && parentUser.data.name) {
+                            userName = parentUser.data.name;
                         }
                     }
 
@@ -508,15 +514,35 @@ function attachAddMeListener(eventObj) {
 
                     overlayDiv.innerHTML = `
                         <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="font-size: 50px; color: #28a745;">✓</div>
+                            <div style="font-size: 50px; color: #28a745;">笨/div>
                             <h2 style="color: #555; margin: 0;">Added!</h2>
                         </div>
                     `;
 
+                    // --- OPTIMISTIC UI UPDATE (FIXES THE "NONE ASSIGNED" BUG) ---
+                    // 1. Get current team string
+                    let currentTeam = eventObj.extendedProps.team || "";
+                    if (currentTeam === "None assigned") currentTeam = "";
+                    
+                    // 2. Append new name immediately
+                    const newTeam = currentTeam ? currentTeam + ", " + userName : userName;
+                    
+                    // 3. Increment Count
+                    const newCount = (eventObj.extendedProps.actualCount || 0) + 1;
+
+                    // 4. Update Event Props internally
+                    eventObj.setExtendedProp('team', newTeam);
+                    eventObj.setExtendedProp('actualCount', newCount);
+
+                    // 5. Re-render Popup IMMEDIATELY with new data
                     setTimeout(() => {
                         overlayDiv.remove(); 
-                        refreshSingleJobData(eventObj); 
-                    }, 1000); 
+                        updatePopupContentInPlace(eventObj); // Force UI update
+                        
+                        // 6. Trigger background refresh (just to be safe)
+                        // Increased delay to 2000ms to allow Zoho DB to catch up
+                        setTimeout(() => refreshSingleJobData(eventObj), 2000); 
+                    }, 1000);
 
                 } catch (err) {
                     console.error(err);
