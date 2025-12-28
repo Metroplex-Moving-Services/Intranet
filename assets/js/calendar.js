@@ -222,6 +222,9 @@ async function refreshSingleJobData(calendarEvent) {
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
             
+            // UPDATE: Ensure teamDetails (email/phone) are refreshed
+            calendarEvent.setExtendedProp('teamDetails', dummyEvent.extendedProps.teamDetails);
+            
             // Check if popup is still open for this job
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
             if (openPopupId) {
@@ -303,6 +306,19 @@ function mapRecordsToEvents(records) {
             bgColor = '#fd7e14'; bdColor = '#fd7e14'; 
         }
 
+        // --- NEW: EXTRACT EMAIL & PHONE FROM MOVERS2 ---
+        // We capture the raw array which now contains your new fields
+        let teamDetails = [];
+        if (Array.isArray(record.Movers2)) {
+            teamDetails = record.Movers2.map(m => ({
+                id: m.ID,
+                name: m.display_value || m.name || "Unknown",
+                // Capture the new fields you added to the report
+                email: m.moverEmail || m.email || "", 
+                phone: m.moverPhone || m.phone || ""
+            }));
+        }
+
         return {
             title: getShortName(safeName), 
             start: startISO, 
@@ -317,6 +333,7 @@ function mapRecordsToEvents(records) {
                 destination: record.Destination_Address,
                 services: servicesRaw, 
                 team: getMoversString(record.Movers2),
+                teamDetails: teamDetails, // <--- Data Stored Here for Future Dev
                 moverCount: requiredCount,
                 actualCount: actualMoversCount 
             }
@@ -386,7 +403,6 @@ function generatePopupHtml(props, start, end, showAddButton) {
 
     const hiddenIdCheck = `<div id="popup-job-id-${props.id}" style="display:none;"></div>`;
 
-    // FIX: Replaced corrupted "Chinese symbols" with standard Emojis
     return `
         ${hiddenIdCheck}
         <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
