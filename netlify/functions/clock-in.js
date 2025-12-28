@@ -1,7 +1,7 @@
 /* ============================================================
    netlify/functions/clock-in.js
    Handles Geocoding, Distance Calculation, and Zoho Check-In
-   (v1.2 - Fixed Address Object Bug)
+   (v1.3 - Debugging Enabled)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -15,7 +15,7 @@ const REPORT_JOBS = "Proposal_Contract_Report";
 const REPORT_MOVERS = "All_Movers";
 const FORM_CHECKIN = "CheckIn";
 
-// --- HELPER: RETRY LOGIC (Shared) ---
+// --- HELPER: RETRY LOGIC ---
 async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
     const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`;
     for (let i = 0; i < retries; i++) {
@@ -29,7 +29,7 @@ async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
     }
 }
 
-// --- HELPER: DATE FORMATTER (dd-MMM-yyyy HH:mm:ss) ---
+// --- HELPER: DATE FORMATTER ---
 function formatZohoDate(date) {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const d = date.getDate().toString().padStart(2, '0');
@@ -41,14 +41,13 @@ function formatZohoDate(date) {
     return `${d}-${m}-${y} ${h}:${min}:${s}`;
 }
 
-// --- HELPER: HAVERSINE DISTANCE (Miles) ---
+// --- HELPER: HAVERSINE DISTANCE ---
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 3958.8; // Earth radius in miles
+    const R = 3958.8; 
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
 }
@@ -65,7 +64,9 @@ exports.handler = async function(event, context) {
 
     try {
         const payload = JSON.parse(event.body);
-        const { jobId, userEmail, userLat, userLon, userIp } = payload;
+        // We accept 'pin' from frontend, or default to "0000"
+        const { jobId, userEmail, userLat, userLon, userIp, pin } = payload;
+        const finalPin = pin || "0000";
 
         if (!jobId || !userEmail || !userLat || !userLon) {
             throw new Error("Missing required data (jobId, email, or coordinates).");
@@ -76,39 +77,25 @@ exports.handler = async function(event, context) {
         const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
         const baseUrl = "https://creator.zoho.com/api/v2";
 
-        // 2. Fetch Job Details (to get Address)
+        // 2. Fetch Job Details (Address)
         const jobUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
         const jobRes = await fetch(jobUrl, { headers: authHeader });
         const jobData = await jobRes.json();
 
         if (jobData.code !== 3000) throw new Error("Could not find Job Record.");
-        const jobRecord = jobData.data;
         
-        // --- FIX: Handle Zoho Address Object ---
-        let originRaw = jobRecord.Origination_Address;
-        let originAddress = "";
-
-        if (typeof originRaw === 'object' && originRaw !== null) {
-            // Zoho sends address as an object with { display_value: "123 Main St..." }
-            originAddress = originRaw.display_value || "";
-        } else {
-            // Sometimes it's just a string
-            originAddress = String(originRaw || "").trim();
-        }
+        let originRaw = jobData.data.Origination_Address;
+        let originAddress = (typeof originRaw === 'object' && originRaw !== null) ? (originRaw.display_value || "") : String(originRaw || "").trim();
 
         if (!originAddress) throw new Error("Job has no Origination Address.");
 
-        console.log(`Geocoding Address: ${originAddress}`); // Debugging log
-
-        // 3. Geocode Job Address (HERE.com API)
+        // 3. Geocode Job Address (HERE.com)
         if (!HERE_API_KEY) throw new Error("Server Error: Missing HERE_API_KEY.");
-        
         const hereUrl = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(originAddress)}&apiKey=${HERE_API_KEY}`;
         const hereRes = await fetch(hereUrl);
         const hereData = await hereRes.json();
 
         if (!hereData.items || hereData.items.length === 0) {
-            console.error("HERE API Response:", JSON.stringify(hereData));
             throw new Error(`Could not find coordinates for: ${originAddress}`);
         }
 
@@ -117,44 +104,46 @@ exports.handler = async function(event, context) {
 
         // 4. Calculate Distance
         const distanceMiles = calculateDistance(userLat, userLon, jobLat, jobLon);
-        console.log(`Clock-In Distance Check: ${distanceMiles.toFixed(4)} miles`);
-
-        // --- DISTANCE CHECK (Quarter Mile) ---
         if (distanceMiles > 0.25) {
             return {
-                statusCode: 400, // Bad Request
+                statusCode: 400,
                 headers,
                 body: JSON.stringify({ 
                     error: "DISTANCE_FAIL", 
-                    message: "You are not close enough to the job site, homie.",
+                    message: "You are not close enough to the job site.",
                     distance: distanceMiles.toFixed(2)
                 })
             };
         }
 
-        // 5. Find Mover ID (Zoho)
+        // 5. Find Mover ID (This is the step that fixes the "Missing ID")
+        // We search the 'All_Movers' report for the email address
         const findMoverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${userEmail}")`;
         const moverRes = await fetch(findMoverUrl, { headers: authHeader });
         const moverData = await moverRes.json();
 
         if (moverData.code !== 3000 || !moverData.data || moverData.data.length === 0) {
-            throw new Error(`Mover not found with email: ${userEmail}`);
+            // DEBUG: Send this error back so we know if the lookup failed
+            throw new Error(`Mover not found in Zoho with email: ${userEmail}`);
         }
+        
+        // This is the ID we need!
         const moverId = moverData.data[0].ID;
 
-        // 6. Submit Check-In to Zoho
+        // 6. Submit Check-In
         const checkInUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/form/${FORM_CHECKIN}`;
         
         const checkInBody = {
             "data": {
-                "JobId": jobId,                    // Lookup ID
-                "Add_Mover": moverId,              // Lookup ID
+                // Ensure these match your Zoho Field Link Names exactly!
+                "JobId": jobId,                    
+                "Add_Mover": moverId,              
                 "Actual_Clock_in_Time1": formatZohoDate(new Date()),
                 "Mover_Coordinates": `${userLat}, ${userLon}`,
                 "Job_Coordinates": `${jobLat}, ${jobLon}`,
                 "Distance": distanceMiles.toFixed(4),
                 "CapturedIPAddress": userIp || "Unknown",
-                "PIN": "0000"
+                "PIN": finalPin
             }
         };
 
@@ -170,11 +159,17 @@ exports.handler = async function(event, context) {
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify({ success: true, message: "Clocked in homie!" })
+                body: JSON.stringify({ success: true, message: "Clocked in successfully!" })
             };
         } else {
-            console.error("Zoho Submit Error:", submitData);
-            throw new Error("Failed to create Check-In record in Zoho.");
+            // CRITICAL FIX: Return the ACTUAL Zoho error to the frontend
+            console.error("Zoho Submit Error:", JSON.stringify(submitData));
+            return {
+                statusCode: 400, // Bad Request
+                headers,
+                // Sending 'submitData' lets us see if it's "Invalid Field" or "Mandatory Field"
+                body: JSON.stringify({ error: "ZOHO_REJECT", details: submitData }) 
+            };
         }
 
     } catch (error) {
