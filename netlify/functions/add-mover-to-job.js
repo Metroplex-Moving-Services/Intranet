@@ -142,4 +142,4 @@ exports.handler = async function(event, context) {
             body: JSON.stringify({ error: error.message })
         };
     }
-};
+}; 
