@@ -158,7 +158,7 @@ exports.handler = async function(event, context) {
             }
         };
 
-        const submitRes = await fetch(checkInUrl, {
+        const submitRes = await fetch(checkInUrl, { 
             method: 'POST',
             headers: { ...authHeader, 'Content-Type': 'application/json' },
             body: JSON.stringify(checkInBody)

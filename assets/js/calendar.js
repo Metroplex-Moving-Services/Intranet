@@ -347,7 +347,8 @@ function attachClockInListener(eventObj) {
                             userEmail: userEmail,
                             userLat: position.coords.latitude,
                             userLon: position.coords.longitude,
-                            userIp: userIp
+                            userIp: userIp,
+                            pin: '0000'
                         })
                     });
 
