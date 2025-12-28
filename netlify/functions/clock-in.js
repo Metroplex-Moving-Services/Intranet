@@ -1,12 +1,13 @@
 /* ============================================================
    netlify/functions/clock-in.js
    Handles Geocoding, Distance Calculation, and Zoho Check-In
+   (v1.2 - Fixed Address Object Bug)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
 const ZOHO_CLIENT_ID = process.env.ZOHO_CLIENT_ID;
 const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
-const HERE_API_KEY = process.env.HERE_API_KEY; // <--- ADD THIS TO NETLIFY ENV VARS
+const HERE_API_KEY = process.env.HERE_API_KEY; 
 
 const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
@@ -82,9 +83,22 @@ exports.handler = async function(event, context) {
 
         if (jobData.code !== 3000) throw new Error("Could not find Job Record.");
         const jobRecord = jobData.data;
-        const originAddress = jobRecord.Origination_Address;
+        
+        // --- FIX: Handle Zoho Address Object ---
+        let originRaw = jobRecord.Origination_Address;
+        let originAddress = "";
+
+        if (typeof originRaw === 'object' && originRaw !== null) {
+            // Zoho sends address as an object with { display_value: "123 Main St..." }
+            originAddress = originRaw.display_value || "";
+        } else {
+            // Sometimes it's just a string
+            originAddress = String(originRaw || "").trim();
+        }
 
         if (!originAddress) throw new Error("Job has no Origination Address.");
+
+        console.log(`Geocoding Address: ${originAddress}`); // Debugging log
 
         // 3. Geocode Job Address (HERE.com API)
         if (!HERE_API_KEY) throw new Error("Server Error: Missing HERE_API_KEY.");
@@ -94,7 +108,8 @@ exports.handler = async function(event, context) {
         const hereData = await hereRes.json();
 
         if (!hereData.items || hereData.items.length === 0) {
-            throw new Error("Could not find coordinates for the Job Address.");
+            console.error("HERE API Response:", JSON.stringify(hereData));
+            throw new Error(`Could not find coordinates for: ${originAddress}`);
         }
 
         const jobLat = hereData.items[0].position.lat;
