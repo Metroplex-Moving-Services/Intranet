@@ -1,7 +1,6 @@
 /* ============================================================
    netlify/functions/clock-in.js
-   Handles Geocoding, Distance Calculation, and Zoho Check-In
-   (v1.9 - User Suggested Format: MM-dd-yy hh:mm a)
+   (v2.0 - Production Ready: Adds Token Caching & Rate Limit Protection)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -15,42 +14,70 @@ const REPORT_JOBS = "Proposal_Contract_Report";
 const REPORT_MOVERS = "All_Movers";
 const FORM_CHECKIN = "CheckIn";
 
-// --- HELPER: RETRY LOGIC ---
+// --- GLOBAL CACHE (The Fix for Error 429) ---
+// These variables survive between function runs if the server is "warm"
+let cachedAccessToken = null;
+let tokenExpiryTime = 0;
+
+// --- HELPER: GET TOKEN (With Caching) ---
 async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
+    // 1. Check if we have a valid cached token
+    // We subtract 60 seconds to be safe (don't use a token about to expire)
+    if (cachedAccessToken && Date.now() < (tokenExpiryTime - 60000)) {
+        console.log("Using Cached Zoho Token (Skipping API Call)");
+        return cachedAccessToken;
+    }
+
+    console.log("Cache empty or expired. Fetching NEW Zoho Token...");
     const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`;
+    
     for (let i = 0; i < retries; i++) {
         try {
             const res = await fetch(tokenUrl, { method: 'POST' });
             const data = await res.json();
-            if (data.access_token) return data.access_token;
+            
+            if (data.error) {
+                // If we hit the rate limit, THROW immediately so we can see it
+                throw new Error(JSON.stringify(data));
+            }
+
+            if (data.access_token) {
+                // 2. Save to Cache
+                cachedAccessToken = data.access_token;
+                // 'expires_in' is usually 3600 seconds (1 hour). Convert to milliseconds.
+                tokenExpiryTime = Date.now() + (data.expires_in * 1000);
+                return data.access_token;
+            }
+            
+            // Retry logic
             if (i < retries - 1) { await new Promise(r => setTimeout(r, delay)); delay *= 2; }
             else throw new Error(JSON.stringify(data));
-        } catch (err) { if (i === retries - 1) throw err; }
+
+        } catch (err) { 
+            console.error(`Token Fetch Attempt ${i+1} Failed:`, err);
+            if (i === retries - 1) throw err; 
+        }
     }
 }
 
 // --- HELPER: DATE FORMATTER ---
-// FORMAT: MM-dd-yy hh:mm a (e.g. 12-28-25 05:22 PM)
-// TIMEZONE: Converts UTC to Dallas/Central Time
+// FORMAT: MM-dd-yy hh:mm a (Zoho Standard)
 function formatZohoDate() {
-    // 1. Get current time in Dallas/Central Time
     const dallasDateString = new Date().toLocaleString("en-US", {timeZone: "America/Chicago"});
     const date = new Date(dallasDateString);
 
-    const m = (date.getMonth() + 1).toString().padStart(2, '0'); // Month
-    const d = date.getDate().toString().padStart(2, '0');        // Day
-    const y = date.getFullYear().toString().slice(-2);           // 2-Digit Year (25)
+    const m = (date.getMonth() + 1).toString().padStart(2, '0'); 
+    const d = date.getDate().toString().padStart(2, '0');        
+    const y = date.getFullYear().toString().slice(-2);           
     
     let h = date.getHours();
     const min = date.getMinutes().toString().padStart(2, '0');
     
-    // AM/PM Conversion
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12;
-    h = h ? h : 12; // '0' becomes '12'
+    h = h ? h : 12; 
     const hStr = h.toString().padStart(2, '0');
 
-    // Result: "12-28-25 05:22 PM"
     return `${m}-${d}-${y} ${hStr}:${min} ${ampm}`;
 }
 
@@ -73,7 +100,6 @@ exports.handler = async function(event, context) {
     };
 
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
 
     try {
         const payload = JSON.parse(event.body);
@@ -81,10 +107,10 @@ exports.handler = async function(event, context) {
         const finalPin = pin || "0000";
 
         if (!jobId || !userEmail || !userLat || !userLon) {
-            throw new Error("Missing required data (jobId, email, or coordinates).");
+            throw new Error("Missing required data.");
         }
 
-        // 1. Get Zoho Token
+        // 1. Get Zoho Token (Now uses Cache!)
         const accessToken = await getAccessTokenWithRetry();
         const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
         const baseUrl = "https://creator.zoho.com/api/v2";
@@ -141,14 +167,11 @@ exports.handler = async function(event, context) {
         // 6. Submit Check-In
         const checkInUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/form/${FORM_CHECKIN}`;
         
-        const clockInTime = formatZohoDate(); 
-        console.log("Submitting Time:", clockInTime);
-
         const checkInBody = {
             "data": {
                 "JobId": jobId,                    
                 "Add_Mover": moverId,              
-                "Actual_Clock_in_Time1": clockInTime, // Using MM-dd-yy hh:mm a
+                "Actual_Clock_in_Time1": formatZohoDate(),
                 "Mover_Coordinates": `${userLat}, ${userLon}`,
                 "Job_Coordinates": `${jobLat}, ${jobLon}`,
                 "Distance": distanceMiles.toFixed(4),
@@ -181,7 +204,18 @@ exports.handler = async function(event, context) {
         }
 
     } catch (error) {
+        // DETECT RATE LIMITS IN ERROR LOGS
         console.error("Clock-In Error:", error);
+        
+        const errorString = error.message || JSON.stringify(error);
+        if (errorString.includes("too many requests") || errorString.includes("429")) {
+             return {
+                statusCode: 429,
+                headers,
+                body: JSON.stringify({ error: "Zoho is busy. Please try again in 1 minute." })
+            };
+        }
+
         return {
             statusCode: 500,
             headers,
