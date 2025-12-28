@@ -8,7 +8,6 @@ exports.handler = async function(event, context) {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     // --- HELPER: RETRY LOGIC ---
-    // Tries to get a token up to 3 times if Zoho says "Access Denied"
     async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
         const { ZOHO_REFRESH_TOKEN, ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET } = process.env;
         const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`;
@@ -24,7 +23,7 @@ exports.handler = async function(event, context) {
                 console.warn(`Token Attempt ${i + 1} failed:`, data.error || data);
                 if (i < retries - 1) {
                     await new Promise(r => setTimeout(r, delay)); 
-                    delay *= 2; // Wait longer next time (1s, 2s, 4s)
+                    delay *= 2; // Exponential backoff
                 } else {
                     throw new Error(JSON.stringify(data));
                 }
@@ -47,9 +46,15 @@ exports.handler = async function(event, context) {
         const APP_LINK = "household-goods-moving-services";
         const REPORT_NAME = "Proposal_Contract_Report"; 
 
-        const requestedId = event.queryStringParameters ? event.queryStringParameters.id : null;
+        // 1. Get and Sanitize ID (Ensure it is only digits)
+        let requestedId = event.queryStringParameters ? event.queryStringParameters.id : null;
+        
+        // Safety Clean: Remove any non-digit characters to prevent "Text" errors
+        if (requestedId) {
+            requestedId = requestedId.replace(/\D/g, ''); 
+        }
 
-        // 1. Get Access Token (WITH RETRY)
+        // 2. Get Access Token (WITH RETRY)
         let accessToken;
         try {
             accessToken = await getAccessTokenWithRetry();
@@ -62,13 +67,16 @@ exports.handler = async function(event, context) {
             };
         }
 
-        // 2. Construct URL
+        // 3. Construct URL
         let dataUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_NAME}`;
+        
+        // FIX: No quotes around ${requestedId}. 
+        // Zoho treats IDs as Numbers. Quotes make it Text.
         if (requestedId) {
-            dataUrl += `?criteria=(ID == "${requestedId}")`;
+            dataUrl += `?criteria=(ID == ${requestedId})`;
         }
 
-        // 3. Fetch Data
+        // 4. Fetch Data
         const dataResponse = await fetch(dataUrl, {
             headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
         });
