@@ -2,8 +2,7 @@
    assets/js/calendar.js
    Handles Descope Auth, Zoho Data Fetching, FullCalendar,
    Add Me Logic, and Clock-In Logic (v1.3.1 - Fixed Email Lookup)
-   ============================================================ */
-
+   ============================================================ */ 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
 const NETLIFY_GET_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar";
 const NETLIFY_ADD_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/add-mover-to-job";
