@@ -1,6 +1,6 @@
 /* ============================================================
    netlify/functions/get-calendar.js
-   (v2.0 - Production Ready: Adds Token Caching)
+   (v2.1 - Debug Mode: Fixes 503 Crashes & CORS)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -11,20 +11,17 @@ const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
 const REPORT_NAME = "Proposal_Contract_Report"; 
 
-// --- GLOBAL CACHE (The Fix for Error 429) ---
-// This variable stays alive between requests as long as the server is "warm"
+// CACHE
 let cachedAccessToken = null;
 let tokenExpiryTime = 0;
 
-// --- HELPER: GET TOKEN (With Caching) ---
 async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
-    // 1. Check Cache (Reuse token if valid)
     if (cachedAccessToken && Date.now() < (tokenExpiryTime - 60000)) {
-        console.log("Using Cached Zoho Token for Calendar");
+        console.log("Using Cached Token");
         return cachedAccessToken;
     }
 
-    console.log("Fetching NEW Zoho Token for Calendar...");
+    console.log("Fetching NEW Token...");
     const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`;
     
     for (let i = 0; i < retries; i++) {
@@ -32,26 +29,23 @@ async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
             const res = await fetch(tokenUrl, { method: 'POST' });
             const data = await res.json();
             
-            // Catch Rate Limit Errors specifically
-            if (data.error) throw new Error(JSON.stringify(data));
+            if (data.error) throw new Error("Zoho Auth Error: " + JSON.stringify(data));
 
             if (data.access_token) {
-                // 2. Save to Cache
                 cachedAccessToken = data.access_token;
                 tokenExpiryTime = Date.now() + (data.expires_in * 1000);
                 return data.access_token;
             }
-            
             if (i < retries - 1) { await new Promise(r => setTimeout(r, delay)); delay *= 2; }
             else throw new Error(JSON.stringify(data));
         } catch (err) { 
-            console.error(`Token Fetch Attempt ${i+1} Failed:`, err);
             if (i === retries - 1) throw err; 
         }
     }
 }
 
 exports.handler = async function(event, context) {
+    // 1. DEFINE HEADERS FIRST (To ensure they always exist)
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -61,28 +55,32 @@ exports.handler = async function(event, context) {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        // 1. Get and Sanitize ID (from your original code)
-        let requestedId = event.queryStringParameters ? event.queryStringParameters.id : null;
-        if (requestedId) {
-            requestedId = requestedId.replace(/\D/g, ''); 
+        // SAFETY CHECK: Does 'fetch' exist? (Common Node version issue)
+        if (typeof fetch === "undefined") {
+            throw new Error("Node.js version too old. 'fetch' is undefined. Please set NODE_VERSION to 18 in Netlify.");
         }
 
-        // 2. Get Access Token (Using the new Caching System)
+        // 2. Logic
+        let requestedId = event.queryStringParameters ? event.queryStringParameters.id : null;
+        if (requestedId) requestedId = requestedId.replace(/\D/g, ''); 
+
         const accessToken = await getAccessTokenWithRetry();
 
-        // 3. Construct URL
         let dataUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_NAME}`;
-        
-        if (requestedId) {
-            dataUrl += `?criteria=(ID == ${requestedId})`;
-        }
+        if (requestedId) dataUrl += `?criteria=(ID == ${requestedId})`;
 
-        // 4. Fetch Data
         const dataResponse = await fetch(dataUrl, {
             headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
         });
 
-        const json = await dataResponse.json();
+        // 3. Handle Non-JSON Responses (Zoho sometimes returns HTML on error)
+        const text = await dataResponse.text();
+        let json;
+        try {
+            json = JSON.parse(text);
+        } catch (e) {
+            throw new Error(`Invalid JSON from Zoho: ${text.substring(0, 100)}...`);
+        }
 
         return {
             statusCode: 200,
@@ -91,18 +89,23 @@ exports.handler = async function(event, context) {
         };
 
     } catch (error) {
-        console.error("Calendar Error:", error);
+        console.error("Calendar Crash:", error);
         
-        // Handle Rate Limit gracefully
-        const errorString = error.message || JSON.stringify(error);
-        if (errorString.includes("too many requests") || errorString.includes("429")) {
-             return {
+        // 4. RATE LIMIT HANDLING
+        const errStr = error.message || "";
+        if (errStr.includes("Zoho is busy") || errStr.includes("429")) {
+            return {
                 statusCode: 429,
                 headers,
-                body: JSON.stringify({ error: "System busy. Please refresh in a moment." })
+                body: JSON.stringify({ error: "System is busy. Please try again in 1 minute." })
             };
         }
 
-        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+        // Return 500 but WITH headers so CORS doesn't mask the error
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: `Server Error: ${error.message}` }) 
+        };
     }
 };
