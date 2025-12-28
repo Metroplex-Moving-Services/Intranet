@@ -1,7 +1,7 @@
 /* ============================================================
    assets/js/calendar.js
    Handles Descope Auth, Zoho Data Fetching, FullCalendar,
-   Add Me Logic, and Clock-In Logic (v1.3.0)
+   Add Me Logic, and Clock-In Logic (v1.4.0 - Fixed Email Lookup)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -145,7 +145,8 @@ async function refreshSingleJobData(calendarEvent) {
             calendarEvent.setExtendedProp('team', dummyEvent.extendedProps.team);
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
-            calendarEvent.setExtendedProp('teamDetails', dummyEvent.extendedProps.teamDetails);
+            // Updated property assignment for emails
+            calendarEvent.setExtendedProp('moverEmails', dummyEvent.extendedProps.moverEmails);
             
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
             if (openPopupId) { updatePopupContentInPlace(calendarEvent); }
@@ -209,18 +210,18 @@ function generatePopupHtml(eventObj) {
     const needsMover = props.actualCount < props.moverCount;
     const isFuture = start > new Date();
     
-    // Check if I am already on the job (Name Check)
+    // Check if I am already on the job (Name Check for visual safety)
     let alreadyOnJobByName = false;
     if (props.team && currentUserName && props.team.includes(currentUserName)) {
         alreadyOnJobByName = true;
     }
     const showAddButton = isHoobastank && needsMover && isFuture && !alreadyOnJobByName;
 
-    // --- LOGIC: CLOCK IN BUTTON ---
+    // --- LOGIC: CLOCK IN BUTTON (FIXED) ---
     // 1. Email Match (Am I on the team?)
-    const onTeamByEmail = props.teamDetails && props.teamDetails.some(m => 
-        m.email && currentUserEmail && m.email.toLowerCase() === currentUserEmail.toLowerCase()
-    );
+    // We now look at the comma-separated string coming from "Movers2.Email" which we stored in props.moverEmails
+    const allowedEmails = props.moverEmails || ""; 
+    const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
     
     // 2. Time Check (Within 10 mins)
     const TEN_MIN_MS = 10 * 60 * 1000;
@@ -472,7 +473,7 @@ function attachAddMeListener(eventObj) {
     }
 }
 
-// --- HELPERS (Unchanged) ---
+// --- HELPERS ---
 function parseZohoDate(dateStr) {
     if (!dateStr) return null;
     dateStr = dateStr.trim();
@@ -501,6 +502,7 @@ function formatPopupDate(dateObj) { if (!dateObj) return ""; return dateObj.toLo
 function updateTodayButton(shouldEnable) { var btn = document.querySelector('.fc-resetToday-button'); if (btn) { btn.style.opacity = shouldEnable ? '1' : '0.5'; btn.disabled = !shouldEnable; btn.style.cursor = shouldEnable ? 'pointer' : 'default'; } }
 function getDisplayAddr(addrObj) { if (!addrObj) return "Unknown"; if (typeof addrObj === 'string') return addrObj; let parts = []; if (addrObj.address_line_1) parts.push(addrObj.address_line_1); if (addrObj.address_line_2) parts.push(addrObj.address_line_2); if (addrObj.district_city) parts.push(addrObj.district_city); return parts.join(", "); }
 function getMapLink(addrObj) { if (!addrObj) return "#"; var mapAddr = ""; if (typeof addrObj === 'string') mapAddr = addrObj; else { let parts = []; if (addrObj.address_line_1) parts.push(addrObj.address_line_1); if (addrObj.district_city) parts.push(addrObj.district_city); if (addrObj.state_province) parts.push(addrObj.state_province); if (addrObj.postal_code) parts.push(addrObj.postal_code); mapAddr = parts.join(", "); } var isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent); return isApple ? "http://maps.apple.com/?daddr=" + encodeURIComponent(mapAddr) + "&dirflg=d" : "https://www.google.com/maps?daddr=" + encodeURIComponent(mapAddr) + "&dirflg=t"; }
+
 function mapRecordsToEvents(records) {
     return records.map(function(record) {
         var startRaw = record.Agreed_Start_Date_Time; var endRaw = record.Estimate_End_Date_Time;
@@ -517,16 +519,10 @@ function mapRecordsToEvents(records) {
         if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) { bgColor = '#28a745'; bdColor = '#28a745'; } 
         else if (actualMoversCount < requiredCount) { bgColor = '#fd7e14'; bdColor = '#fd7e14'; }
 
-        // CAPTURE EMAIL/PHONE FOR CLOCK-IN LOGIC
-        let teamDetails = [];
-        if (Array.isArray(record.Movers2)) {
-            teamDetails = record.Movers2.map(m => ({
-                id: m.ID,
-                name: m.display_value || m.name || "Unknown",
-                email: m.moverEmail || m.email || "", 
-                phone: m.moverPhone || m.phone || ""
-            }));
-        }
+        // --- FIX: Capture emails from the comma-separated string, NOT the array ---
+        // Zoho sends "Movers2.Email" as a string (e.g., "john@a.com,jane@b.com")
+        // We handle the case where it might be undefined
+        const teamEmailsString = record["Movers2.Email"] || "";
 
         return {
             title: getShortName(safeName), start: startISO, end: endISO,
@@ -534,7 +530,7 @@ function mapRecordsToEvents(records) {
             extendedProps: { 
                 id: record.ID, name: safeName, origin: record.Origination_Address, destination: record.Destination_Address,
                 services: servicesRaw, team: getMoversString(record.Movers2),
-                teamDetails: teamDetails, 
+                moverEmails: teamEmailsString, // Storing the string for easy check later
                 moverCount: requiredCount, actualCount: actualMoversCount 
             }
         };
