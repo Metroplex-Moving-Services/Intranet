@@ -1,7 +1,7 @@
 /* ============================================================
    netlify/functions/clock-in.js
    Handles Geocoding, Distance Calculation, and Zoho Check-In
-   (v1.3 - Debugging Enabled)
+   (v1.4 - Fixed Date Format to MM/dd/yyyy)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -29,16 +29,18 @@ async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
     }
 }
 
-// --- HELPER: DATE FORMATTER ---
+// --- HELPER: DATE FORMATTER (MM/dd/yyyy HH:mm:ss) ---
+// UPDATED: Now uses US Format to match your Zoho settings
 function formatZohoDate(date) {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const d = date.getDate().toString().padStart(2, '0');
-    const m = months[date.getMonth()];
+    const m = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
     const y = date.getFullYear();
     const h = date.getHours().toString().padStart(2, '0');
     const min = date.getMinutes().toString().padStart(2, '0');
     const s = date.getSeconds().toString().padStart(2, '0');
-    return `${d}-${m}-${y} ${h}:${min}:${s}`;
+    
+    // Format: MM/dd/yyyy HH:mm:ss (e.g., 12/28/2025 16:45:00)
+    return `${m}/${d}/${y} ${h}:${min}:${s}`;
 }
 
 // --- HELPER: HAVERSINE DISTANCE ---
@@ -64,7 +66,6 @@ exports.handler = async function(event, context) {
 
     try {
         const payload = JSON.parse(event.body);
-        // We accept 'pin' from frontend, or default to "0000"
         const { jobId, userEmail, userLat, userLon, userIp, pin } = payload;
         const finalPin = pin || "0000";
 
@@ -77,7 +78,7 @@ exports.handler = async function(event, context) {
         const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
         const baseUrl = "https://creator.zoho.com/api/v2";
 
-        // 2. Fetch Job Details (Address)
+        // 2. Fetch Job Details
         const jobUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
         const jobRes = await fetch(jobUrl, { headers: authHeader });
         const jobData = await jobRes.json();
@@ -89,7 +90,7 @@ exports.handler = async function(event, context) {
 
         if (!originAddress) throw new Error("Job has no Origination Address.");
 
-        // 3. Geocode Job Address (HERE.com)
+        // 3. Geocode Job Address
         if (!HERE_API_KEY) throw new Error("Server Error: Missing HERE_API_KEY.");
         const hereUrl = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(originAddress)}&apiKey=${HERE_API_KEY}`;
         const hereRes = await fetch(hereUrl);
@@ -116,18 +117,14 @@ exports.handler = async function(event, context) {
             };
         }
 
-        // 5. Find Mover ID (This is the step that fixes the "Missing ID")
-        // We search the 'All_Movers' report for the email address
+        // 5. Find Mover ID
         const findMoverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${userEmail}")`;
         const moverRes = await fetch(findMoverUrl, { headers: authHeader });
         const moverData = await moverRes.json();
 
         if (moverData.code !== 3000 || !moverData.data || moverData.data.length === 0) {
-            // DEBUG: Send this error back so we know if the lookup failed
             throw new Error(`Mover not found in Zoho with email: ${userEmail}`);
         }
-        
-        // This is the ID we need!
         const moverId = moverData.data[0].ID;
 
         // 6. Submit Check-In
@@ -135,10 +132,9 @@ exports.handler = async function(event, context) {
         
         const checkInBody = {
             "data": {
-                // Ensure these match your Zoho Field Link Names exactly!
                 "JobId": jobId,                    
                 "Add_Mover": moverId,              
-                "Actual_Clock_in_Time1": formatZohoDate(new Date()),
+                "Actual_Clock_in_Time1": formatZohoDate(new Date()), // Now sends MM/dd/yyyy
                 "Mover_Coordinates": `${userLat}, ${userLon}`,
                 "Job_Coordinates": `${jobLat}, ${jobLon}`,
                 "Distance": distanceMiles.toFixed(4),
@@ -162,12 +158,10 @@ exports.handler = async function(event, context) {
                 body: JSON.stringify({ success: true, message: "Clocked in successfully!" })
             };
         } else {
-            // CRITICAL FIX: Return the ACTUAL Zoho error to the frontend
             console.error("Zoho Submit Error:", JSON.stringify(submitData));
             return {
-                statusCode: 400, // Bad Request
+                statusCode: 400, 
                 headers,
-                // Sending 'submitData' lets us see if it's "Invalid Field" or "Mandatory Field"
                 body: JSON.stringify({ error: "ZOHO_REJECT", details: submitData }) 
             };
         }
