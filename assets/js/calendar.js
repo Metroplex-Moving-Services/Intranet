@@ -1,7 +1,8 @@
 /* ============================================================
    assets/js/calendar.js
    Handles Descope Auth, Zoho Data Fetching, FullCalendar,
-   Add Me Logic, and Clock-In Logic (v1.4.0 - Fixed Email Lookup)
+   Add Me Logic, and Clock-In Logic 
+   (v2.0 - Adds "Check Status" to prevent duplicate Clock-Ins)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -145,7 +146,6 @@ async function refreshSingleJobData(calendarEvent) {
             calendarEvent.setExtendedProp('team', dummyEvent.extendedProps.team);
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
-            // Updated property assignment for emails
             calendarEvent.setExtendedProp('moverEmails', dummyEvent.extendedProps.moverEmails);
             
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
@@ -157,25 +157,69 @@ async function refreshSingleJobData(calendarEvent) {
 
 // --- POPUP LOGIC ---
 
+// NEW: Check if user already clocked in
+async function checkClockInStatus(jobId, userEmail) {
+    try {
+        const response = await fetch(NETLIFY_CLOCKIN_ENDPOINT, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${currentAuthToken}`,
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({
+                action: 'check_status', 
+                jobId: jobId,
+                userEmail: userEmail
+            })
+        });
+        const data = await response.json();
+        return data.clockedIn === true;
+    } catch (e) {
+        console.warn("Could not check status", e);
+        return false; // Fail safe
+    }
+}
+
+// Helper to update the Clock-In UI state
+async function resolveClockInState(eventObj) {
+    const wrapper = document.getElementById('clock-in-wrapper');
+    if (!wrapper) return;
+
+    let userEmail = null;
+    if (window.parent && window.parent.user && window.parent.user.data) {
+        userEmail = window.parent.user.data.email || (window.parent.user.data.loginIds ? window.parent.user.data.loginIds[0] : null);
+    }
+
+    if (userEmail) {
+        const alreadyClockedIn = await checkClockInStatus(eventObj.extendedProps.id, userEmail);
+        if (alreadyClockedIn) {
+            wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
+        } else {
+            wrapper.innerHTML = `<button id="btn-clock-in" class="btn-clock-in">⏱ Clock In</button>`;
+            attachClockInListener(eventObj); // Attach listener now that button exists
+        }
+    } else {
+        wrapper.style.display = 'none';
+    }
+}
+
 function openJobPopup(eventObj) {
-    // Clear any existing clock-in timer when opening a new popup
     if (clockInTimer) clearTimeout(clockInTimer);
 
-    const props = eventObj.extendedProps;
-    const htmlContent = generatePopupHtml(eventObj); // Pass full eventObj for time checks
+    const htmlContent = generatePopupHtml(eventObj); 
 
     Swal.fire({
-        title: props.name,
+        title: eventObj.extendedProps.name,
         width: 600,
         showCloseButton: true,
         showConfirmButton: false, 
         html: htmlContent,
         didOpen: () => {
             attachAddMeListener(eventObj);
-            attachClockInListener(eventObj);
+            // Initiate the status check
+            resolveClockInState(eventObj);
         },
         willClose: () => {
-            // Clean up timer when popup closes
             if (clockInTimer) clearTimeout(clockInTimer);
         }
     });
@@ -187,7 +231,8 @@ function updatePopupContentInPlace(eventObj) {
     if(contentContainer) {
         contentContainer.innerHTML = htmlContent;
         attachAddMeListener(eventObj); 
-        attachClockInListener(eventObj);
+        // Re-run the status check since we just wiped the HTML
+        resolveClockInState(eventObj);
     }
 }
 
@@ -209,42 +254,31 @@ function generatePopupHtml(eventObj) {
     // --- LOGIC: ADD ME BUTTON ---
     const needsMover = props.actualCount < props.moverCount;
     const isFuture = start > new Date();
-    
-    // Check if I am already on the job (Name Check for visual safety)
     let alreadyOnJobByName = false;
     if (props.team && currentUserName && props.team.includes(currentUserName)) {
         alreadyOnJobByName = true;
     }
     const showAddButton = isHoobastank && needsMover && isFuture && !alreadyOnJobByName;
 
-    // --- LOGIC: CLOCK IN BUTTON (FIXED) ---
-    // 1. Email Match (Am I on the team?)
-    // We now look at the comma-separated string coming from "Movers2.Email" which we stored in props.moverEmails
+    // --- LOGIC: CLOCK IN ELIGIBILITY ---
     const allowedEmails = props.moverEmails || ""; 
     const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
     
-    // 2. Time Check (Within 10 mins)
     const TEN_MIN_MS = 10 * 60 * 1000;
     const now = new Date().getTime();
-    const startTime = start.getTime();
-    const timeUntilStart = startTime - now;
+    const timeUntilStart = start.getTime() - now;
     
-    let showClockInButton = false;
+    let canShowClockIn = false;
 
-    // If I'm on the team...
     if (onTeamByEmail) {
         if (timeUntilStart <= TEN_MIN_MS) {
-            // It is less than 10 mins to start (or already started)
-            showClockInButton = true;
+            canShowClockIn = true;
         } else {
-            // It is TOO EARLY. Start a timer to refresh UI when window opens.
+            // Setup Timer for refresh
             const delay = timeUntilStart - TEN_MIN_MS;
-            // Only set timer if delay is reasonable (e.g., < 24 hours) to avoid memory leaks
             if (delay > 0 && delay < 86400000) {
-                console.log(`Clock In available in ${Math.ceil(delay/60000)} minutes. Timer set.`);
                 if (clockInTimer) clearTimeout(clockInTimer);
                 clockInTimer = setTimeout(() => {
-                    console.log("Timer fired! Refreshing popup to show Clock In.");
                     updatePopupContentInPlace(eventObj);
                 }, delay);
             }
@@ -264,8 +298,12 @@ function generatePopupHtml(eventObj) {
     if (showAddButton) {
         buttonsHtml += `<button id="btn-add-me" class="btn-add-me"><span>+</span> Add Me</button>`;
     }
-    if (showClockInButton) {
-        buttonsHtml += `<button id="btn-clock-in" class="btn-clock-in">⏱ Clock In</button>`;
+
+    // Placeholder for Clock In (will be filled by resolveClockInState)
+    if (canShowClockIn) {
+        buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;">
+            <div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div>
+        </span>`;
     }
 
     const hiddenIdCheck = `<div id="popup-job-id-${props.id}" style="display:none;"></div>`;
@@ -343,6 +381,7 @@ function attachClockInListener(eventObj) {
                             'Content-Type': 'application/json' 
                         },
                         body: JSON.stringify({
+                            action: 'clock_in',
                             jobId: eventObj.extendedProps.id,
                             userEmail: userEmail,
                             userLat: position.coords.latitude,
@@ -363,8 +402,6 @@ function attachClockInListener(eventObj) {
                                 text: "We can't clock you in yet, you are not close enough to the job site yet, homie.",
                                 confirmButtonText: 'OK'
                             }).then(() => {
-                                // Re-open the main popup (User requirement: "closed this new popup navigate the user back")
-                                // Since SweetAlert replaces the current one, we just re-open logic
                                 openJobPopup(eventObj);
                             });
                         } else {
@@ -379,9 +416,9 @@ function attachClockInListener(eventObj) {
                             timer: 2000,
                             showConfirmButton: false
                         }).then(() => {
-                            // Optionally refresh to remove the button or disable it
-                            // For now, we leave it or close popup
-                            btn.style.display = 'none';
+                            // Update UI immediately
+                            const wrapper = document.getElementById('clock-in-wrapper');
+                            if(wrapper) wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
                         });
                     }
 
@@ -401,7 +438,7 @@ function attachClockInListener(eventObj) {
     }
 }
 
-// --- STANDARD ADD ME LISTENER (Unchanged logic, just cleaner) ---
+// --- STANDARD ADD ME LISTENER ---
 function attachAddMeListener(eventObj) {
     const btn = document.getElementById('btn-add-me');
     if (btn) {
@@ -520,9 +557,6 @@ function mapRecordsToEvents(records) {
         if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) { bgColor = '#28a745'; bdColor = '#28a745'; } 
         else if (actualMoversCount < requiredCount) { bgColor = '#fd7e14'; bdColor = '#fd7e14'; }
 
-        // --- FIX: Capture emails from the comma-separated string, NOT the array ---
-        // Zoho sends "Movers2.Email" as a string (e.g., "john@a.com,jane@b.com")
-        // We handle the case where it might be undefined
         const teamEmailsString = record["Movers2.Email"] || "";
 
         return {
@@ -531,7 +565,7 @@ function mapRecordsToEvents(records) {
             extendedProps: { 
                 id: record.ID, name: safeName, origin: record.Origination_Address, destination: record.Destination_Address,
                 services: servicesRaw, team: getMoversString(record.Movers2),
-                moverEmails: teamEmailsString, // Storing the string for easy check later
+                moverEmails: teamEmailsString,
                 moverCount: requiredCount, actualCount: actualMoversCount 
             }
         };
