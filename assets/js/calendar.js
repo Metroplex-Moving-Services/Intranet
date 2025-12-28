@@ -7,6 +7,72 @@ const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: 
 const NETLIFY_GET_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar";
 const NETLIFY_ADD_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/add-mover-to-job";
 
+// --- INJECT CUSTOM STYLES (Spinner & Buttons) ---
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .loader-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #0C419a;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+    
+    .loader-spinner.small {
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+    }
+
+    .loader-spinner.large {
+        width: 40px;
+        height: 40px;
+        border-width: 5px;
+        border-top-color: #28a745;
+        margin-bottom: 10px;
+    }
+
+    /* MODERN 'ADD ME' BUTTON */
+    .btn-add-me {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        color: white;
+        border: none;
+        border-radius: 50px; /* Pill shape */
+        padding: 6px 16px;
+        font-size: 0.85em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        transition: all 0.2s ease;
+        vertical-align: middle;
+        margin-left: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-add-me:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 12px rgba(40, 167, 69, 0.4);
+        background: linear-gradient(135deg, #34ce57 0%, #28a745 100%);
+    }
+
+    .btn-add-me:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+`;
+document.head.appendChild(style);
+
+
 document.addEventListener('DOMContentLoaded', async function() {
     
     // --- STALE DATA TIMER (1 Hour) ---
@@ -35,14 +101,10 @@ function initCalendar(authToken) {
     currentAuthToken = authToken;
     const loadingMsg = document.getElementById('loading');
     
-    // Only show loading text if calendar isn't already visible (first load)
     if (!calendarInstance) {
-        loadingMsg.innerText = "Loading calendar data...";
+        // Use spinner for initial load
+        loadingMsg.innerHTML = `<div class="loader-spinner"></div> Loading calendar data...`;
         loadingMsg.style.display = 'block';
-    } else {
-        // Optional: Show a subtle loading indicator for refreshes?
-        // loadingMsg.innerText = "Refreshing...";
-        // loadingMsg.style.display = 'block';
     }
 
     const calendarEl = document.getElementById('calendar');
@@ -58,14 +120,20 @@ function initCalendar(authToken) {
     });
 }
 
-function fetchCalendarData(token) {
-    return fetch(NETLIFY_GET_ENDPOINT, {
+// Accepts optional specificJobId
+function fetchCalendarData(token, specificJobId = null) {
+    let url = NETLIFY_GET_ENDPOINT;
+    if (specificJobId) {
+        url += `?id=${specificJobId}`; 
+    }
+
+    return fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(async response => {
         if (!response.ok) {
             const text = await response.text();
-            throw new Error(`Server Error: ${response.status}`);
+            throw new Error(`Server Error: ${response.status} - ${text}`);
         }
         return response.json();
     })
@@ -75,8 +143,6 @@ function fetchCalendarData(token) {
 function renderCalendar(calendarEl, records) {
     var calendarEvents = mapRecordsToEvents(records);
 
-    // If calendar already exists, just update the events and return
-    // This prevents the UI from "flashing" or resetting the view unnecessarily
     if (calendarInstance) {
         calendarInstance.removeAllEvents();
         calendarInstance.addEventSource(calendarEvents);
@@ -91,16 +157,14 @@ function renderCalendar(calendarEl, records) {
             resetToday: {
                 text: 'Today',
                 click: function() {
-                    // 1. Move view to Today
                     calendarInstance.today();
-                    
-                    // 2. Clear selection styles
                     document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
                     updateTodayButton(false);
-
-                    // 3. FORCE REFRESH: Pull fresh data from Zoho
-                    console.log("Refreshing data...");
-                    initCalendar(currentAuthToken);
+                    
+                    // Show small spinner logic could go here if we had a dedicated UI element
+                    // For now, we just call init which handles global loading state if needed,
+                    // or we could assume it's background refresh.
+                    initCalendar(currentAuthToken); 
                 }
             }
         },
@@ -125,20 +189,22 @@ function renderCalendar(calendarEl, records) {
     calendarInstance.render();
 }
 
-// --- INTELLIGENT JOB REFRESH ---
+// --- OPTIMIZED JOB REFRESH ---
 async function refreshSingleJobData(calendarEvent) {
     const jobId = calendarEvent.extendedProps.id;
     
     const teamContainer = document.getElementById(`team-container-${jobId}`);
     if(teamContainer) {
-        teamContainer.innerHTML += ` <span style="font-size:0.8em; color:#888;">(Checking for updates...)</span>`;
+        // VISUAL: Add small spinner while checking
+        teamContainer.innerHTML += ` <div class="loader-spinner small" style="margin-left:5px; border-top-color:#888;"></div>`;
     }
 
     try {
-        const freshRecords = await fetchCalendarData(currentAuthToken);
-        const freshRecord = freshRecords.find(r => r.ID === jobId);
+        const freshRecords = await fetchCalendarData(currentAuthToken, jobId);
+        
+        const freshRecord = freshRecords.find(r => r.ID === jobId) || freshRecords[0];
 
-        if (freshRecord) {
+        if (freshRecord && freshRecord.ID === jobId) {
             const dummyEvent = mapRecordsToEvents([freshRecord])[0]; 
             
             calendarEvent.setProp('backgroundColor', dummyEvent.backgroundColor);
@@ -154,6 +220,10 @@ async function refreshSingleJobData(calendarEvent) {
         }
     } catch (err) {
         console.error("Background refresh failed", err);
+        if(teamContainer) {
+            // Remove spinner if failed
+             teamContainer.innerHTML = teamContainer.innerHTML.replace(/<div class="loader-spinner.*<\/div>/, "");
+        }
     }
 }
 
@@ -266,11 +336,12 @@ function generatePopupHtml(props, start, end, showAddButton) {
     var originLink    = getMapLink(props.origin);
     var destLink      = getMapLink(props.destination);
 
+    // VISUAL: New Button Class
     var addMeBtnHtml = "";
     if (showAddButton) {
         addMeBtnHtml = `
-            <button id="btn-add-me" style="margin-left: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.85em; font-weight: bold; cursor: pointer; vertical-align: middle;">
-                Add Me
+            <button id="btn-add-me" class="btn-add-me">
+                <span>+</span> Add Me
             </button>
         `;
     }
@@ -351,7 +422,13 @@ function attachAddMeListener(eventObj) {
             popup.appendChild(overlayDiv);
 
             document.getElementById('btn-confirm-yes').addEventListener('click', async () => {
-                overlayDiv.innerHTML = `<h3 style="color:#0C419a;">Adding you to job...</h3>`;
+                // VISUAL: Show Spinner on Confirm
+                overlayDiv.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div class="loader-spinner large"></div>
+                        <h3 style="color:#0C419a; margin-top:10px;">Adding you to job...</h3>
+                    </div>
+                `;
 
                 try {
                     let userEmail = null;
