@@ -160,10 +160,6 @@ function renderCalendar(calendarEl, records) {
                     calendarInstance.today();
                     document.querySelectorAll('.selected-day').forEach(el => el.classList.remove('selected-day'));
                     updateTodayButton(false);
-                    
-                    // Show small spinner logic could go here if we had a dedicated UI element
-                    // For now, we just call init which handles global loading state if needed,
-                    // or we could assume it's background refresh.
                     initCalendar(currentAuthToken); 
                 }
             }
@@ -192,11 +188,16 @@ function renderCalendar(calendarEl, records) {
 // --- OPTIMIZED JOB REFRESH ---
 async function refreshSingleJobData(calendarEvent) {
     const jobId = calendarEvent.extendedProps.id;
-    
+    const spinnerId = `spinner-${jobId}`;
     const teamContainer = document.getElementById(`team-container-${jobId}`);
+
     if(teamContainer) {
-        // VISUAL: Add small spinner while checking
-        teamContainer.innerHTML += ` <div class="loader-spinner small" style="margin-left:5px; border-top-color:#888;"></div>`;
+        // Clean up any old spinners first
+        const oldSpinner = document.getElementById(spinnerId);
+        if (oldSpinner) oldSpinner.remove();
+
+        // Add new spinner
+        teamContainer.innerHTML += ` <div id="${spinnerId}" class="loader-spinner small" style="margin-left:5px; border-top-color:#888;"></div>`;
     }
 
     try {
@@ -220,10 +221,10 @@ async function refreshSingleJobData(calendarEvent) {
         }
     } catch (err) {
         console.error("Background refresh failed", err);
-        if(teamContainer) {
-            // Remove spinner if failed
-             teamContainer.innerHTML = teamContainer.innerHTML.replace(/<div class="loader-spinner.*<\/div>/, "");
-        }
+    } finally {
+        // CLEANUP: Always remove the spinner when done (success or fail)
+        const spinner = document.getElementById(spinnerId);
+        if (spinner) spinner.remove();
     }
 }
 
@@ -232,11 +233,27 @@ function updatePopupContentInPlace(eventObj) {
     const start = eventObj.start;
     const end = eventObj.end;
     
+    // --- BUTTON VISIBILITY LOGIC ---
     var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
     var isHoobastank = parentRole.includes("Hoobastank");
     var needsMover = props.actualCount < props.moverCount;
     var isFuture = start > new Date();
-    var showAddButton = isHoobastank && needsMover && isFuture;
+
+    // Check if I am already on the job
+    var currentUserName = "";
+    if (window.parent && window.parent.user && window.parent.user.data && window.parent.user.data.name) {
+        currentUserName = window.parent.user.data.name;
+    }
+
+    // Match Name in Team String (Simple Check)
+    var alreadyOnJob = false;
+    if (props.team && currentUserName && props.team.includes(currentUserName)) {
+        alreadyOnJob = true;
+    }
+
+    // Final decision to show button
+    var showAddButton = isHoobastank && needsMover && isFuture && !alreadyOnJob;
+    // --------------------------------
 
     const htmlContent = generatePopupHtml(props, start, end, showAddButton);
     
@@ -305,11 +322,24 @@ function openJobPopup(eventObj) {
     const start = eventObj.start;
     const end = eventObj.end;
     
+    // --- BUTTON VISIBILITY LOGIC (Duplicated for Initial Open) ---
     var parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
     var isHoobastank = parentRole.includes("Hoobastank");
     var needsMover = props.actualCount < props.moverCount;
     var isFuture = start > new Date();
-    var showAddButton = isHoobastank && needsMover && isFuture;
+
+    var currentUserName = "";
+    if (window.parent && window.parent.user && window.parent.user.data && window.parent.user.data.name) {
+        currentUserName = window.parent.user.data.name;
+    }
+
+    var alreadyOnJob = false;
+    if (props.team && currentUserName && props.team.includes(currentUserName)) {
+        alreadyOnJob = true;
+    }
+
+    var showAddButton = isHoobastank && needsMover && isFuture && !alreadyOnJob;
+    // -------------------------------------------------------------
 
     const htmlContent = generatePopupHtml(props, start, end, showAddButton);
 
