@@ -123,8 +123,14 @@ function initCalendar(authToken) {
 // Accepts optional specificJobId
 function fetchCalendarData(token, specificJobId = null) {
     let url = NETLIFY_GET_ENDPOINT;
+    
+    // --- CACHE BUSTER: Add random time to force fresh network request ---
+    const timestamp = new Date().getTime(); 
+    
     if (specificJobId) {
-        url += `?id=${specificJobId}`; 
+        url += `?id=${specificJobId}&_t=${timestamp}`; 
+    } else {
+        url += `?_t=${timestamp}`;
     }
 
     return fetch(url, {
@@ -203,17 +209,20 @@ async function refreshSingleJobData(calendarEvent) {
     try {
         const freshRecords = await fetchCalendarData(currentAuthToken, jobId);
         
+        // Find our record (Zoho search returns an array)
         const freshRecord = freshRecords.find(r => r.ID === jobId) || freshRecords[0];
 
         if (freshRecord && freshRecord.ID === jobId) {
             const dummyEvent = mapRecordsToEvents([freshRecord])[0]; 
             
+            // Update Event Object
             calendarEvent.setProp('backgroundColor', dummyEvent.backgroundColor);
             calendarEvent.setProp('borderColor', dummyEvent.borderColor);
             calendarEvent.setExtendedProp('team', dummyEvent.extendedProps.team);
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
             
+            // Check if popup is still open for this job
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
             if (openPopupId) {
                 updatePopupContentInPlace(calendarEvent);
@@ -222,7 +231,7 @@ async function refreshSingleJobData(calendarEvent) {
     } catch (err) {
         console.error("Background refresh failed", err);
     } finally {
-        // CLEANUP: Always remove the spinner when done (success or fail)
+        // CLEANUP: Always remove the spinner when done
         const spinner = document.getElementById(spinnerId);
         if (spinner) spinner.remove();
     }
@@ -245,13 +254,12 @@ function updatePopupContentInPlace(eventObj) {
         currentUserName = window.parent.user.data.name;
     }
 
-    // Match Name in Team String (Simple Check)
+    // Match Name in Team String
     var alreadyOnJob = false;
     if (props.team && currentUserName && props.team.includes(currentUserName)) {
         alreadyOnJob = true;
     }
 
-    // Final decision to show button
     var showAddButton = isHoobastank && needsMover && isFuture && !alreadyOnJob;
     // --------------------------------
 
