@@ -1,7 +1,7 @@
 /* ============================================================
    netlify/functions/clock-in.js
    Handles Geocoding, Distance Calculation, and Zoho Check-In
-   (v1.8 - Trying ISO 8601 Standard Format)
+   (v1.9 - User Suggested Format: MM-dd-yy hh:mm a)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -30,23 +30,28 @@ async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
 }
 
 // --- HELPER: DATE FORMATTER ---
-// FORMAT: yyyy-MM-dd HH:mm:ss (ISO 8601 "SQL" Style)
-// Example: 2025-12-28 17:45:00
+// FORMAT: MM-dd-yy hh:mm a (e.g. 12-28-25 05:22 PM)
 // TIMEZONE: Converts UTC to Dallas/Central Time
 function formatZohoDate() {
     // 1. Get current time in Dallas/Central Time
     const dallasDateString = new Date().toLocaleString("en-US", {timeZone: "America/Chicago"});
     const date = new Date(dallasDateString);
 
-    const d = date.getDate().toString().padStart(2, '0');
-    const m = (date.getMonth() + 1).toString().padStart(2, '0'); // Numeric Month
-    const y = date.getFullYear();
-    const h = date.getHours().toString().padStart(2, '0'); // 24-hour format
-    const min = date.getMinutes().toString().padStart(2, '0');
-    const s = date.getSeconds().toString().padStart(2, '0');
+    const m = (date.getMonth() + 1).toString().padStart(2, '0'); // Month
+    const d = date.getDate().toString().padStart(2, '0');        // Day
+    const y = date.getFullYear().toString().slice(-2);           // 2-Digit Year (25)
     
-    // Result: "2025-12-28 17:45:00"
-    return `${y}-${m}-${d} ${h}:${min}:${s}`;
+    let h = date.getHours();
+    const min = date.getMinutes().toString().padStart(2, '0');
+    
+    // AM/PM Conversion
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12; // '0' becomes '12'
+    const hStr = h.toString().padStart(2, '0');
+
+    // Result: "12-28-25 05:22 PM"
+    return `${m}-${d}-${y} ${hStr}:${min} ${ampm}`;
 }
 
 // --- HELPER: HAVERSINE DISTANCE ---
@@ -143,7 +148,7 @@ exports.handler = async function(event, context) {
             "data": {
                 "JobId": jobId,                    
                 "Add_Mover": moverId,              
-                "Actual_Clock_in_Time1": clockInTime, // Using yyyy-MM-dd HH:mm:ss
+                "Actual_Clock_in_Time1": clockInTime, // Using MM-dd-yy hh:mm a
                 "Mover_Coordinates": `${userLat}, ${userLon}`,
                 "Job_Coordinates": `${jobLat}, ${jobLon}`,
                 "Distance": distanceMiles.toFixed(4),
