@@ -1,23 +1,63 @@
 /* ============================================================
    netlify/functions/clock-in.js
-   [DIAGNOSTIC MODE] 
-   This script fetches the field metadata to reveal the required Date Format.
+   Handles Geocoding, Distance Calculation, and Zoho Check-In
+   (v1.8 - Trying ISO 8601 Standard Format)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
 const ZOHO_CLIENT_ID = process.env.ZOHO_CLIENT_ID;
 const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
+const HERE_API_KEY = process.env.HERE_API_KEY; 
 
 const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
-const FORM_NAME = "CheckIn"; 
+const REPORT_JOBS = "Proposal_Contract_Report";
+const REPORT_MOVERS = "All_Movers";
+const FORM_CHECKIN = "CheckIn";
 
-// --- HELPER: GET TOKEN ---
-async function getAccessToken() {
+// --- HELPER: RETRY LOGIC ---
+async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
     const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`;
-    const res = await fetch(tokenUrl, { method: 'POST' });
-    const data = await res.json();
-    return data.access_token;
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(tokenUrl, { method: 'POST' });
+            const data = await res.json();
+            if (data.access_token) return data.access_token;
+            if (i < retries - 1) { await new Promise(r => setTimeout(r, delay)); delay *= 2; }
+            else throw new Error(JSON.stringify(data));
+        } catch (err) { if (i === retries - 1) throw err; }
+    }
+}
+
+// --- HELPER: DATE FORMATTER ---
+// FORMAT: yyyy-MM-dd HH:mm:ss (ISO 8601 "SQL" Style)
+// Example: 2025-12-28 17:45:00
+// TIMEZONE: Converts UTC to Dallas/Central Time
+function formatZohoDate() {
+    // 1. Get current time in Dallas/Central Time
+    const dallasDateString = new Date().toLocaleString("en-US", {timeZone: "America/Chicago"});
+    const date = new Date(dallasDateString);
+
+    const d = date.getDate().toString().padStart(2, '0');
+    const m = (date.getMonth() + 1).toString().padStart(2, '0'); // Numeric Month
+    const y = date.getFullYear();
+    const h = date.getHours().toString().padStart(2, '0'); // 24-hour format
+    const min = date.getMinutes().toString().padStart(2, '0');
+    const s = date.getSeconds().toString().padStart(2, '0');
+    
+    // Result: "2025-12-28 17:45:00"
+    return `${y}-${m}-${d} ${h}:${min}:${s}`;
+}
+
+// --- HELPER: HAVERSINE DISTANCE ---
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 3958.8; 
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
 }
 
 exports.handler = async function(event, context) {
@@ -28,44 +68,119 @@ exports.handler = async function(event, context) {
     };
 
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
 
     try {
-        const accessToken = await getAccessToken();
-        
-        // --- THE DIAGNOSTIC CALL ---
-        // We ask Zoho for the list of fields in the CheckIn form
-        const fieldsUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/form/${FORM_NAME}/fields`;
-        
-        const response = await fetch(fieldsUrl, {
-            headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
-        });
-        
-        const data = await response.json();
+        const payload = JSON.parse(event.body);
+        const { jobId, userEmail, userLat, userLon, userIp, pin } = payload;
+        const finalPin = pin || "0000";
 
-        // Find the specific field causing the error
-        const targetField = data.fields 
-            ? data.fields.find(f => f.link_name === "Actual_Clock_in_Time1") 
-            : null;
+        if (!jobId || !userEmail || !userLat || !userLon) {
+            throw new Error("Missing required data (jobId, email, or coordinates).");
+        }
 
-        return {
-            statusCode: 400, // Keep as 400 so it shows up in your console error log
-            headers,
-            body: JSON.stringify({
-                diagnostic_mode: "ON",
-                message: "Here is the field definition from Zoho.",
-                all_fields_found: data.code === 3000,
-                // Return the specific field info so we can see the 'dateFormat'
-                field_definition: targetField || "Field not found in response",
-                // Return the raw response just in case
-                raw_response: data 
-            })
+        // 1. Get Zoho Token
+        const accessToken = await getAccessTokenWithRetry();
+        const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
+        const baseUrl = "https://creator.zoho.com/api/v2";
+
+        // 2. Fetch Job Details
+        const jobUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
+        const jobRes = await fetch(jobUrl, { headers: authHeader });
+        const jobData = await jobRes.json();
+
+        if (jobData.code !== 3000) throw new Error("Could not find Job Record.");
+        
+        let originRaw = jobData.data.Origination_Address;
+        let originAddress = (typeof originRaw === 'object' && originRaw !== null) ? (originRaw.display_value || "") : String(originRaw || "").trim();
+
+        if (!originAddress) throw new Error("Job has no Origination Address.");
+
+        // 3. Geocode Job Address
+        if (!HERE_API_KEY) throw new Error("Server Error: Missing HERE_API_KEY.");
+        const hereUrl = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(originAddress)}&apiKey=${HERE_API_KEY}`;
+        const hereRes = await fetch(hereUrl);
+        const hereData = await hereRes.json();
+
+        if (!hereData.items || hereData.items.length === 0) {
+            throw new Error(`Could not find coordinates for: ${originAddress}`);
+        }
+
+        const jobLat = hereData.items[0].position.lat;
+        const jobLon = hereData.items[0].position.lng;
+
+        // 4. Calculate Distance
+        const distanceMiles = calculateDistance(userLat, userLon, jobLat, jobLon);
+        if (distanceMiles > 0.25) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ 
+                    error: "DISTANCE_FAIL", 
+                    message: "You are not close enough to the job site.",
+                    distance: distanceMiles.toFixed(2)
+                })
+            };
+        }
+
+        // 5. Find Mover ID
+        const findMoverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${userEmail}")`;
+        const moverRes = await fetch(findMoverUrl, { headers: authHeader });
+        const moverData = await moverRes.json();
+
+        if (moverData.code !== 3000 || !moverData.data || moverData.data.length === 0) {
+            throw new Error(`Mover not found in Zoho with email: ${userEmail}`);
+        }
+        const moverId = moverData.data[0].ID;
+
+        // 6. Submit Check-In
+        const checkInUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/form/${FORM_CHECKIN}`;
+        
+        const clockInTime = formatZohoDate(); 
+        console.log("Submitting Time:", clockInTime);
+
+        const checkInBody = {
+            "data": {
+                "JobId": jobId,                    
+                "Add_Mover": moverId,              
+                "Actual_Clock_in_Time1": clockInTime, // Using yyyy-MM-dd HH:mm:ss
+                "Mover_Coordinates": `${userLat}, ${userLon}`,
+                "Job_Coordinates": `${jobLat}, ${jobLon}`,
+                "Distance": distanceMiles.toFixed(4),
+                "CapturedIPAddress": userIp || "Unknown",
+                "PIN": finalPin
+            }
         };
 
+        const submitRes = await fetch(checkInUrl, { 
+            method: 'POST',
+            headers: { ...authHeader, 'Content-Type': 'application/json' },
+            body: JSON.stringify(checkInBody)
+        });
+
+        const submitData = await submitRes.json();
+
+        if (submitData.code === 3000) {
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ success: true, message: "Clocked in successfully!" })
+            };
+        } else {
+            console.error("Zoho Submit Error:", JSON.stringify(submitData));
+            return {
+                statusCode: 400, 
+                headers,
+                body: JSON.stringify({ error: "ZOHO_REJECT", details: submitData }) 
+            };
+        }
+
     } catch (error) {
+        console.error("Clock-In Error:", error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ error: error.message || "Internal Server Error" })
         };
     }
 };
