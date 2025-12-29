@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v3.0 - Full Feature: One Clock-In Per Job + Status Checks)
+   (v3.1 - Fixed: Restored Confirmation Text & Instant UI Updates)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -139,7 +139,6 @@ async function refreshSingleJobData(calendarEvent) {
 
 // --- POPUP LOGIC ---
 
-// NEW: Check backend for status
 async function checkClockInStatus(jobId, userEmail) {
     try {
         const response = await fetch(NETLIFY_CLOCKIN_ENDPOINT, {
@@ -149,13 +148,9 @@ async function checkClockInStatus(jobId, userEmail) {
         });
         const data = await response.json();
         return data.clockedIn === true;
-    } catch (e) {
-        console.warn("Status check failed", e);
-        return false; 
-    }
+    } catch (e) { return false; }
 }
 
-// Determines if button or "Clocked In" text should show
 async function resolveClockInState(eventObj) {
     const wrapper = document.getElementById('clock-in-wrapper');
     if (!wrapper) return;
@@ -189,7 +184,7 @@ function openJobPopup(eventObj) {
         html: htmlContent,
         didOpen: () => {
             attachAddMeListener(eventObj);
-            resolveClockInState(eventObj); // START CHECK
+            resolveClockInState(eventObj);
         },
         willClose: () => { if (clockInTimer) clearTimeout(clockInTimer); }
     });
@@ -201,7 +196,7 @@ function updatePopupContentInPlace(eventObj) {
     if(contentContainer) {
         contentContainer.innerHTML = htmlContent;
         attachAddMeListener(eventObj); 
-        resolveClockInState(eventObj); // RE-CHECK
+        resolveClockInState(eventObj);
     }
 }
 
@@ -225,7 +220,7 @@ function generatePopupHtml(eventObj) {
     let alreadyOnJobByName = props.team && currentUserName && props.team.includes(currentUserName);
     const showAddButton = isHoobastank && needsMover && isFuture && !alreadyOnJobByName;
 
-    // Clock In Logic (Time & Team Check)
+    // Clock In Logic
     const allowedEmails = props.moverEmails || ""; 
     const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
     
@@ -237,7 +232,6 @@ function generatePopupHtml(eventObj) {
         if (timeUntilStart <= TEN_MIN_MS) {
             canShowClockIn = true;
         } else {
-            // Timer for refresh
             if (timeUntilStart < 86400000) {
                 if (clockInTimer) clearTimeout(clockInTimer);
                 clockInTimer = setTimeout(() => updatePopupContentInPlace(eventObj), timeUntilStart - TEN_MIN_MS);
@@ -245,7 +239,6 @@ function generatePopupHtml(eventObj) {
         }
     }
 
-    // HTML Gen
     var dateStr = formatPopupDate(start);
     var startTimeStr = formatPopupTime(start);
     var endTimeStr = end ? formatPopupTime(end) : "Unknown";
@@ -255,7 +248,6 @@ function generatePopupHtml(eventObj) {
     let buttonsHtml = "";
     if (showAddButton) buttonsHtml += `<button id="btn-add-me" class="btn-add-me"><span>+</span> Add Me</button>`;
     
-    // Placeholder for Clock In (Filled by resolveClockInState)
     if (canShowClockIn) {
         buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;"><div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div></span>`;
     }
@@ -285,6 +277,82 @@ function generatePopupHtml(eventObj) {
             </div>
         </div>
     `;
+}
+
+// --- FIXED ADD ME LISTENER (Restored Message + Instant UI Update) ---
+function attachAddMeListener(eventObj) {
+    const btn = document.getElementById('btn-add-me');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            // 1. Restore the Nice Date Message
+            const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
+            const niceDate = eventObj.start.toLocaleDateString('en-US', dateOptions);
+            const niceTime = formatPopupTime(eventObj.start);
+            const niceEnd  = eventObj.end ? formatPopupTime(eventObj.end) : "?";
+
+            const popup = Swal.getPopup();
+            const overlayDiv = document.createElement('div');
+            // Restored the text: "The job is on..."
+            overlayDiv.innerHTML = `
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; color: #333;">Are you sure?</h3>
+                    <p style="margin-bottom: 25px; color: #555; padding: 0 20px; font-size: 1.1em;">The job is on <strong>${niceDate}</strong><br>${niceTime} - ${niceEnd}</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-confirm-yes" style="background-color:#28a745; color:white; border:none; padding:10px 20px; cursor:pointer;">Yes, I'm In</button>
+                        <button id="btn-confirm-no" style="background-color:#d33; color:white; border:none; padding:10px 20px; cursor:pointer;">Cancel</button>
+                    </div>
+                </div>`;
+            popup.appendChild(overlayDiv);
+
+            document.getElementById('btn-confirm-yes').addEventListener('click', async () => {
+                overlayDiv.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center;"><div class="loader-spinner large"></div><h3 style="color:#0C419a; margin-top:10px;">Adding you to job...</h3></div>`;
+                try {
+                    let userEmail = null; let userName = "Me";
+                    if (window.parent && window.parent.user && window.parent.user.data) {
+                        userEmail = window.parent.user.data.email || (window.parent.user.data.loginIds ? window.parent.user.data.loginIds[0] : null);
+                        userName = window.parent.user.data.name || "Me";
+                    }
+                    if(!userEmail) throw new Error("Email not found.");
+
+                    const apiResponse = await fetch(NETLIFY_ADD_ENDPOINT, {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${currentAuthToken}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jobId: eventObj.extendedProps.id, email: userEmail })
+                    });
+                    if(!apiResponse.ok) throw new Error(await apiResponse.text());
+
+                    overlayDiv.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center;"><div style="font-size: 50px; color: #28a745;">✅</div><h2 style="color: #555; margin: 0;">Added!</h2></div>`;
+
+                    // 2. Optimistic UI Update (Shows Name Instantly)
+                    let currentTeam = eventObj.extendedProps.team || "";
+                    if (currentTeam === "None assigned") currentTeam = "";
+                    const newTeam = currentTeam ? currentTeam + ", " + userName : userName;
+                    const newCount = (eventObj.extendedProps.actualCount || 0) + 1;
+                    const requiredCount = eventObj.extendedProps.moverCount || 0;
+
+                    // Update the Event Object in memory
+                    eventObj.setExtendedProp('team', newTeam);
+                    eventObj.setExtendedProp('actualCount', newCount);
+                    if (newCount >= requiredCount) { 
+                        eventObj.setProp('backgroundColor', '#0C419a'); 
+                        eventObj.setProp('borderColor', '#0C419a'); 
+                    }
+
+                    setTimeout(() => { 
+                        overlayDiv.remove(); 
+                        // Re-render the popup with the new data immediately
+                        updatePopupContentInPlace(eventObj); 
+                        // Then fetch from server to confirm
+                        refreshSingleJobData(eventObj); 
+                    }, 1000);
+
+                } catch (err) {
+                    overlayDiv.innerHTML = `<div style="padding:20px;"><h3 style="color:red;">Error</h3><p>${err.message}</p><button id="btn-err-close" style="padding:5px 10px;">Close</button></div>`;
+                    document.getElementById('btn-err-close').onclick = () => Swal.close();
+                }
+            });
+            document.getElementById('btn-confirm-no').onclick = () => overlayDiv.remove();
+        });
+    }
 }
 
 function attachClockInListener(eventObj) {
@@ -351,50 +419,6 @@ function attachClockInListener(eventObj) {
                 Swal.fire('Location Error', 'Allow location access.', 'warning');
                 btn.innerHTML = '⏱ Clock In'; btn.disabled = false;
             }, { enableHighAccuracy: true, timeout: 10000 });
-        });
-    }
-}
-
-// --- STANDARD ADD ME LISTENER ---
-function attachAddMeListener(eventObj) {
-    const btn = document.getElementById('btn-add-me');
-    if (btn) {
-        btn.addEventListener('click', () => {
-            const popup = Swal.getPopup();
-            const overlayDiv = document.createElement('div');
-            overlayDiv.innerHTML = `
-                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <h3>Are you sure?</h3>
-                    <div style="display: flex; gap: 10px; margin-top:20px;">
-                        <button id="btn-confirm-yes" style="background-color:#28a745; color:white; border:none; padding:10px 20px;">Yes, I'm In</button>
-                        <button id="btn-confirm-no" style="background-color:#d33; color:white; border:none; padding:10px 20px;">Cancel</button>
-                    </div>
-                </div>`;
-            popup.appendChild(overlayDiv);
-
-            document.getElementById('btn-confirm-yes').addEventListener('click', async () => {
-                overlayDiv.innerHTML = `<div class="loader-spinner large"></div><h3>Adding...</h3>`;
-                try {
-                    let userEmail = null;
-                    if (window.parent && window.parent.user && window.parent.user.data) {
-                        userEmail = window.parent.user.data.email || (window.parent.user.data.loginIds ? window.parent.user.data.loginIds[0] : null);
-                    }
-                    if(!userEmail) throw new Error("Email not found.");
-
-                    const apiResponse = await fetch(NETLIFY_ADD_ENDPOINT, {
-                        method: 'POST', headers: { 'Authorization': `Bearer ${currentAuthToken}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ jobId: eventObj.extendedProps.id, email: userEmail })
-                    });
-                    if(!apiResponse.ok) throw new Error(await apiResponse.text());
-
-                    overlayDiv.innerHTML = `<h2 style="color: #28a745;">Added!</h2>`;
-                    setTimeout(() => { overlayDiv.remove(); updatePopupContentInPlace(eventObj); refreshSingleJobData(eventObj); }, 1000);
-                } catch (err) {
-                    overlayDiv.innerHTML = `<h3 style="color:red;">Error</h3><p>${err.message}</p><button id="btn-err-close">Close</button>`;
-                    document.getElementById('btn-err-close').onclick = () => Swal.close();
-                }
-            });
-            document.getElementById('btn-confirm-no').onclick = () => overlayDiv.remove();
         });
     }
 }
