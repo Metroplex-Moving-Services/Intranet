@@ -1,25 +1,12 @@
 /* ============================================================
    assets/js/calendar.js
-   (v3.2 - Fixed: Prevents Button Reappearance due to Zoho Lag)
+   (v3.3 - CSS moved to mmsstyle.css, Cleaned up Logic)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
 const NETLIFY_GET_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-calendar";
 const NETLIFY_ADD_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/add-mover-to-job";
 const NETLIFY_CLOCKIN_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/clock-in";
-
-// --- STYLES ---
-const style = document.createElement('style');
-style.innerHTML = `
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loader-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #0C419a; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
-    .loader-spinner.small { width: 14px; height: 14px; border-width: 2px; }
-    .loader-spinner.large { width: 40px; height: 40px; border-width: 5px; border-top-color: #28a745; margin-bottom: 10px; }
-    .btn-add-me { background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; border: none; border-radius: 50px; padding: 6px 16px; font-size: 0.85em; font-weight: 600; text-transform: uppercase; cursor: pointer; margin-left: 10px; }
-    .btn-clock-in { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; border-radius: 50px; padding: 6px 16px; font-size: 0.85em; font-weight: 600; text-transform: uppercase; cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; gap: 5px; }
-    .btn-clock-in:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
-`;
-document.head.appendChild(style);
 
 let clockInTimer = null;
 let calendarInstance = null;
@@ -151,13 +138,10 @@ async function checkClockInStatus(jobId, userEmail) {
     } catch (e) { return false; }
 }
 
-// --- UPDATED: RESOLVE STATE (With Local Memory) ---
 async function resolveClockInState(eventObj) {
     const wrapper = document.getElementById('clock-in-wrapper');
     if (!wrapper) return;
 
-    // 1. Check Local "Optimistic" Flag First
-    // If we just successfully clocked in, we trust that flag over Zoho's slow database.
     if (eventObj.extendedProps.clockedInLocally === true) {
         wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         return;
@@ -169,7 +153,6 @@ async function resolveClockInState(eventObj) {
     }
 
     if (userEmail) {
-        // 2. Ask Backend
         const alreadyClockedIn = await checkClockInStatus(eventObj.extendedProps.id, userEmail);
         
         if (alreadyClockedIn) {
@@ -289,7 +272,6 @@ function generatePopupHtml(eventObj) {
     `;
 }
 
-// --- FIXED: Add Me Listener ---
 function attachAddMeListener(eventObj) {
     const btn = document.getElementById('btn-add-me');
     if (btn) {
@@ -359,7 +341,6 @@ function attachAddMeListener(eventObj) {
     }
 }
 
-// --- UPDATED: CLOCK IN LISTENER (Sets Local Memory) ---
 function attachClockInListener(eventObj) {
     const btn = document.getElementById('btn-clock-in');
     if (btn) {
