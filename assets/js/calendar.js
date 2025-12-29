@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v3.1 - Fixed: Restored Confirmation Text & Instant UI Updates)
+   (v3.2 - Fixed: Prevents Button Reappearance due to Zoho Lag)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -151,9 +151,17 @@ async function checkClockInStatus(jobId, userEmail) {
     } catch (e) { return false; }
 }
 
+// --- UPDATED: RESOLVE STATE (With Local Memory) ---
 async function resolveClockInState(eventObj) {
     const wrapper = document.getElementById('clock-in-wrapper');
     if (!wrapper) return;
+
+    // 1. Check Local "Optimistic" Flag First
+    // If we just successfully clocked in, we trust that flag over Zoho's slow database.
+    if (eventObj.extendedProps.clockedInLocally === true) {
+        wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
+        return;
+    }
 
     let userEmail = null;
     if (window.parent && window.parent.user && window.parent.user.data) {
@@ -161,7 +169,9 @@ async function resolveClockInState(eventObj) {
     }
 
     if (userEmail) {
+        // 2. Ask Backend
         const alreadyClockedIn = await checkClockInStatus(eventObj.extendedProps.id, userEmail);
+        
         if (alreadyClockedIn) {
             wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         } else {
@@ -279,12 +289,11 @@ function generatePopupHtml(eventObj) {
     `;
 }
 
-// --- FIXED ADD ME LISTENER (Restored Message + Instant UI Update) ---
+// --- FIXED: Add Me Listener ---
 function attachAddMeListener(eventObj) {
     const btn = document.getElementById('btn-add-me');
     if (btn) {
         btn.addEventListener('click', () => {
-            // 1. Restore the Nice Date Message
             const dateOptions = { weekday: 'long', month: 'short', day: 'numeric' };
             const niceDate = eventObj.start.toLocaleDateString('en-US', dateOptions);
             const niceTime = formatPopupTime(eventObj.start);
@@ -292,7 +301,6 @@ function attachAddMeListener(eventObj) {
 
             const popup = Swal.getPopup();
             const overlayDiv = document.createElement('div');
-            // Restored the text: "The job is on..."
             overlayDiv.innerHTML = `
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
                     <h3 style="margin: 0 0 10px 0; color: #333;">Are you sure?</h3>
@@ -322,14 +330,12 @@ function attachAddMeListener(eventObj) {
 
                     overlayDiv.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center;"><div style="font-size: 50px; color: #28a745;">✅</div><h2 style="color: #555; margin: 0;">Added!</h2></div>`;
 
-                    // 2. Optimistic UI Update (Shows Name Instantly)
                     let currentTeam = eventObj.extendedProps.team || "";
                     if (currentTeam === "None assigned") currentTeam = "";
                     const newTeam = currentTeam ? currentTeam + ", " + userName : userName;
                     const newCount = (eventObj.extendedProps.actualCount || 0) + 1;
                     const requiredCount = eventObj.extendedProps.moverCount || 0;
 
-                    // Update the Event Object in memory
                     eventObj.setExtendedProp('team', newTeam);
                     eventObj.setExtendedProp('actualCount', newCount);
                     if (newCount >= requiredCount) { 
@@ -339,9 +345,7 @@ function attachAddMeListener(eventObj) {
 
                     setTimeout(() => { 
                         overlayDiv.remove(); 
-                        // Re-render the popup with the new data immediately
                         updatePopupContentInPlace(eventObj); 
-                        // Then fetch from server to confirm
                         refreshSingleJobData(eventObj); 
                     }, 1000);
 
@@ -355,6 +359,7 @@ function attachAddMeListener(eventObj) {
     }
 }
 
+// --- UPDATED: CLOCK IN LISTENER (Sets Local Memory) ---
 function attachClockInListener(eventObj) {
     const btn = document.getElementById('btn-clock-in');
     if (btn) {
@@ -385,7 +390,7 @@ function attachClockInListener(eventObj) {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${currentAuthToken}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'clock_in', // Normal clock in
+                            action: 'clock_in', 
                             jobId: eventObj.extendedProps.id,
                             userEmail: userEmail,
                             userLat: position.coords.latitude,
@@ -405,6 +410,9 @@ function attachClockInListener(eventObj) {
                             throw new Error(result.message || "Clock-In Failed");
                         }
                     } else {
+                        // --- IMPORTANT: SET LOCAL MEMORY ---
+                        eventObj.setExtendedProp('clockedInLocally', true);
+
                         Swal.fire({ icon: 'success', title: 'Clocked In!', timer: 2000, showConfirmButton: false })
                         .then(() => {
                             const wrapper = document.getElementById('clock-in-wrapper');
@@ -423,7 +431,7 @@ function attachClockInListener(eventObj) {
     }
 }
 
-// --- HELPERS (Same as before) ---
+// --- HELPERS ---
 function parseZohoDate(dateStr) {
     if (!dateStr) return null;
     dateStr = dateStr.trim();
