@@ -1,6 +1,6 @@
 /* ============================================================
    netlify/functions/get-calendar.js
-   (v2.2 - Emergency Fix: Adds 5-Second Timeout to prevent 503 Crashes)
+   (v2.3 - Bulletproof Mode: Universal Timeout & Crash Protection)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -15,25 +15,13 @@ const REPORT_NAME = "Proposal_Contract_Report";
 let cachedAccessToken = null;
 let tokenExpiryTime = 0;
 
-// --- HELPER: FETCH WITH TIMEOUT ---
-// Prevents Netlify 503 errors by giving up after 5 seconds
+// --- HELPER: UNIVERSAL TIMEOUT ---
+// Forces a failure if Zoho takes > 5 seconds, preventing Netlify 503s
 async function fetchWithTimeout(url, options = {}, timeout = 5000) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
-        return response;
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            throw new Error('Request timed out (Zoho did not respond in 5s)');
-        }
-        throw error;
-    } finally {
-        clearTimeout(id);
-    }
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Zoho Request Timed Out')), timeout)
+    );
+    return Promise.race([fetch(url, options), timeoutPromise]);
 }
 
 async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
@@ -47,7 +35,6 @@ async function getAccessTokenWithRetry(retries = 3, delay = 1000) {
     
     for (let i = 0; i < retries; i++) {
         try {
-            // Use our new safe fetch
             const res = await fetchWithTimeout(tokenUrl, { method: 'POST' });
             const data = await res.json();
             
@@ -78,8 +65,9 @@ exports.handler = async function(event, context) {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
+        // Safety Check: Is fetch available?
         if (typeof fetch === "undefined") {
-            throw new Error("Node version too old. Please set NODE_VERSION to 18 in Netlify.");
+            throw new Error("Node.js version too old. Please set NODE_VERSION to 20 in Netlify.");
         }
 
         // 2. Logic
@@ -91,7 +79,7 @@ exports.handler = async function(event, context) {
         let dataUrl = `https://creator.zoho.com/api/v2/${APP_OWNER}/${APP_LINK}/report/${REPORT_NAME}`;
         if (requestedId) dataUrl += `?criteria=(ID == ${requestedId})`;
 
-        // 3. Fetch Data (Safely)
+        // 3. Fetch Data
         const dataResponse = await fetchWithTimeout(dataUrl, {
             headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
         });
@@ -111,16 +99,15 @@ exports.handler = async function(event, context) {
         };
 
     } catch (error) {
-        console.error("Calendar Crash:", error);
+        console.error("Function Error:", error);
         
-        // 4. GRACEFUL ERROR HANDLING
-        // Even if we timeout, we send JSON + Headers so the browser doesn't block it with CORS
+        // 4. GRACEFUL ERROR RETURN (Prevents CORS Errors)
         return {
-            statusCode: 500, // or 408 for timeout
+            statusCode: 500,
             headers, 
             body: JSON.stringify({ 
-                error: "System Error", 
-                details: error.message || "Connection timed out."
+                error: "Server Error", 
+                details: error.message || "Unknown Error"
             }) 
         };
     }
