@@ -1,6 +1,6 @@
 /* ============================================================
    netlify/functions/clock-in.js
-   (v3.3 - Fix: Use ".ID" for Lookup Field Criteria)
+   (v3.4 - Fix: Query JobId only + Match Name/ID in memory)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -12,17 +12,14 @@ const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
 const REPORT_JOBS = "Proposal_Contract_Report";
 const REPORT_MOVERS = "All_Movers";
-
-// IMPORTANT: Ensure "CheckIn_Report" shows ALL records in Zoho Creator.
-// Also ensure the "Add Mover" column is visible in this report (even if hidden in the live view, it must be in the report structure).
 const REPORT_CHECKINS = "CheckIn_Report"; 
 const FORM_CHECKIN = "CheckIn";
 
-// --- CACHE (Saves Money) ---
+// --- CACHE ---
 let cachedAccessToken = null;
 let tokenExpiryTime = 0;
 
-// --- HELPER: TIMEOUT (Saves Runtime) ---
+// --- HELPER: TIMEOUT ---
 async function fetchWithTimeout(url, options = {}, timeout = 6000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -90,12 +87,12 @@ exports.handler = async function(event, context) {
         
         if (!jobId || !userEmail) throw new Error("Missing required data.");
 
-        // 1. Auth & Mover Lookup (Shared)
+        // 1. Auth & Mover Lookup
         const accessToken = await getAccessToken();
         const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
         const baseUrl = "https://creator.zoho.com/api/v2";
 
-        // Find Mover ID based on Email
+        // Find Mover Profile
         const findMoverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${userEmail}")`;
         const moverRes = await fetchWithTimeout(findMoverUrl, { headers: authHeader });
         const moverData = await moverRes.json();
@@ -103,23 +100,63 @@ exports.handler = async function(event, context) {
         if (moverData.code !== 3000 || !moverData.data || moverData.data.length === 0) {
             throw new Error(`Mover not found in Zoho with email: ${userEmail}`);
         }
-        const moverId = moverData.data[0].ID;
+        
+        const moverRecord = moverData.data[0];
+        const moverId = moverRecord.ID;
+        
+        // Construct Full Name to match the check-in report format (First + " " + Last)
+        // Adjust these field names if your "All_Movers" report uses different keys (e.g. Name.first_name)
+        let moverFullName = "";
+        if (moverRecord.Name) {
+            // Check if Name is a complex object or string
+            if (typeof moverRecord.Name === 'object') {
+                 moverFullName = `${moverRecord.Name.first_name || ""} ${moverRecord.Name.last_name || ""}`.trim();
+            } else {
+                 moverFullName = moverRecord.Name;
+            }
+        }
 
         // --- ACTION 1: CHECK STATUS ---
         if (action === 'check_status') {
-            // FIX APPLIED HERE:
-            // "Add_Mover" is a Lookup. We must use "Add_Mover.ID" to compare against the numeric ID.
-            const criteria = `(JobId == ${jobId} && Add_Mover.ID == ${moverId})`;
+            // STRATEGY: 
+            // 1. Query ONLY by JobId (Since querying by Mover failed due to report settings).
+            // 2. Filter the results in memory using Javascript.
             
+            const criteria = `(JobId == ${jobId})`;
             const checkUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_CHECKINS}?criteria=${criteria}`;
             
-             console.log(`Debug Check: ${checkUrl}`); 
+            // console.log(`Checking Status: ${checkUrl}`);
 
             const checkRes = await fetchWithTimeout(checkUrl, { headers: authHeader });
             const checkData = await checkRes.json();
             
-            // If we find any records, they are clocked in
-            const isClockedIn = (checkData.code === 3000 && checkData.data && checkData.data.length > 0);
+            let isClockedIn = false;
+
+            if (checkData.code === 3000 && checkData.data && Array.isArray(checkData.data)) {
+                // Loop through all check-ins for this job
+                for (const record of checkData.data) {
+                    // CHECK 1: Match by ID (Best)
+                    // The report might return "Add_Mover" (ID) OR "Add_Mover.ID"
+                    let recordMoverId = record.Add_Mover || record["Add_Mover.ID"];
+                    // If it's an object (Zoho sometimes returns {display_value:..., ID:...})
+                    if (typeof recordMoverId === 'object' && recordMoverId.ID) recordMoverId = recordMoverId.ID;
+
+                    if (recordMoverId == moverId) {
+                        isClockedIn = true;
+                        break;
+                    }
+
+                    // CHECK 2: Match by Name (Fallback)
+                    // Your JSON showed "Add_Mover.Mover_Name": "John Turman"
+                    const recordMoverName = record["Add_Mover.Mover_Name"] || record["Add_Mover.display_value"];
+                    
+                    if (recordMoverName && moverFullName && 
+                        recordMoverName.toLowerCase() === moverFullName.toLowerCase()) {
+                        isClockedIn = true;
+                        break;
+                    }
+                }
+            }
             
             return { statusCode: 200, headers, body: JSON.stringify({ clockedIn: isClockedIn }) };
         }
@@ -151,7 +188,6 @@ exports.handler = async function(event, context) {
 
         // D. Submit
         const checkInUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/form/${FORM_CHECKIN}`;
-        
         const checkInBody = {
             "data": {
                 "JobId": jobId, 
