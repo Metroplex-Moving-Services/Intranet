@@ -125,7 +125,7 @@ exports.handler = async function(event, context) {
             const criteria = `(JobId == ${jobId})`;
             const checkUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_CHECKINS}?criteria=${criteria}`;
             
-            // console.log(`Checking Status: ${checkUrl}`);
+             console.log(`Checking Status: ${checkUrl}`);
 
             const checkRes = await fetchWithTimeout(checkUrl, { headers: authHeader });
             const checkData = await checkRes.json();
