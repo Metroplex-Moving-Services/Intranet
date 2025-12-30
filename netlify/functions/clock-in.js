@@ -1,6 +1,6 @@
 /* ============================================================
    netlify/functions/clock-in.js
-   (v3.0 - Production: One Clock-In Per Job + Billing Protection)
+   (v3.2 - Fix: "JobId" is a Number type - Removed Quotes)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -12,7 +12,10 @@ const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
 const REPORT_JOBS = "Proposal_Contract_Report";
 const REPORT_MOVERS = "All_Movers";
-const REPORT_CHECKINS = "CheckIn_Report"; // To check duplicates
+
+// IMPORTANT: Ensure "CheckIn_Report" shows ALL records in Zoho Creator.
+// If this report has a filter for "Today", the API will fail for yesterday's jobs.
+const REPORT_CHECKINS = "CheckIn_Report"; 
 const FORM_CHECKIN = "CheckIn";
 
 // --- CACHE (Saves Money) ---
@@ -92,6 +95,7 @@ exports.handler = async function(event, context) {
         const authHeader = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
         const baseUrl = "https://creator.zoho.com/api/v2";
 
+        // Find Mover ID based on Email
         const findMoverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${userEmail}")`;
         const moverRes = await fetchWithTimeout(findMoverUrl, { headers: authHeader });
         const moverData = await moverRes.json();
@@ -101,18 +105,26 @@ exports.handler = async function(event, context) {
         }
         const moverId = moverData.data[0].ID;
 
-        // --- ACTION 1: CHECK STATUS (New Feature) ---
+        // --- ACTION 1: CHECK STATUS ---
         if (action === 'check_status') {
-            // Check if Mover + Job combo already exists
-            const checkUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_CHECKINS}?criteria=(JobId == "${jobId}" && Add_Mover == ${moverId})`;
+            // FIXED: Your form defines JobId as a NUMBER. 
+            // We removed the quotes around ${jobId} so Zoho treats it as a number comparison.
+            const criteria = `(JobId == ${jobId} && Add_Mover == ${moverId})`;
+            
+            const checkUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_CHECKINS}?criteria=${criteria}`;
+            
+            // console.log(`Debug Check: ${checkUrl}`); // Uncomment to debug in Netlify Logs
+
             const checkRes = await fetchWithTimeout(checkUrl, { headers: authHeader });
             const checkData = await checkRes.json();
             
+            // If we find any records, they are clocked in
             const isClockedIn = (checkData.code === 3000 && checkData.data && checkData.data.length > 0);
+            
             return { statusCode: 200, headers, body: JSON.stringify({ clockedIn: isClockedIn }) };
         }
 
-        // --- ACTION 2: CLOCK IN (Existing Feature) ---
+        // --- ACTION 2: CLOCK IN ---
         
         // A. Get Job Address
         const jobUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_JOBS}/${jobId}`;
@@ -139,11 +151,19 @@ exports.handler = async function(event, context) {
 
         // D. Submit
         const checkInUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/form/${FORM_CHECKIN}`;
+        
+        // NOTE: JobId is a Number in Zoho, but JSON handles numbers natively.
+        // If Zoho complains, we can parse it: parseInt(jobId).
         const checkInBody = {
             "data": {
-                "JobId": jobId, "Add_Mover": moverId, "Actual_Clock_in_Time1": formatZohoDate(),
-                "Mover_Coordinates": `${userLat}, ${userLon}`, "Job_Coordinates": `${jobLat}, ${jobLon}`,
-                "Distance": distanceMiles.toFixed(4), "CapturedIPAddress": userIp || "Unknown", "PIN": pin || "0000"
+                "JobId": jobId, 
+                "Add_Mover": moverId, 
+                "Actual_Clock_in_Time1": formatZohoDate(),
+                "Mover_Coordinates": `${userLat}, ${userLon}`, 
+                "Job_Coordinates": `${jobLat}, ${jobLon}`,
+                "Distance": distanceMiles.toFixed(4), 
+                "CapturedIPAddress": userIp || "Unknown", 
+                "PIN": pin || "0000"
             }
         };
 
