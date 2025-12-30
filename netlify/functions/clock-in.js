@@ -113,7 +113,7 @@ exports.handler = async function(event, context) {
             
             const checkUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_CHECKINS}?criteria=${criteria}`;
             
-            // console.log(`Debug Check: ${checkUrl}`); 
+             console.log(`Debug Check: ${checkUrl}`); 
 
             const checkRes = await fetchWithTimeout(checkUrl, { headers: authHeader });
             const checkData = await checkRes.json();
