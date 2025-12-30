@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v4.1 - Cleaned Team, Single Line Date, WhatsApp Logo)
+   (v4.2 - WhatsApp List View Link & Larger Icon)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -117,8 +117,7 @@ async function refreshSingleJobData(calendarEvent) {
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
             calendarEvent.setExtendedProp('moverEmails', dummyEvent.extendedProps.moverEmails);
-            // Phone prop update removed
-
+            
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
             if (openPopupId) { updatePopupContentInPlace(calendarEvent); }
         }
@@ -244,7 +243,6 @@ function generatePopupHtml(eventObj) {
         }
 
         // 2. Clock In Logic
-        // We set the flag here, but resolveClockInState decides strictly based on Past/Future
         const allowedEmails = props.moverEmails || ""; 
         const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
         
@@ -253,7 +251,6 @@ function generatePopupHtml(eventObj) {
             const timeUntilStart = start.getTime() - now.getTime();
             
             // If it's within 10 mins OR job is active/past, we allow the "Wrapper" to exist.
-            // resolveClockInState will hide the *button* if it's in the past.
             if (timeUntilStart <= TEN_MIN_MS) {
                 canShowClockIn = true;
             } else {
@@ -278,16 +275,17 @@ function generatePopupHtml(eventObj) {
     }
     
     if (canShowClockIn) {
-        // Placeholder for Clock In (Filled by resolveClockInState)
         buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;"><div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div></span>`;
     }
 
-    // --- TEAM LIST (Simple text only) ---
+    // --- TEAM LIST (Text only) ---
     let teamDisplayHtml = (props.team && props.team !== "None assigned") ? props.team : "None assigned";
 
     // --- WHATSAPP LOGO ---
-    const whatsAppIcon = `<a href="https://wa.me/" target="_blank" style="text-decoration:none; margin-left:5px;">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:18px; width:18px; vertical-align:middle;" alt="Open WhatsApp">
+    // Changed href to "whatsapp://app" to force mobile app chat list.
+    // Changed size to 26px to be larger.
+    const whatsAppIcon = `<a href="whatsapp://app" style="text-decoration:none; margin-left:5px;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:26px; width:26px; vertical-align:middle;" alt="Open WhatsApp">
                           </a>`;
 
     return `
@@ -309,8 +307,8 @@ function generatePopupHtml(eventObj) {
             <strong>📋 Services Provided:</strong>
             <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
-            <div style="margin-top: 5px;">
-                <strong>👷 Team:</strong> ${whatsAppIcon} ${buttonsHtml}
+            <div style="margin-top: 5px; display: flex; align-items: center;">
+                <strong style="margin-right: 5px;">👷 Team:</strong> ${whatsAppIcon} ${buttonsHtml}
             </div>
             <div id="team-container-${props.id}" style="margin-top: 5px; color: #333; font-weight: 500;">
                 ${teamDisplayHtml}
@@ -503,8 +501,6 @@ function mapRecordsToEvents(records) {
         if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) { bgColor = '#28a745'; bdColor = '#28a745'; } 
         else if (actualMoversCount < requiredCount) { bgColor = '#fd7e14'; bdColor = '#fd7e14'; }
 
-        // REMOVED: Phone extraction logic
-
         return {
             title: getShortName(safeName), start: startISO, end: endISO,
             backgroundColor: bgColor, borderColor: bdColor, textColor: '#ffffff',
@@ -512,7 +508,6 @@ function mapRecordsToEvents(records) {
                 id: record.ID, name: safeName, origin: record.Origination_Address, destination: record.Destination_Address,
                 services: servicesRaw, team: getMoversString(record.Movers2),
                 moverEmails: record["Movers2.Email"] || "",
-                // REMOVED: moverPhones
                 moverCount: requiredCount, actualCount: actualMoversCount 
             }
         };
