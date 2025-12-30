@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v4.2 - WhatsApp List View Link & Larger Icon)
+   (v4.3 - Mobile Link Fix target="_top")
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -278,13 +278,12 @@ function generatePopupHtml(eventObj) {
         buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;"><div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div></span>`;
     }
 
-    // --- TEAM LIST (Text only) ---
+    // --- TEAM LIST ---
     let teamDisplayHtml = (props.team && props.team !== "None assigned") ? props.team : "None assigned";
 
     // --- WHATSAPP LOGO ---
-    // Changed href to "whatsapp://app" to force mobile app chat list.
-    // Changed size to 26px to be larger.
-    const whatsAppIcon = `<a href="whatsapp://app" style="text-decoration:none; margin-left:5px;">
+    // ADDED target="_top" to allow mobile phones to launch the app from inside the iframe
+    const whatsAppIcon = `<a href="whatsapp://app" target="_top" style="text-decoration:none; margin-left:5px;">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:26px; width:26px; vertical-align:middle;" alt="Open WhatsApp">
                           </a>`;
 
