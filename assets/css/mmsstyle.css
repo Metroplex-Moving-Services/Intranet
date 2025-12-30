@@ -449,3 +449,33 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
 .popup-link:hover {
     text-decoration: underline;
 }
+
+/* ... existing styles ... */
+
+/* 4. WhatsApp & Centering Tweaks */
+.popup-header-center {
+    text-align: center;
+    justify-content: center;
+}
+
+.whatsapp-link {
+    color: #25D366; /* Official WhatsApp Green */
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 5px;
+}
+
+.whatsapp-link:hover {
+    color: #128C7E;
+    text-decoration: underline;
+}
+
+.team-header-link {
+    color: #333;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.team-header-link:hover {
+    color: #25D366;
+}

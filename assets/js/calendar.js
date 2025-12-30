@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v3.3 - CSS moved to mmsstyle.css, Cleaned up Logic)
+   (v4.0 - Past Jobs, Hoobastank Only, Centering, WhatsApp)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -110,13 +110,15 @@ async function refreshSingleJobData(calendarEvent) {
         const freshRecord = freshRecords.find(r => r.ID === jobId) || freshRecords[0];
         if (freshRecord && freshRecord.ID === jobId) {
             const dummyEvent = mapRecordsToEvents([freshRecord])[0]; 
+            // Update props
             calendarEvent.setProp('backgroundColor', dummyEvent.backgroundColor);
             calendarEvent.setProp('borderColor', dummyEvent.borderColor);
             calendarEvent.setExtendedProp('team', dummyEvent.extendedProps.team);
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
             calendarEvent.setExtendedProp('moverEmails', dummyEvent.extendedProps.moverEmails);
-            
+            calendarEvent.setExtendedProp('moverPhones', dummyEvent.extendedProps.moverPhones); // New Phone Prop
+
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
             if (openPopupId) { updatePopupContentInPlace(calendarEvent); }
         }
@@ -142,6 +144,7 @@ async function resolveClockInState(eventObj) {
     const wrapper = document.getElementById('clock-in-wrapper');
     if (!wrapper) return;
 
+    // 1. Check Local "Optimistic" Flag First
     if (eventObj.extendedProps.clockedInLocally === true) {
         wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         return;
@@ -158,8 +161,18 @@ async function resolveClockInState(eventObj) {
         if (alreadyClockedIn) {
             wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         } else {
-            wrapper.innerHTML = `<button id="btn-clock-in" class="btn-clock-in">⏱ Clock In</button>`;
-            attachClockInListener(eventObj);
+            // If NOT clocked in...
+            const end = eventObj.end;
+            const now = new Date();
+            
+            // If job is in the past, DO NOT show the button. Show nothing.
+            if (end < now) {
+                wrapper.innerHTML = ""; // Clear wrapper
+            } else {
+                // Future job? Show button.
+                wrapper.innerHTML = `<button id="btn-clock-in" class="btn-clock-in">⏱ Clock In</button>`;
+                attachClockInListener(eventObj);
+            }
         }
     } else {
         wrapper.style.display = 'none';
@@ -176,8 +189,12 @@ function openJobPopup(eventObj) {
         showConfirmButton: false, 
         html: htmlContent,
         didOpen: () => {
-            attachAddMeListener(eventObj);
-            resolveClockInState(eventObj);
+            // Only attach logic if Hoobastank
+            const parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
+            if (parentRole.includes("Hoobastank")) {
+                attachAddMeListener(eventObj);
+                resolveClockInState(eventObj);
+            }
         },
         willClose: () => { if (clockInTimer) clearTimeout(clockInTimer); }
     });
@@ -188,8 +205,12 @@ function updatePopupContentInPlace(eventObj) {
     const contentContainer = Swal.getHtmlContainer();
     if(contentContainer) {
         contentContainer.innerHTML = htmlContent;
-        attachAddMeListener(eventObj); 
-        resolveClockInState(eventObj);
+        
+        const parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
+        if (parentRole.includes("Hoobastank")) {
+            attachAddMeListener(eventObj); 
+            resolveClockInState(eventObj);
+        }
     }
 }
 
@@ -197,6 +218,7 @@ function generatePopupHtml(eventObj) {
     const props = eventObj.extendedProps;
     const start = eventObj.start;
     const end = eventObj.end;
+    const now = new Date();
     
     // User Context
     let currentUserName = ""; let currentUserEmail = "";
@@ -207,49 +229,91 @@ function generatePopupHtml(eventObj) {
     const parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
     const isHoobastank = parentRole.includes("Hoobastank");
 
-    // Add Me Logic
-    const needsMover = props.actualCount < props.moverCount;
-    const isFuture = start > new Date();
-    let alreadyOnJobByName = props.team && currentUserName && props.team.includes(currentUserName);
-    const showAddButton = isHoobastank && needsMover && isFuture && !alreadyOnJobByName;
-
-    // Clock In Logic
-    const allowedEmails = props.moverEmails || ""; 
-    const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
-    
-    const TEN_MIN_MS = 10 * 60 * 1000;
-    const timeUntilStart = start.getTime() - new Date().getTime();
-    
+    // --- VARIABLES ---
+    let buttonsHtml = "";
     let canShowClockIn = false;
-    if (onTeamByEmail) {
-        if (timeUntilStart <= TEN_MIN_MS) {
-            canShowClockIn = true;
-        } else {
-            if (timeUntilStart < 86400000) {
-                if (clockInTimer) clearTimeout(clockInTimer);
-                clockInTimer = setTimeout(() => updatePopupContentInPlace(eventObj), timeUntilStart - TEN_MIN_MS);
+    let showAddButton = false;
+
+    // --- LOGIC: ONLY PROCESS IF HOOBASTANK ---
+    if (isHoobastank) {
+        // 1. Add Me Logic (Only if Job is in FUTURE)
+        if (start > now) {
+            const needsMover = props.actualCount < props.moverCount;
+            let alreadyOnJobByName = props.team && currentUserName && props.team.includes(currentUserName);
+            showAddButton = needsMover && !alreadyOnJobByName;
+        }
+
+        // 2. Clock In Logic
+        // We set the flag here, but resolveClockInState decides strictly based on Past/Future
+        const allowedEmails = props.moverEmails || ""; 
+        const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
+        
+        if (onTeamByEmail) {
+            const TEN_MIN_MS = 10 * 60 * 1000;
+            const timeUntilStart = start.getTime() - now.getTime();
+            
+            // If it's within 10 mins OR job is active/past, we allow the "Wrapper" to exist.
+            // resolveClockInState will hide the *button* if it's in the past.
+            if (timeUntilStart <= TEN_MIN_MS) {
+                canShowClockIn = true;
+            } else {
+                // Refresh timer for future
+                 if (timeUntilStart < 86400000) {
+                    if (clockInTimer) clearTimeout(clockInTimer);
+                    clockInTimer = setTimeout(() => updatePopupContentInPlace(eventObj), timeUntilStart - TEN_MIN_MS);
+                }
             }
         }
     }
 
+    // --- HTML GENERATION ---
     var dateStr = formatPopupDate(start);
     var startTimeStr = formatPopupTime(start);
     var endTimeStr = end ? formatPopupTime(end) : "Unknown";
     var originLink = getMapLink(props.origin);
     var destLink = getMapLink(props.destination);
 
-    let buttonsHtml = "";
-    if (showAddButton) buttonsHtml += `<button id="btn-add-me" class="btn-add-me"><span>+</span> Add Me</button>`;
+    if (showAddButton) {
+        buttonsHtml += `<button id="btn-add-me" class="btn-add-me"><span>+</span> Add Me</button>`;
+    }
     
     if (canShowClockIn) {
+        // Placeholder for Clock In (Filled by resolveClockInState)
         buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;"><div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div></span>`;
     }
 
+    // --- WHATSAPP TEAM LIST ---
+    let teamDisplayHtml = "None assigned";
+    if (props.team && props.team !== "None assigned") {
+        const names = props.team.split(', ');
+        const phones = props.moverPhones ? props.moverPhones.split(',') : [];
+        
+        teamDisplayHtml = names.map((name, index) => {
+            // Try to match phone by index (rough logic, relies on Zoho order)
+            let phone = phones[index] ? phones[index].trim() : "";
+            if (phone) phone = phone.replace(/\D/g, ''); // Clean number
+            
+            let html = `<span>${name}`;
+            if (phone) {
+                html += ` <a href="https://wa.me/${phone}" target="_blank" class="whatsapp-link" title="Chat with ${name} on WhatsApp">
+                             <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:14px; width:14px; vertical-align:middle;">
+                          </a>`;
+            }
+            html += `</span>`;
+            return html;
+        }).join(", ");
+    }
+
+    // Team Header Link (SMS Group Fallback)
+    const teamHeader = `<span class="team-header-link" onclick="window.open('sms:${(props.moverPhones || "").replace(/,/g, ',')}')">Team</span>`;
+
     return `
         <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
-            <div style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
-                📅 ${dateStr}, ${startTimeStr} - ${endTimeStr}
+            
+            <div class="popup-header-center" style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
+                📅 ${dateStr}<br>${startTimeStr} - ${endTimeStr}
             </div>
+
             <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
                 <strong style="min-width: 80px; color: #333; margin-right: 10px;">📍 Pickup:</strong>
                 <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1;">${getDisplayAddr(props.origin)}</a>
@@ -263,15 +327,16 @@ function generatePopupHtml(eventObj) {
             <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
             <div style="margin-top: 5px;">
-                <strong>👷 Team:</strong> ${buttonsHtml}
+                <strong>👷 ${teamHeader}:</strong> ${buttonsHtml}
             </div>
             <div id="team-container-${props.id}" style="margin-top: 5px; color: #333; font-weight: 500;">
-                ${props.team || "None assigned"}
+                ${teamDisplayHtml}
             </div>
         </div>
     `;
 }
 
+// --- ADD ME LISTENER ---
 function attachAddMeListener(eventObj) {
     const btn = document.getElementById('btn-add-me');
     if (btn) {
@@ -341,6 +406,7 @@ function attachAddMeListener(eventObj) {
     }
 }
 
+// --- CLOCK IN LISTENER ---
 function attachClockInListener(eventObj) {
     const btn = document.getElementById('btn-clock-in');
     if (btn) {
@@ -454,6 +520,9 @@ function mapRecordsToEvents(records) {
         if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) { bgColor = '#28a745'; bdColor = '#28a745'; } 
         else if (actualMoversCount < requiredCount) { bgColor = '#fd7e14'; bdColor = '#fd7e14'; }
 
+        // Try to get Phones (If user added column to report)
+        const teamPhonesString = record["Movers2.Mobile"] || record["Movers_Phones"] || "";
+
         return {
             title: getShortName(safeName), start: startISO, end: endISO,
             backgroundColor: bgColor, borderColor: bdColor, textColor: '#ffffff',
@@ -461,6 +530,7 @@ function mapRecordsToEvents(records) {
                 id: record.ID, name: safeName, origin: record.Origination_Address, destination: record.Destination_Address,
                 services: servicesRaw, team: getMoversString(record.Movers2),
                 moverEmails: record["Movers2.Email"] || "",
+                moverPhones: teamPhonesString, // New Field for WhatsApp
                 moverCount: requiredCount, actualCount: actualMoversCount 
             }
         };
