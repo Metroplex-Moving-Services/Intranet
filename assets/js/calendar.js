@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v4.0 - Past Jobs, Hoobastank Only, Centering, WhatsApp)
+   (v4.1 - Cleaned Team, Single Line Date, WhatsApp Logo)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -117,7 +117,7 @@ async function refreshSingleJobData(calendarEvent) {
             calendarEvent.setExtendedProp('actualCount', dummyEvent.extendedProps.actualCount);
             calendarEvent.setExtendedProp('moverCount', dummyEvent.extendedProps.moverCount);
             calendarEvent.setExtendedProp('moverEmails', dummyEvent.extendedProps.moverEmails);
-            calendarEvent.setExtendedProp('moverPhones', dummyEvent.extendedProps.moverPhones); // New Phone Prop
+            // Phone prop update removed
 
             const openPopupId = document.getElementById(`popup-job-id-${jobId}`);
             if (openPopupId) { updatePopupContentInPlace(calendarEvent); }
@@ -282,36 +282,19 @@ function generatePopupHtml(eventObj) {
         buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;"><div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div></span>`;
     }
 
-    // --- WHATSAPP TEAM LIST ---
-    let teamDisplayHtml = "None assigned";
-    if (props.team && props.team !== "None assigned") {
-        const names = props.team.split(', ');
-        const phones = props.moverPhones ? props.moverPhones.split(',') : [];
-        
-        teamDisplayHtml = names.map((name, index) => {
-            // Try to match phone by index (rough logic, relies on Zoho order)
-            let phone = phones[index] ? phones[index].trim() : "";
-            if (phone) phone = phone.replace(/\D/g, ''); // Clean number
-            
-            let html = `<span>${name}`;
-            if (phone) {
-                html += ` <a href="https://wa.me/${phone}" target="_blank" class="whatsapp-link" title="Chat with ${name} on WhatsApp">
-                             <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:14px; width:14px; vertical-align:middle;">
-                          </a>`;
-            }
-            html += `</span>`;
-            return html;
-        }).join(", ");
-    }
+    // --- TEAM LIST (Simple text only) ---
+    let teamDisplayHtml = (props.team && props.team !== "None assigned") ? props.team : "None assigned";
 
-    // Team Header Link (SMS Group Fallback)
-    const teamHeader = `<span class="team-header-link" onclick="window.open('sms:${(props.moverPhones || "").replace(/,/g, ',')}')">Team</span>`;
+    // --- WHATSAPP LOGO ---
+    const whatsAppIcon = `<a href="https://wa.me/" target="_blank" style="text-decoration:none; margin-left:5px;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:18px; width:18px; vertical-align:middle;" alt="Open WhatsApp">
+                          </a>`;
 
     return `
         <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
             
-            <div class="popup-header-center" style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px;">
-                📅 ${dateStr}<br>${startTimeStr} - ${endTimeStr}
+            <div class="popup-header-center" style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px; white-space: nowrap;">
+                📅 ${dateStr} <span style="color:#ccc; margin:0 5px;">|</span> ${startTimeStr} - ${endTimeStr}
             </div>
 
             <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
@@ -327,7 +310,7 @@ function generatePopupHtml(eventObj) {
             <div class="services-box" style="margin-top: 5px;">${props.services ? String(props.services).trim() : "No details."}</div>
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
             <div style="margin-top: 5px;">
-                <strong>👷 ${teamHeader}:</strong> ${buttonsHtml}
+                <strong>👷 Team:</strong> ${whatsAppIcon} ${buttonsHtml}
             </div>
             <div id="team-container-${props.id}" style="margin-top: 5px; color: #333; font-weight: 500;">
                 ${teamDisplayHtml}
@@ -520,8 +503,7 @@ function mapRecordsToEvents(records) {
         if (servicesRaw && servicesRaw.toLowerCase().includes("pending")) { bgColor = '#28a745'; bdColor = '#28a745'; } 
         else if (actualMoversCount < requiredCount) { bgColor = '#fd7e14'; bdColor = '#fd7e14'; }
 
-        // Try to get Phones (If user added column to report)
-        const teamPhonesString = record["Movers2.Mobile"] || record["Movers_Phones"] || "";
+        // REMOVED: Phone extraction logic
 
         return {
             title: getShortName(safeName), start: startISO, end: endISO,
@@ -530,7 +512,7 @@ function mapRecordsToEvents(records) {
                 id: record.ID, name: safeName, origin: record.Origination_Address, destination: record.Destination_Address,
                 services: servicesRaw, team: getMoversString(record.Movers2),
                 moverEmails: record["Movers2.Email"] || "",
-                moverPhones: teamPhonesString, // New Field for WhatsApp
+                // REMOVED: moverPhones
                 moverCount: requiredCount, actualCount: actualMoversCount 
             }
         };
