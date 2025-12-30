@@ -1,6 +1,6 @@
 /* ============================================================
    netlify/functions/clock-in.js
-   (v3.2 - Fix: "JobId" is a Number type - Removed Quotes)
+   (v3.3 - Fix: Use ".ID" for Lookup Field Criteria)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -14,7 +14,7 @@ const REPORT_JOBS = "Proposal_Contract_Report";
 const REPORT_MOVERS = "All_Movers";
 
 // IMPORTANT: Ensure "CheckIn_Report" shows ALL records in Zoho Creator.
-// If this report has a filter for "Today", the API will fail for yesterday's jobs.
+// Also ensure the "Add Mover" column is visible in this report (even if hidden in the live view, it must be in the report structure).
 const REPORT_CHECKINS = "CheckIn_Report"; 
 const FORM_CHECKIN = "CheckIn";
 
@@ -107,13 +107,13 @@ exports.handler = async function(event, context) {
 
         // --- ACTION 1: CHECK STATUS ---
         if (action === 'check_status') {
-            // FIXED: Your form defines JobId as a NUMBER. 
-            // We removed the quotes around ${jobId} so Zoho treats it as a number comparison.
-            const criteria = `(JobId == ${jobId} && Add_Mover == ${moverId})`;
+            // FIX APPLIED HERE:
+            // "Add_Mover" is a Lookup. We must use "Add_Mover.ID" to compare against the numeric ID.
+            const criteria = `(JobId == ${jobId} && Add_Mover.ID == ${moverId})`;
             
             const checkUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_CHECKINS}?criteria=${criteria}`;
             
-             console.log(`Debug Check: ${checkUrl}`); // Uncomment to debug in Netlify Logs
+            // console.log(`Debug Check: ${checkUrl}`); 
 
             const checkRes = await fetchWithTimeout(checkUrl, { headers: authHeader });
             const checkData = await checkRes.json();
@@ -152,8 +152,6 @@ exports.handler = async function(event, context) {
         // D. Submit
         const checkInUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/form/${FORM_CHECKIN}`;
         
-        // NOTE: JobId is a Number in Zoho, but JSON handles numbers natively.
-        // If Zoho complains, we can parse it: parseInt(jobId).
         const checkInBody = {
             "data": {
                 "JobId": jobId, 
