@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v4.4 - Fix Clock In Display & Future Date Logic)
+   (v4.5 - Fix: "Clocked In" Display & Future Job Logic)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -140,23 +140,11 @@ async function checkClockInStatus(jobId, userEmail) {
 }
 
 async function resolveClockInState(eventObj) {
+    // Attempt to find the wrapper. If generatePopupHtml created it, it will be here.
     const wrapper = document.getElementById('clock-in-wrapper');
     if (!wrapper) return;
 
-    // --- 1. STRICT FUTURE CHECK ---
-    // If the job is strictly in the future (Date > Today), do not process.
-    const jobDate = new Date(eventObj.start);
-    const today = new Date();
-    // Normalize to midnight for comparison
-    const jobDateMidnight = new Date(jobDate); jobDateMidnight.setHours(0,0,0,0);
-    const todayMidnight = new Date(today); todayMidnight.setHours(0,0,0,0);
-
-    if (jobDateMidnight > todayMidnight) {
-        wrapper.style.display = 'none'; // Ensure it's hidden
-        return; // STOP HERE
-    }
-
-    // --- 2. Check Local "Optimistic" Flag ---
+    // 1. Check Local "Optimistic" Flag (Fastest check)
     if (eventObj.extendedProps.clockedInLocally === true) {
         wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         return;
@@ -168,34 +156,50 @@ async function resolveClockInState(eventObj) {
     }
 
     if (userEmail) {
+        // 2. Perform API Check
         const alreadyClockedIn = await checkClockInStatus(eventObj.extendedProps.id, userEmail);
         
         if (alreadyClockedIn) {
+            // CASE: User is ALREADY clocked in. Show text regardless of date.
             wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         } else {
-            // If NOT clocked in, check if we should show the button
+            // CASE: User is NOT clocked in. 
+            // Check if we should show the button or hide the wrapper (future/past).
             const now = new Date();
             const start = eventObj.start;
-            const TEN_MIN_MS = 10 * 60 * 1000;
-            const timeUntilStart = start.getTime() - now.getTime();
+            const end = eventObj.end;
+            
+            // Normalize dates to midnight for strictly "Future Day" check
+            const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+            const jobMidnight = new Date(start); jobMidnight.setHours(0,0,0,0);
 
-            // If job ended (past) OR it is too early (more than 10 mins before start)
-            // Note: If job is active, timeUntilStart is negative, so it passes the <= check.
-            if (eventObj.end < now) {
-                // Job is over
-                wrapper.innerHTML = ""; 
+            if (jobMidnight > todayMidnight) {
+                // FUTURE JOB: Hide wrapper entirely.
                 wrapper.style.display = 'none';
-            } else if (timeUntilStart > TEN_MIN_MS) {
-                // Job is today, but too early to clock in
-                wrapper.innerHTML = ""; // Hide spinner
-                // Optionally: wrapper.innerHTML = "<small>Too early</small>";
+            } 
+            else if (jobMidnight.getTime() === todayMidnight.getTime() || (start < now && end > now)) {
+                 // TODAY (or currently active multi-day job)
+                 // Check 10-minute window
+                 const TEN_MIN_MS = 10 * 60 * 1000;
+                 const timeUntilStart = start.getTime() - now.getTime();
+
+                 if (timeUntilStart > TEN_MIN_MS) {
+                     // Too early -> Hide wrapper but set timer
+                     wrapper.style.display = 'none'; 
+                     if (clockInTimer) clearTimeout(clockInTimer);
+                     clockInTimer = setTimeout(() => updatePopupContentInPlace(eventObj), timeUntilStart - TEN_MIN_MS);
+                 } else {
+                     // Time Window Open -> Show Button
+                     wrapper.innerHTML = `<button id="btn-clock-in" class="btn-clock-in">⏱ Clock In</button>`;
+                     attachClockInListener(eventObj);
+                 }
             } else {
-                // Valid time window
-                wrapper.innerHTML = `<button id="btn-clock-in" class="btn-clock-in">⏱ Clock In</button>`;
-                attachClockInListener(eventObj);
+                // PAST JOB -> Hide wrapper
+                wrapper.style.display = 'none';
             }
         }
     } else {
+        // No email found -> Hide wrapper
         wrapper.style.display = 'none';
     }
 }
@@ -251,7 +255,7 @@ function generatePopupHtml(eventObj) {
 
     // --- VARIABLES ---
     let buttonsHtml = "";
-    let canShowClockIn = false;
+    let shouldCreateWrapper = false;
     let showAddButton = false;
 
     // --- LOGIC: ONLY PROCESS IF HOOBASTANK ---
@@ -264,29 +268,14 @@ function generatePopupHtml(eventObj) {
         }
 
         // 2. Clock In Logic
+        // Check if user is on the team via Email
         const allowedEmails = props.moverEmails || ""; 
         const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
         
         if (onTeamByEmail) {
-            // UPDATED LOGIC:
-            // We authorize the wrapper creation if it is TODAY.
-            // resolveClockInState will decide whether to hide it (future/too early) or show it (clocked in/time to start).
-            const isSameDay = start.getDate() === now.getDate() && 
-                              start.getMonth() === now.getMonth() && 
-                              start.getFullYear() === now.getFullYear();
-
-            // Only show wrapper if it's the same day (or active job)
-            if (isSameDay || (start < now && end > now)) {
-                canShowClockIn = true;
-                
-                // Set refresh timer logic for "Too Early" state
-                const TEN_MIN_MS = 10 * 60 * 1000;
-                const timeUntilStart = start.getTime() - now.getTime();
-                if (timeUntilStart > TEN_MIN_MS && timeUntilStart < 86400000) {
-                     if (clockInTimer) clearTimeout(clockInTimer);
-                     clockInTimer = setTimeout(() => updatePopupContentInPlace(eventObj), timeUntilStart - TEN_MIN_MS);
-                }
-            }
+            // We ALWAYS create the wrapper if they are on the team.
+            // resolveClockInState will decide to hide it (future) or show it (clocked in).
+            shouldCreateWrapper = true;
         }
     }
 
@@ -301,9 +290,8 @@ function generatePopupHtml(eventObj) {
         buttonsHtml += `<button id="btn-add-me" class="btn-add-me"><span>+</span> Add Me</button>`;
     }
     
-    // Create the wrapper with a spinner by default. 
-    // resolveClockInState will replace this with the Button OR "Clocked In" text.
-    if (canShowClockIn) {
+    // Create the wrapper with a spinner by default.
+    if (shouldCreateWrapper) {
         buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;"><div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div></span>`;
     }
 
@@ -316,11 +304,9 @@ function generatePopupHtml(eventObj) {
 
     return `
         <div id="popup-content-container" style="text-align: left; font-size: 1.1em;">
-            
             <div class="popup-header-center" style="margin-bottom: 20px; font-weight: bold; font-size: 1.2em; color: #444; border-bottom: 2px solid #0C419a; padding-bottom: 10px; white-space: nowrap;">
                 📅 ${dateStr} <span style="color:#ccc; margin:0 5px;">|</span> ${startTimeStr} - ${endTimeStr}
             </div>
-
             <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
                 <strong style="min-width: 80px; color: #333; margin-right: 10px;">📍 Pickup:</strong>
                 <a href="${originLink}" target="_blank" class="popup-link" style="flex: 1;">${getDisplayAddr(props.origin)}</a>
