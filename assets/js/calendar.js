@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/calendar.js
-   (v4.3 - Mobile Link Fix target="_top")
+   (v4.4 - Fix Clock In Display & Future Date Logic)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -143,7 +143,20 @@ async function resolveClockInState(eventObj) {
     const wrapper = document.getElementById('clock-in-wrapper');
     if (!wrapper) return;
 
-    // 1. Check Local "Optimistic" Flag First
+    // --- 1. STRICT FUTURE CHECK ---
+    // If the job is strictly in the future (Date > Today), do not process.
+    const jobDate = new Date(eventObj.start);
+    const today = new Date();
+    // Normalize to midnight for comparison
+    const jobDateMidnight = new Date(jobDate); jobDateMidnight.setHours(0,0,0,0);
+    const todayMidnight = new Date(today); todayMidnight.setHours(0,0,0,0);
+
+    if (jobDateMidnight > todayMidnight) {
+        wrapper.style.display = 'none'; // Ensure it's hidden
+        return; // STOP HERE
+    }
+
+    // --- 2. Check Local "Optimistic" Flag ---
     if (eventObj.extendedProps.clockedInLocally === true) {
         wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         return;
@@ -160,15 +173,24 @@ async function resolveClockInState(eventObj) {
         if (alreadyClockedIn) {
             wrapper.innerHTML = `<span style="color:#28a745; font-weight:bold; margin-left:5px;">✅ Clocked In</span>`;
         } else {
-            // If NOT clocked in...
-            const end = eventObj.end;
+            // If NOT clocked in, check if we should show the button
             const now = new Date();
-            
-            // If job is in the past, DO NOT show the button. Show nothing.
-            if (end < now) {
-                wrapper.innerHTML = ""; // Clear wrapper
+            const start = eventObj.start;
+            const TEN_MIN_MS = 10 * 60 * 1000;
+            const timeUntilStart = start.getTime() - now.getTime();
+
+            // If job ended (past) OR it is too early (more than 10 mins before start)
+            // Note: If job is active, timeUntilStart is negative, so it passes the <= check.
+            if (eventObj.end < now) {
+                // Job is over
+                wrapper.innerHTML = ""; 
+                wrapper.style.display = 'none';
+            } else if (timeUntilStart > TEN_MIN_MS) {
+                // Job is today, but too early to clock in
+                wrapper.innerHTML = ""; // Hide spinner
+                // Optionally: wrapper.innerHTML = "<small>Too early</small>";
             } else {
-                // Future job? Show button.
+                // Valid time window
                 wrapper.innerHTML = `<button id="btn-clock-in" class="btn-clock-in">⏱ Clock In</button>`;
                 attachClockInListener(eventObj);
             }
@@ -188,7 +210,6 @@ function openJobPopup(eventObj) {
         showConfirmButton: false, 
         html: htmlContent,
         didOpen: () => {
-            // Only attach logic if Hoobastank
             const parentRole = (window.parent && window.parent.userRole) ? window.parent.userRole : [];
             if (parentRole.includes("Hoobastank")) {
                 attachAddMeListener(eventObj);
@@ -247,17 +268,23 @@ function generatePopupHtml(eventObj) {
         const onTeamByEmail = currentUserEmail && allowedEmails.toLowerCase().includes(currentUserEmail.toLowerCase());
         
         if (onTeamByEmail) {
-            const TEN_MIN_MS = 10 * 60 * 1000;
-            const timeUntilStart = start.getTime() - now.getTime();
-            
-            // If it's within 10 mins OR job is active/past, we allow the "Wrapper" to exist.
-            if (timeUntilStart <= TEN_MIN_MS) {
+            // UPDATED LOGIC:
+            // We authorize the wrapper creation if it is TODAY.
+            // resolveClockInState will decide whether to hide it (future/too early) or show it (clocked in/time to start).
+            const isSameDay = start.getDate() === now.getDate() && 
+                              start.getMonth() === now.getMonth() && 
+                              start.getFullYear() === now.getFullYear();
+
+            // Only show wrapper if it's the same day (or active job)
+            if (isSameDay || (start < now && end > now)) {
                 canShowClockIn = true;
-            } else {
-                // Refresh timer for future
-                 if (timeUntilStart < 86400000) {
-                    if (clockInTimer) clearTimeout(clockInTimer);
-                    clockInTimer = setTimeout(() => updatePopupContentInPlace(eventObj), timeUntilStart - TEN_MIN_MS);
+                
+                // Set refresh timer logic for "Too Early" state
+                const TEN_MIN_MS = 10 * 60 * 1000;
+                const timeUntilStart = start.getTime() - now.getTime();
+                if (timeUntilStart > TEN_MIN_MS && timeUntilStart < 86400000) {
+                     if (clockInTimer) clearTimeout(clockInTimer);
+                     clockInTimer = setTimeout(() => updatePopupContentInPlace(eventObj), timeUntilStart - TEN_MIN_MS);
                 }
             }
         }
@@ -274,6 +301,8 @@ function generatePopupHtml(eventObj) {
         buttonsHtml += `<button id="btn-add-me" class="btn-add-me"><span>+</span> Add Me</button>`;
     }
     
+    // Create the wrapper with a spinner by default. 
+    // resolveClockInState will replace this with the Button OR "Clocked In" text.
     if (canShowClockIn) {
         buttonsHtml += `<span id="clock-in-wrapper" style="margin-left:10px;"><div class="loader-spinner small" style="border-top-color:#007bff; vertical-align:middle;"></div></span>`;
     }
@@ -281,8 +310,6 @@ function generatePopupHtml(eventObj) {
     // --- TEAM LIST ---
     let teamDisplayHtml = (props.team && props.team !== "None assigned") ? props.team : "None assigned";
 
-    // --- WHATSAPP LOGO ---
-    // ADDED target="_top" to allow mobile phones to launch the app from inside the iframe
     const whatsAppIcon = `<a href="whatsapp://app" target="_top" style="text-decoration:none; margin-left:5px;">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:26px; width:26px; vertical-align:middle;" alt="Open WhatsApp">
                           </a>`;
