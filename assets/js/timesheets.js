@@ -4,8 +4,10 @@
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
-// Note: We use the 'alldata' report link name based on your URL
-const NETLIFY_PAYOUTS_ENDPOINT = "https://metroplexmovingservices.netlify.app/.netlify/functions/get-payouts";
+
+// CHANGE THIS LINE: Use a relative path (starts with /)
+// This tells the browser: "Find this function on whatever website I am currently looking at."
+const NETLIFY_PAYOUTS_ENDPOINT = "/.netlify/functions/get-payouts";
 
 document.addEventListener('DOMContentLoaded', async function() {
     const sessionToken = sdk.getSessionToken();
