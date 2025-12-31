@@ -549,3 +549,64 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
     border-radius: 4px; 
     text-align: center; 
 }
+/* --- ADVANCED TIMESHEETS --- */
+
+/* Default: Show everything (Desktop/Landscape) */
+.ts-col-desktop { display: table-cell; }
+.ts-col-mobile  { display: none; } /* Hidden by default */
+
+/* Mobile Portrait Mode (Phones holding vertically) */
+@media screen and (max-width: 767px) {
+    /* Hide the detailed desktop columns */
+    .ts-col-desktop { display: none; }
+    
+    /* Show the mobile-optimized columns */
+    .ts-col-mobile { display: table-cell; }
+    
+    /* Adjust table font size for tight spaces */
+    .ts-table { font-size: 13px; }
+    .ts-table th, .ts-table td { padding: 8px 5px; }
+}
+
+/* Week Header Styling */
+.week-header-row {
+    background-color: #e9ecef;
+    font-weight: bold;
+    color: #333;
+    text-align: left;
+}
+.week-header-cell {
+    padding: 15px 10px;
+    font-size: 1.1em;
+    background-color: #e2e6ea;
+    border-top: 2px solid #b0b0b0;
+}
+
+/* Week Summary Footer */
+.week-summary-row {
+    background-color: #fff3cd; /* Light yellow for money/totals */
+    font-weight: bold;
+    border-top: 2px solid #dee2e6;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+.page-btn {
+    background-color: #0C419a;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.page-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

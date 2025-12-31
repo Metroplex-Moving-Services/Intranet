@@ -4,37 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Timesheets | MMS Intranet</title>
+    
     <script src="https://unpkg.com/@descope/web-component@3.24.0/dist/index.js"></script>
     <script src="https://unpkg.com/@descope/web-js-sdk@1.5.0/dist/index.umd.js"></script>
     
-    <link rel="stylesheet" href="../assets/css/mmsstyle.css"> 
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="../assets/css/mmsstyles.css"> 
 </head>
 <body>
 
-<div class="container timesheet-container">
-    <h2>My Timesheets</h2>
+<div class="container timesheet-container" style="margin-top: 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #0C419a; margin-bottom:15px;">
+        <h2 style="margin:10px 0;">My Timesheets</h2>
+        <button onclick="loadTimesheetsData()" class="btn btn-sm btn-default"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+    </div>
+    
     <div id="loading" style="display:none;"><div class="loader"></div></div>
     <div id="error-container"></div>
     
     <div class="table-responsive">
-        <table class="ts-table" id="timesheet-table">
+        <table class="ts-table table table-hover" id="timesheet-table">
             <thead>
                 <tr>
-                    <th>Job Date</th>
-                    <th>Customer</th>
-                    <th>Duration</th>
-                    <th>Pay Rate</th>
-                    <th>Tips/Extra</th> 
-                    <th>Total Payout</th>
+                    <th class="ts-col-mobile">Job Date/Time</th>
+                    <th class="ts-col-mobile">Miles</th>
+                    <th class="ts-col-mobile">Hrs</th>
+                    <th class="ts-col-mobile">Total Pay</th>
+
+                    <th class="ts-col-desktop">Job Date Time</th>
+                    <th class="ts-col-desktop">Customer</th>
+                    <th class="ts-col-desktop">Miles</th>
+                    <th class="ts-col-desktop">Start</th>
+                    <th class="ts-col-desktop">End</th>
+                    <th class="ts-col-desktop">Worked</th>
+                    <th class="ts-col-desktop">Job Dur.</th>
+                    <th class="ts-col-desktop">Base Pay</th>
+                    <th class="ts-col-desktop">Tip</th>
+                    <th class="ts-col-desktop">Extra</th>
                 </tr>
             </thead>
             <tbody id="timesheet-body">
                 </tbody>
         </table>
     </div>
-    <p id="no-data" style="display:none; text-align:center; color:#777; margin-top:20px;">No timesheets found.</p>
+    
+    <p id="no-data" style="display:none; text-align:center; color:#777; margin-top:20px;">No work history found.</p>
+
+    <div id="pagination" class="pagination-controls" style="display:none;">
+        <button id="btn-prev" class="page-btn">Previous</button>
+        <span id="page-indicator">Weeks 1-4</span>
+        <button id="btn-next" class="page-btn">Next</button>
+    </div>
 </div>
 
 <script src="../assets/js/timesheets.js"></script>
+
 </body>
 </html>
