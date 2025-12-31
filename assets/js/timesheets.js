@@ -1,12 +1,9 @@
 /* ============================================================
    assets/js/timesheets.js
-   Description: Fetches and displays user-specific Payout reports
+   (Fixed: Sends Email explicitly in Header)
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
-
-// CHANGE THIS LINE: Use a relative path (starts with /)
-// This tells the browser: "Find this function on whatever website I am currently looking at."
 const NETLIFY_PAYOUTS_ENDPOINT = "/.netlify/functions/get-payouts";
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -14,11 +11,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!sessionToken || sdk.isJwtExpired(sessionToken)) {
         window.top.location.href = "/Intranet/login.html";
     } else {
-        loadTimesheets(sessionToken);
+        // We must fetch the full user profile to get the email
+        try {
+            const userProfile = await sdk.me();
+            // Descope puts email in 'email' or 'loginIds[0]'
+            const email = userProfile.data.email || userProfile.data.loginIds[0];
+            
+            if (email) {
+                loadTimesheets(sessionToken, email);
+            } else {
+                throw new Error("Could not find your email address.");
+            }
+        } catch (err) {
+            document.getElementById('error-container').innerHTML = `<div class="error-msg">Auth Error: ${err.message}</div>`;
+        }
     }
 });
 
-async function loadTimesheets(token) {
+async function loadTimesheets(token, userEmail) {
     const loader = document.getElementById('loading');
     const tableBody = document.getElementById('timesheet-body');
     const noDataMsg = document.getElementById('no-data');
@@ -29,8 +39,12 @@ async function loadTimesheets(token) {
     
     try {
         // 1. Fetch Data
+        // We pass the email in a custom header 'X-User-Email'
         const response = await fetch(NETLIFY_PAYOUTS_ENDPOINT, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'X-User-Email': userEmail 
+            }
         });
         
         if (!response.ok) throw new Error(await response.text());
@@ -85,7 +99,6 @@ function getZohoVal(field) {
 
 function formatDate(dateStr) {
     if (!dateStr) return "";
-    // ZoHo often returns DD-MMM-YYYY or YYYY-MM-DD
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr; 
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -93,7 +106,6 @@ function formatDate(dateStr) {
 
 function parseMoney(val) {
     if (!val) return { val: 0, text: "$0.00" };
-    // Remove symbols if Zoho sends "$100.00"
     const num = parseFloat(String(val).replace(/[^0-9.-]+/g,""));
     return { val: (isNaN(num) ? 0 : num), text: val };
 }
