@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Timesheets | MMS Intranet</title>
+    <script src="https://unpkg.com/@descope/web-component@3.24.0/dist/index.js"></script>
+    <script src="https://unpkg.com/@descope/web-js-sdk@1.5.0/dist/index.umd.js"></script>
+    
+    <link rel="stylesheet" href="assets/css/styles.css"> 
+    <link rel="stylesheet" href="assets/css/mmsstyles.css"> 
+</head>
+<body>
+
+<div class="container timesheet-container">
+    <h2>My Timesheets</h2>
+    <div id="loading" style="display:none;"><div class="loader"></div></div>
+    <div id="error-container"></div>
+    
+    <div class="table-responsive">
+        <table class="ts-table" id="timesheet-table">
+            <thead>
+                <tr>
+                    <th>Job Date</th>
+                    <th>Customer</th>
+                    <th>Duration</th>
+                    <th>Pay Rate</th>
+                    <th>Tips/Extra</th>
+                    <th>Total Payout</th>
+                </tr>
+            </thead>
+            <tbody id="timesheet-body">
+                </tbody>
+        </table>
+    </div>
+    <p id="no-data" style="display:none; text-align:center; color:#777; margin-top:20px;">No timesheets found.</p>
+</div>
+
+<script src="assets/js/timesheets.js"></script>
+</body>
+</html>
