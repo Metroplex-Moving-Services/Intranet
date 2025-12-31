@@ -1,6 +1,6 @@
 /* ============================================================
    netlify/functions/clock-in.js
-   (v3.5 - Debug Mode: Verbose Logging for Status Check)
+   (v3.7 - Fix: Targeted "Mover_Name" Field Extraction)
    ============================================================ */
 
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN; 
@@ -103,68 +103,65 @@ exports.handler = async function(event, context) {
         
         const moverRecord = moverData.data[0];
         const moverId = moverRecord.ID;
-        
-        // Construct Full Name to match the check-in report format
+
+        // --- NEW: EXTRACT NAME FROM "Mover_Name" ---
         let moverFullName = "";
-        if (moverRecord.Name) {
-            if (typeof moverRecord.Name === 'object') {
-                 moverFullName = `${moverRecord.Name.first_name || ""} ${moverRecord.Name.last_name || ""}`.trim();
-            } else {
-                 moverFullName = moverRecord.Name;
-            }
+
+        // Case A: Mover_Name is an object (Standard for 'Name' fields)
+        if (moverRecord.Mover_Name && typeof moverRecord.Mover_Name === 'object') {
+             const fName = moverRecord.Mover_Name.first_name || "";
+             const lName = moverRecord.Mover_Name.last_name || "";
+             moverFullName = `${fName} ${lName}`.trim();
+        }
+        // Case B: Mover_Name is a simple string (Sometimes returned by Reports)
+        else if (moverRecord.Mover_Name) {
+            moverFullName = moverRecord.Mover_Name.trim();
+        }
+        // Case C: Fallback to "Name" field if Mover_Name is empty
+        else if (moverRecord.Name) {
+            moverFullName = (typeof moverRecord.Name === 'object') 
+                ? `${moverRecord.Name.first_name || ""} ${moverRecord.Name.last_name || ""}`.trim()
+                : moverRecord.Name.trim();
         }
 
         // --- ACTION 1: CHECK STATUS ---
         if (action === 'check_status') {
-            console.log(`[DEBUG] 1. Looking for Mover: "${moverFullName}" (ID: ${moverId})`);
             
+            // Query only by JobId because "Add_Mover.ID" is hidden in your report
             const criteria = `(JobId == ${jobId})`;
             const checkUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_CHECKINS}?criteria=${criteria}`;
             
-            console.log(`[DEBUG] 2. Querying Job URL: ${checkUrl}`);
-
             const checkRes = await fetchWithTimeout(checkUrl, { headers: authHeader });
             const checkData = await checkRes.json();
             
             let isClockedIn = false;
 
             if (checkData.code === 3000 && checkData.data && Array.isArray(checkData.data)) {
-                console.log(`[DEBUG] 3. Found ${checkData.data.length} records for this Job.`);
                 
                 // Loop through all check-ins for this job
-                for (const [index, record] of checkData.data.entries()) {
+                for (const record of checkData.data) {
                     
-                    // Retrieve Data from Record
+                    // 1. TRY ID MATCH (Best Reliability)
                     let recordMoverId = record.Add_Mover || record["Add_Mover.ID"];
                     if (typeof recordMoverId === 'object' && recordMoverId.ID) recordMoverId = recordMoverId.ID;
 
-                    const recordMoverName = record["Add_Mover.Mover_Name"] || record["Add_Mover.display_value"] || "Unknown";
-
-                    // Log the comparison
-                    console.log(`[DEBUG] --- Record #${index + 1} ---`);
-                    console.log(`[DEBUG]    Record Name: "${recordMoverName}"  vs  Target Name: "${moverFullName}"`);
-                    console.log(`[DEBUG]    Record ID:   "${recordMoverId}"    vs  Target ID:   "${moverId}"`);
-
-                    // CHECK 1: Match by ID (Best)
                     if (recordMoverId && moverId && String(recordMoverId) === String(moverId)) {
-                        console.log(`[DEBUG]    MATCH FOUND BY ID!`);
                         isClockedIn = true;
                         break;
                     }
 
-                    // CHECK 2: Match by Name (Fallback)
+                    // 2. TRY NAME MATCH (Fallback)
+                    // Matches "Add_Mover.Mover_Name" from CheckIn Report vs "Mover_Name" from Mover Profile
+                    const recordMoverName = record["Add_Mover.Mover_Name"] || record["Add_Mover.display_value"];
+                    
                     if (recordMoverName && moverFullName && 
-                        recordMoverName.toLowerCase().trim() === moverFullName.toLowerCase().trim()) {
-                        console.log(`[DEBUG]    MATCH FOUND BY NAME!`);
+                        recordMoverName.toLowerCase().trim() === moverFullName.toLowerCase()) {
                         isClockedIn = true;
                         break;
                     }
                 }
-            } else {
-                console.log(`[DEBUG] 3. No records found for this Job (or API Error). Code: ${checkData.code}`);
             }
             
-            console.log(`[DEBUG] 4. Final Result: ${isClockedIn}`);
             return { statusCode: 200, headers, body: JSON.stringify({ clockedIn: isClockedIn }) };
         }
 
