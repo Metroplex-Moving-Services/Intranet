@@ -40,7 +40,6 @@ async function loadTimesheetsData() {
     const errorContainer = document.getElementById('error-container');
     const pagination = document.getElementById('pagination');
 
-    // Reset UI
     loader.style.display = 'block';
     table.style.display = 'none';
     noDataMsg.style.display = 'none';
@@ -66,7 +65,6 @@ async function loadTimesheetsData() {
             allWeeks = groupJobsByWeek(records);
             currentPage = 1;
             renderPage();
-            // Show table ONLY after rendering
             table.style.display = 'table';
         }
     } catch (err) {
@@ -77,7 +75,7 @@ async function loadTimesheetsData() {
     }
 }
 
-/* --- GROUPING LOGIC (Same as before) --- */
+/* --- GROUPING LOGIC --- */
 function groupJobsByWeek(jobs) {
     const groups = {};
 
@@ -86,7 +84,7 @@ function groupJobsByWeek(jobs) {
         
         const d = new Date(job.Job_Date);
         const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
         
         const monday = new Date(d.setDate(diff));
         monday.setHours(0,0,0,0);
@@ -114,7 +112,6 @@ function groupJobsByWeek(jobs) {
     });
 
     const sortedWeeks = Object.values(groups).sort((a, b) => b.startDate - a.startDate);
-
     sortedWeeks.forEach(week => {
         week.jobs.sort((a, b) => new Date(b.Job_Date) - new Date(a.Job_Date));
     });
@@ -142,11 +139,9 @@ function renderPage() {
         headerRow.className = "week-header-row";
         const endDate = new Date(week.startDate);
         endDate.setDate(endDate.getDate() + 6); 
-        
         const rangeStr = `${formatDateShort(week.startDate)} - ${formatDateShort(endDate)}`;
-        
-        // We set colspan to a high number to span all columns in both views
-        headerRow.innerHTML = `<td colspan="15">Week of: ${rangeStr}</td>`;
+        // Colspan covers all columns (Max 8)
+        headerRow.innerHTML = `<td colspan="12">Week of: ${rangeStr}</td>`;
         tableBody.appendChild(headerRow);
 
         // B. Job Rows
@@ -158,48 +153,54 @@ function renderPage() {
             const e = parseMoney(job.Extra);
             const totalPay = p.val + t.val + e.val;
             
-            // NOTE: Only ONE "Job Date" column per view type to avoid duplication
+            // Format: "Dec 31, 08:00 AM"
+            const clockedInStr = `${formatDateShort(job.Job_Date)}, ${formatTime(job.MoverStartTime)}`;
+
             tr.innerHTML = `
                 <td class="ts-col-mobile">
-                    <div>${formatDateShort(job.Job_Date)}</div>
-                    <small class="text-muted">${formatTime(job.MoverStartTime)}</small>
+                    <strong>${formatDateShort(job.Job_Date)}</strong><br>
+                    <small>${formatTime(job.MoverStartTime)}</small>
                 </td>
                 <td class="ts-col-mobile">${job.CalculatedMiles || 0}</td>
                 <td class="ts-col-mobile">${(parseFloat(job.MoverTimeWorked)||0).toFixed(2)}</td>
                 <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(totalPay)}</td>
 
-                <td class="ts-col-desktop">${formatDateShort(job.Job_Date)} ${formatTime(job.MoverStartTime)}</td>
+                <td class="ts-col-desktop">${clockedInStr}</td>
                 <td class="ts-col-desktop">${getZohoName(job.Customer_Name)}</td>
                 <td class="ts-col-desktop">${job.CalculatedMiles || 0}</td>
-                <td class="ts-col-desktop">${formatTime(job.MoverStartTime)}</td>
-                <td class="ts-col-desktop">${formatTime(job.MoverEndtime)}</td>
                 <td class="ts-col-desktop">${(parseFloat(job.MoverTimeWorked)||0).toFixed(2)}</td>
-                <td class="ts-col-desktop">${(parseFloat(job.Job_Duration)||0).toFixed(2)}</td>
                 <td class="ts-col-desktop">${p.text}</td>
                 <td class="ts-col-desktop">${t.text}</td>
                 <td class="ts-col-desktop">${e.text}</td>
+                <td class="ts-col-desktop money" style="text-align:right;">${formatMoney(totalPay)}</td>
             `;
             tableBody.appendChild(tr);
         });
 
-        // C. Weekly Summary Row
+        // C. Weekly Summary Row (Aligns with specific Desktop columns)
+        // Desktop Alignment:
+        // Cols 1-3 (Clock,Cust,Miles) = "Totals:"
+        // Col 4 (Worked) = Hours Sum
+        // Cols 5-7 (Base,Tip,Extra) = Empty
+        // Col 8 (Total Pay) = Pay Sum
         const summaryRow = document.createElement('tr');
         summaryRow.className = "week-summary-row";
+        
         summaryRow.innerHTML = `
-            <td class="ts-col-mobile" colspan="3" style="text-align:right; font-size:0.9em;">
-                Hrs: ${week.totalHours.toFixed(2)} | Total:
-            </td>
+            <td class="ts-col-mobile" colspan="2" style="text-align:right;">Weekly Totals:</td>
+            <td class="ts-col-mobile">${week.totalHours.toFixed(2)}</td>
             <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(week.totalPayout)}</td>
 
-            <td class="ts-col-desktop" colspan="9" style="text-align:right;">Weekly Totals (${week.totalHours.toFixed(2)} hrs):</td>
-            <td class="ts-col-desktop money" style="font-size:1.1em;">${formatMoney(week.totalPayout)}</td>
+            <td class="ts-col-desktop" colspan="3" style="text-align:right;">Totals:</td>
+            <td class="ts-col-desktop" style="font-weight:bold;">${week.totalHours.toFixed(2)}</td>
+            <td class="ts-col-desktop" colspan="3"></td>
+            <td class="ts-col-desktop money" style="text-align:right;">${formatMoney(week.totalPayout)}</td>
         `;
         tableBody.appendChild(summaryRow);
     });
 
     pagination.style.display = allWeeks.length > 0 ? 'flex' : 'none';
     const totalPages = Math.ceil(allWeeks.length / WEEKS_PER_PAGE);
-    
     indicator.innerText = `Page ${currentPage} of ${totalPages}`;
     btnPrev.disabled = currentPage === 1;
     btnNext.disabled = currentPage >= totalPages;
@@ -214,28 +215,22 @@ function getZohoName(field) {
     if (typeof field === 'object') return field.last_name || ""; 
     return field; 
 }
-
 function formatDateShort(dateInput) {
     if (!dateInput) return "";
     const d = new Date(dateInput);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
-
 function formatTime(timeStr) {
     if (!timeStr) return "";
     const d = new Date(timeStr);
-    if (isNaN(d.getTime())) {
-        return timeStr.split(' ')[1] || timeStr; 
-    }
+    if (isNaN(d.getTime())) return timeStr.split(' ')[1] || timeStr; 
     return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
-
 function parseMoney(val) {
     if (!val) return { val: 0, text: "$0.00" };
     const num = parseFloat(String(val).replace(/[^0-9.-]+/g,""));
     return { val: (isNaN(num) ? 0 : num), text: val };
 }
-
 function formatMoney(num) {
     return "$" + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
