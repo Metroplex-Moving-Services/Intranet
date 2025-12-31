@@ -235,35 +235,35 @@ div.swal2-container { align-items: flex-start !important; padding-top: 10px !imp
 .error-msg { color: #d33; background: #ffe6e6; padding: 10px; border-radius: 4px; text-align: center; }
 
 /* ---------------------------------------------------- */
-/* ADVANCED TIMESHEETS (New Mobile Logic)             */
+/* ADVANCED TIMESHEETS                                */
 /* ---------------------------------------------------- */
 
-/* 1. Default (Desktop/Tablets) */
-/* Show Full Columns, Hide Mobile Columns */
+/* 1. Default (Desktop/Tablets) - Show Desktop cols, Hide Mobile cols */
 .ts-col-desktop { display: table-cell; }
 .ts-col-mobile  { display: none; }
 
 /* 2. Mobile Portrait (Strict Rule for Phones) */
 @media screen and (max-width: 767px) {
-    /* HIDE Desktop columns */
     .ts-col-desktop { display: none !important; }
-    /* SHOW Mobile columns */
     .ts-col-mobile  { display: table-cell !important; }
-    
-    /* Font tweaks for small screens */
     .ts-table { font-size: 13px; }
     .ts-table th, .ts-table td { padding: 8px 4px; }
 }
 
 /* 3. Mobile Landscape (Horizontal Phones) */
-@media screen and (min-width: 500px) and (max-width: 900px) and (orientation: landscape) {
+/* Force full width and remove padding so columns fit */
+@media screen and (min-width: 480px) and (max-width: 900px) and (orientation: landscape) {
     .container.timesheet-container {
         width: 100% !important;
         max-width: 100% !important;
-        padding-left: 10px;
-        padding-right: 10px;
-        margin: 0;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+        margin: 0 !important;
     }
+    .timesheet-container {
+        padding: 5px !important; /* Reduce internal padding */
+    }
+    .ts-table { font-size: 12px; } /* Slightly smaller text for fit */
 }
 
 /* Week Headers */
