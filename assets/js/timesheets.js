@@ -6,8 +6,7 @@
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
 const NETLIFY_PAYOUTS_ENDPOINT = "/.netlify/functions/get-payouts";
 
-// State
-let allWeeks = []; // Stores grouped data
+let allWeeks = []; 
 let currentPage = 1;
 const WEEKS_PER_PAGE = 4;
 
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const userProfile = await sdk.me();
             const email = userProfile.data.email || userProfile.data.loginIds[0];
             if (email) {
-                // Attach email to window for refresh button to use
                 window.currentUserEmail = email; 
                 window.currentToken = sessionToken;
                 loadTimesheetsData();
@@ -28,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 throw new Error("Could not find your email address.");
             }
         } catch (err) {
+            document.getElementById('loading').style.display = 'none'; // Hide loader on error
             document.getElementById('error-container').innerHTML = `<div class="error-msg">Auth Error: ${err.message}</div>`;
         }
     }
@@ -35,16 +34,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function loadTimesheetsData() {
     const loader = document.getElementById('loading');
+    const table = document.getElementById('timesheet-table');
     const tableBody = document.getElementById('timesheet-body');
     const noDataMsg = document.getElementById('no-data');
     const errorContainer = document.getElementById('error-container');
     const pagination = document.getElementById('pagination');
 
+    // Reset UI
     loader.style.display = 'block';
-    tableBody.innerHTML = '';
-    errorContainer.innerHTML = '';
+    table.style.display = 'none';
     noDataMsg.style.display = 'none';
     pagination.style.display = 'none';
+    errorContainer.innerHTML = '';
     
     try {
         const response = await fetch(NETLIFY_PAYOUTS_ENDPOINT, {
@@ -62,12 +63,11 @@ async function loadTimesheetsData() {
         if (records.length === 0) {
             noDataMsg.style.display = 'block';
         } else {
-            // 1. Process and Group Data
             allWeeks = groupJobsByWeek(records);
-            
-            // 2. Reset Page and Render
             currentPage = 1;
             renderPage();
+            // Show table ONLY after rendering
+            table.style.display = 'table';
         }
     } catch (err) {
         console.error("Timesheet Error:", err);
@@ -77,7 +77,7 @@ async function loadTimesheetsData() {
     }
 }
 
-/* --- GROUPING LOGIC --- */
+/* --- GROUPING LOGIC (Same as before) --- */
 function groupJobsByWeek(jobs) {
     const groups = {};
 
@@ -85,15 +85,12 @@ function groupJobsByWeek(jobs) {
         if (!job.Job_Date) return;
         
         const d = new Date(job.Job_Date);
-        // Calculate "Monday of this week"
-        // Day: 0 (Sun) to 6 (Sat). 
-        // If Sunday (0), Monday was 6 days ago. If Mon(1), 0 days ago.
         const day = d.getDay();
         const diff = d.getDate() - day + (day === 0 ? -6 : 1);
         
         const monday = new Date(d.setDate(diff));
         monday.setHours(0,0,0,0);
-        const weekKey = monday.toISOString().split('T')[0]; // "YYYY-MM-DD" of Monday
+        const weekKey = monday.toISOString().split('T')[0];
 
         if (!groups[weekKey]) {
             groups[weekKey] = {
@@ -104,10 +101,8 @@ function groupJobsByWeek(jobs) {
             };
         }
 
-        // Add Job
         groups[weekKey].jobs.push(job);
 
-        // Accumulate Totals
         const worked = parseFloat(job.MoverTimeWorked) || 0;
         const p = parseMoney(job.Payout).val;
         const t = parseMoney(job.Tip).val;
@@ -118,10 +113,8 @@ function groupJobsByWeek(jobs) {
         groups[weekKey].totalPayout += totalPay;
     });
 
-    // Convert Object to Array and Sort Descending (Newest Week First)
     const sortedWeeks = Object.values(groups).sort((a, b) => b.startDate - a.startDate);
 
-    // Sort Jobs inside each week Descending (Newest Job First)
     sortedWeeks.forEach(week => {
         week.jobs.sort((a, b) => new Date(b.Job_Date) - new Date(a.Job_Date));
     });
@@ -139,34 +132,33 @@ function renderPage() {
 
     tableBody.innerHTML = '';
 
-    // Slice Data for Pagination
     const start = (currentPage - 1) * WEEKS_PER_PAGE;
     const end = start + WEEKS_PER_PAGE;
     const weeksToRender = allWeeks.slice(start, end);
 
-    // Render Weeks
     weeksToRender.forEach(week => {
         // A. Week Header
         const headerRow = document.createElement('tr');
+        headerRow.className = "week-header-row";
         const endDate = new Date(week.startDate);
-        endDate.setDate(endDate.getDate() + 6); // Sunday
+        endDate.setDate(endDate.getDate() + 6); 
         
         const rangeStr = `${formatDateShort(week.startDate)} - ${formatDateShort(endDate)}`;
-        // Colspan 4 for mobile, 10 for desktop (we set a high number to be safe)
-        headerRow.innerHTML = `<td colspan="10" class="week-header-cell">Week of: ${rangeStr}</td>`;
+        
+        // We set colspan to a high number to span all columns in both views
+        headerRow.innerHTML = `<td colspan="15">Week of: ${rangeStr}</td>`;
         tableBody.appendChild(headerRow);
 
         // B. Job Rows
         week.jobs.forEach(job => {
             const tr = document.createElement('tr');
             
-            // Data Prep
             const p = parseMoney(job.Payout);
             const t = parseMoney(job.Tip);
             const e = parseMoney(job.Extra);
             const totalPay = p.val + t.val + e.val;
             
-            // --- COLUMNS ---
+            // NOTE: Only ONE "Job Date" column per view type to avoid duplication
             tr.innerHTML = `
                 <td class="ts-col-mobile">
                     <div>${formatDateShort(job.Job_Date)}</div>
@@ -174,7 +166,7 @@ function renderPage() {
                 </td>
                 <td class="ts-col-mobile">${job.CalculatedMiles || 0}</td>
                 <td class="ts-col-mobile">${(parseFloat(job.MoverTimeWorked)||0).toFixed(2)}</td>
-                <td class="ts-col-mobile money">${formatMoney(totalPay)}</td>
+                <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(totalPay)}</td>
 
                 <td class="ts-col-desktop">${formatDateShort(job.Job_Date)} ${formatTime(job.MoverStartTime)}</td>
                 <td class="ts-col-desktop">${getZohoName(job.Customer_Name)}</td>
@@ -194,9 +186,10 @@ function renderPage() {
         const summaryRow = document.createElement('tr');
         summaryRow.className = "week-summary-row";
         summaryRow.innerHTML = `
-            <td class="ts-col-mobile" colspan="2" style="text-align:right;">Weekly Totals:</td>
-            <td class="ts-col-mobile">${week.totalHours.toFixed(2)}</td>
-            <td class="ts-col-mobile money">${formatMoney(week.totalPayout)}</td>
+            <td class="ts-col-mobile" colspan="3" style="text-align:right; font-size:0.9em;">
+                Hrs: ${week.totalHours.toFixed(2)} | Total:
+            </td>
+            <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(week.totalPayout)}</td>
 
             <td class="ts-col-desktop" colspan="9" style="text-align:right;">Weekly Totals (${week.totalHours.toFixed(2)} hrs):</td>
             <td class="ts-col-desktop money" style="font-size:1.1em;">${formatMoney(week.totalPayout)}</td>
@@ -204,7 +197,6 @@ function renderPage() {
         tableBody.appendChild(summaryRow);
     });
 
-    // Update Pagination Controls
     pagination.style.display = allWeeks.length > 0 ? 'flex' : 'none';
     const totalPages = Math.ceil(allWeeks.length / WEEKS_PER_PAGE);
     
@@ -219,7 +211,6 @@ function renderPage() {
 /* --- HELPERS --- */
 function getZohoName(field) {
     if (!field) return "-";
-    // Returns only last name per request
     if (typeof field === 'object') return field.last_name || ""; 
     return field; 
 }
@@ -227,17 +218,13 @@ function getZohoName(field) {
 function formatDateShort(dateInput) {
     if (!dateInput) return "";
     const d = new Date(dateInput);
-    // Returns "Dec 30" format
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function formatTime(timeStr) {
     if (!timeStr) return "";
-    // ZoHo often sends "11-30-2025 08:00:00" or just "08:00:00"
-    // We just want HH:MM AM/PM
     const d = new Date(timeStr);
     if (isNaN(d.getTime())) {
-        // Try parsing manual time string if standard date parse fails
         return timeStr.split(' ')[1] || timeStr; 
     }
     return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -246,7 +233,7 @@ function formatTime(timeStr) {
 function parseMoney(val) {
     if (!val) return { val: 0, text: "$0.00" };
     const num = parseFloat(String(val).replace(/[^0-9.-]+/g,""));
-    return { val: (isNaN(num) ? 0 : num), text: val }; // Return original text for display if preferred
+    return { val: (isNaN(num) ? 0 : num), text: val };
 }
 
 function formatMoney(num) {
