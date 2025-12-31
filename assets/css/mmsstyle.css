@@ -92,7 +92,7 @@ body.page-index {
     margin-bottom: 0;
 }
 
-/* FIX: Tablet & Mobile Menu Logic (Force Hamburger up to 991px) */
+/* FIX: Tablet & Mobile Menu Logic */
 @media (max-width: 991px) {
     .navbar-header { float: none; }
     .navbar-left, .navbar-right { float: none !important; }
@@ -103,7 +103,6 @@ body.page-index {
     .navbar-collapse.collapse { display: none !important; }
     .navbar-collapse.collapse.in { display: block !important; overflow-y: auto; max-height: 75vh; }
     
-    /* FIX: Left Justify Welcome Message on Phone/Tablet */
     #user-info-block {
         display: block !important;
         float: none !important;
@@ -114,11 +113,7 @@ body.page-index {
         border-bottom: 1px solid #bce8f1; 
     }
 
-    .navbar-nav { 
-        float: none !important; 
-        margin-top: 0; 
-    }
-    
+    .navbar-nav { float: none !important; margin-top: 0; }
     .navbar-nav > li { float: none; }
     .navbar-nav > li > a { padding-top: 10px; padding-bottom: 10px; }
     
@@ -131,69 +126,34 @@ body.page-index {
         border: 0; 
         box-shadow: none; 
     }
-
-    /* NEW FIX: Improve visibility of dropdown links on mobile */
     .navbar-nav .open .dropdown-menu > li > a {
         color: #333 !important; 
-        font-weight: 600 !important; /* Make them bolder and darker */
+        font-weight: 600 !important;
     }
 }
 
 /* =========================================
-   SPLASH.HTML
+   SPLASH, PROFILE, LOGIN, CALENDAR PAGES
    ========================================= */
 body.page-splash {
-    display: flex;
-    flex-direction: column; 
-    height: 100%;           
-    overflow: hidden;       
-    background-color: #ffffff;
-    text-align: center;
-    margin: 0;
+    display: flex; flex-direction: column; height: 100%; overflow: hidden; background-color: #ffffff; text-align: center; margin: 0;
 }
-
 .page-splash .content-wrapper {
-    flex: 1;                
-    display: flex;
-    align-items: flex-start; 
-    justify-content: center;
-    min-height: 0;          
-    padding: 10px;
-    padding-top: 40px;      
-    overflow: hidden; 
+    flex: 1; display: flex; align-items: flex-start; justify-content: center; min-height: 0; padding: 10px; padding-top: 40px; overflow: hidden; 
 }
-
 .page-splash .hero-img {
-    max-height: 65vh;       
-    max-width: 100%;        
-    width: auto;
-    height: auto;
-    object-fit: contain; 
+    max-height: 65vh; max-width: 100%; width: auto; height: auto; object-fit: contain; 
 }
 
-/* =========================================
-   PROFILE PAGE
-   ========================================= */
 body.page-profile {
-    background-color: #f5f5f5;
-    padding: 40px 20px 20px 20px; 
-    height: auto; 
-    min-height: 100%;
-    box-sizing: border-box; 
+    background-color: #f5f5f5; padding: 40px 20px 20px 20px; height: auto; min-height: 100%; box-sizing: border-box; 
 }
 .profile-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    overflow: hidden;
-    max-width: 600px;
-    margin: 0 auto;
+    background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; max-width: 600px; margin: 0 auto;
 }
 .profile-header { background-color: #0C419a; color: white; padding: 30px 20px; text-align: center; }
 #avatarContainer {
-    width: 100px; height: 100px; background-color: rgba(255,255,255,0.2);
-    border-radius: 50%; margin: 0 auto 15px; display: flex;
-    align-items: center; justify-content: center; font-size: 40px; overflow: hidden;
+    width: 100px; height: 100px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; overflow: hidden;
 }
 .profile-body { padding: 20px; }
 .detail-row { border-bottom: 1px solid #eee; padding: 12px 0; display: flex; justify-content: space-between; }
@@ -201,77 +161,148 @@ body.page-profile {
 .detail-label { font-weight: bold; color: #555; }
 .detail-value { color: #333; text-align: right; }
 
-/* =========================================
-   LOGIN PAGE
-   ========================================= */
 body.page-login {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    background-color: #f5f5f5;
-    overflow: hidden; 
+    display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f5f5f5; overflow: hidden; 
 }
 .login-wrapper {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 450px;
+    background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px;
 }
 
-/* =========================================
-   CALENDAR PAGE
-   ========================================= */
 body.page-calendar {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    height: 100%; 
-    overflow: hidden; 
-    margin: 0; 
-    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #ffffff; display: flex; flex-direction: column; height: 100%; overflow: hidden; margin: 0; padding: 0;
 }
-
-#calendar-container { 
-    flex: 1; 
-    background: white; 
-    padding: 0;
-    overflow-y: auto; 
-    min-height: 0; 
-}
-
-.page-calendar footer {
-    flex-shrink: 0;
-    background: #fff;
-    padding: 10px;
-    text-align: center;
-    border-top: 1px solid #eee;
-}
-
+#calendar-container { flex: 1; background: white; padding: 0; overflow-y: auto; min-height: 0; }
+.page-calendar footer { flex-shrink: 0; background: #fff; padding: 10px; text-align: center; border-top: 1px solid #eee; }
 #calendar { min-height: 600px; margin: 0 2px; }
 #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
 
-/* --- FullCalendar & SweetAlert2 Styling --- */
+/* --- FullCalendar & SweetAlert2 --- */
+.fc-header-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding-top: 10px; margin-bottom: 1.5em !important; }
+.fc-toolbar-title { font-size: 1.75em !important; color: #333; font-weight: bold; }
+.fc-button-primary { background-color: #0C419a !important; border-color: #0C419a !important; }
+.fc-button-primary:hover { background-color: #082d6e !important; border-color: #082d6e !important; }
+.fc-button-active { background-color: #062252 !important; border-color: #062252 !important; }
+.fc-event-main { padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.selected-day { background-color: #fff9c4 !important; }
 
-/* 1. Global Toolbar Layout */
-.fc-header-toolbar { 
-    display: flex; 
-    flex-wrap: wrap; 
-    justify-content: space-between; 
-    align-items: center;
-    padding-top: 10px; 
-    margin-bottom: 1.5em !important; 
+/* SweetAlert2 Popup */
+.swal2-popup { padding-top: 10px !important; padding-left: 5px !important; padding-right: 5px !important; padding-bottom: 10px !important; }
+.swal2-title { margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 20px !important; font-size: 1.5em !important; }
+.swal2-html-container { margin: 0 !important; padding: 0 5px !important; width: 100% !important; max-width: 100% !important; }
+div.swal2-container { align-items: flex-start !important; padding-top: 10px !important; }
+.modal-dialog { width: 95% !important; max-width: 800px; margin: 10px auto; }
+.modal-body { padding: 5px 10px !important; }
+.services-box { background-color: #f9f9f9; border-left: 4px solid #0C419a; padding: 10px; margin-top: 5px; font-size: 0.9em; color: #444; white-space: pre-wrap; text-align: left; min-height: 100px; max-height: 350px; overflow-y: auto; }
+
+/* --- PHONE VIEW ADJUSTMENTS --- */
+@media (max-width: 600px) {
+    .fc-event-title { display: none !important; } 
+    .fc-event-time { font-weight: bold; font-size: 1.1em; text-align: center; width: 100%; display: block !important; }
+    .fc-header-toolbar { display: flex !important; flex-direction: row !important; align-items: center; justify-content: space-between !important; flex-wrap: nowrap !important; gap: 5px !important; }
+    .fc-toolbar-chunk { display: flex; align-items: center; width: auto !important; order: unset !important; margin: 0 !important; }
+    .fc-toolbar-title { font-size: 1.1em !important; display: block !important; white-space: nowrap !important; margin: 0 !important; }
+    .fc-button { padding: 4px 8px !important; font-size: 0.85em !important; }
 }
 
-/* 2. Title Styling */
-.fc-toolbar-title { 
-    font-size: 1.75em !important; 
-    color: #333; 
+/* --- COMMON UTILITIES (Spinner, Buttons) --- */
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.loader-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #0C419a; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+.loader-spinner.small { width: 14px; height: 14px; border-width: 2px; }
+.loader-spinner.large { width: 40px; height: 40px; border-width: 5px; border-top-color: #28a745; margin-bottom: 10px; }
+
+.btn-add-me { background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; border: none; border-radius: 50px; padding: 6px 16px; font-size: 0.85em; font-weight: 600; text-transform: uppercase; cursor: pointer; margin-left: 10px; }
+.btn-add-me:hover { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(40, 167, 69, 0.4); }
+
+.btn-clock-in { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; border-radius: 50px; padding: 6px 16px; font-size: 0.85em; font-weight: 600; text-transform: uppercase; cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; gap: 5px; }
+.btn-clock-in:hover { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(0, 123, 255, 0.4); background: linear-gradient(135deg, #0069d9 0%, #004085 100%); }
+.btn-clock-in:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.popup-link { font-size: 0.9em !important; color: #0C419a; text-decoration: none; }
+.popup-link:hover { text-decoration: underline; }
+.popup-header-center { text-align: center; justify-content: center; }
+
+/* --- TIMESHEETS MODULE --- */
+.timesheet-container { max-width: 1000px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.timesheet-container h2 { border-bottom: 2px solid #0C419a; padding-bottom: 10px; color: #333; margin-top: 0; }
+
+.ts-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.ts-table th, .ts-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+.ts-table th { background-color: #f8f9fa; color: #0C419a; font-weight: 600; }
+.ts-table tr:hover { background-color: #f1f1f1; }
+.money { font-weight: bold; color: #28a745; }
+
+.loader { border: 4px solid #f3f3f3; border-top: 4px solid #0C419a; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+.error-msg { color: #d33; background: #ffe6e6; padding: 10px; border-radius: 4px; text-align: center; }
+
+/* ---------------------------------------------------- */
+/* ADVANCED TIMESHEETS (New Mobile Logic)             */
+/* ---------------------------------------------------- */
+
+/* 1. Default (Desktop/Tablets) */
+/* Show Full Columns, Hide Mobile Columns */
+.ts-col-desktop { display: table-cell; }
+.ts-col-mobile  { display: none; }
+
+/* 2. Mobile Portrait (Strict Rule for Phones) */
+@media screen and (max-width: 767px) {
+    /* HIDE Desktop columns */
+    .ts-col-desktop { display: none !important; }
+    /* SHOW Mobile columns */
+    .ts-col-mobile  { display: table-cell !important; }
+    
+    /* Font tweaks for small screens */
+    .ts-table { font-size: 13px; }
+    .ts-table th, .ts-table td { padding: 8px 4px; }
+}
+
+/* 3. Mobile Landscape (Horizontal Phones) */
+@media screen and (min-width: 500px) and (max-width: 900px) and (orientation: landscape) {
+    .container.timesheet-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin: 0;
+    }
+}
+
+/* Week Headers */
+.week-header-row td {
+    background-color: #e9ecef;
+    font-weight: 700;
+    color: #0C419a;
+    padding: 12px;
+    font-size: 1.1em;
+    border-top: 2px solid #b0b0b0;
+}
+
+/* Week Summary Footer (Gold Theme) */
+.week-summary-row {
+    background-color: #fff8e1;
+    border-top: 2px solid #0C419a;
+    border-bottom: 2px solid #0C419a;
+    font-weight: 800;
+    color: #333;
+    font-size: 1.05em;
+}
+
+/* Pagination Spacing */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+.page-btn {
+    background-color: #0C419a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
     font-weight: bold;
 }
-
-/* 3. Button Colors */
-.fc-button-primary { background-color
+.page-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+#page-indicator { margin: 0 30px; font-weight: bold; color: #555; }
