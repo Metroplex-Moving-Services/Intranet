@@ -11,7 +11,6 @@ const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
 const APP_OWNER = "information152";
 const APP_LINK = "household-goods-moving-services";
 const REPORT_MOVERS = "All_Movers";
-// The URL provided was .../#Report:alldata, so the API link name is "alldata"
 const REPORT_PAYOUTS = "alldata"; 
 
 // --- CACHE TOKEN ---
@@ -47,12 +46,11 @@ exports.handler = async function(event, context) {
         const authHeader = event.headers.authorization || event.headers.Authorization;
         if (!authHeader) throw new Error("No Auth Token");
         
-        // In production, verify the JWT signature. 
-        // For now, we decode to get the email to find the Zoho ID.
         const tokenParts = authHeader.split(' ');
         const token = tokenParts.length === 2 ? tokenParts[1] : null;
         if (!token) throw new Error("Invalid Token Format");
 
+        // Decode JWT manually (standard method)
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -60,8 +58,23 @@ exports.handler = async function(event, context) {
         }).join(''));
         const user = JSON.parse(jsonPayload);
         
-        const userEmail = user.email || (user.loginIds ? user.loginIds[0] : null);
-        if (!userEmail) throw new Error("User email not found in token");
+        // --- ROBUST EMAIL EXTRACTION ---
+        // Descope puts the primary identifier in 'sub' (Subject), 'email', or 'loginIds'
+        let userEmail = user.email;
+        
+        if (!userEmail && user.loginIds && Array.isArray(user.loginIds) && user.loginIds.length > 0) {
+            userEmail = user.loginIds[0];
+        }
+        
+        // Fallback: Use 'sub' if it looks like an email
+        if (!userEmail && user.sub && user.sub.includes("@")) {
+            userEmail = user.sub;
+        }
+
+        if (!userEmail) {
+            console.error("Token Payload:", JSON.stringify(user)); // Log this to Netlify to debug if it fails again
+            throw new Error("User email not found in token");
+        }
 
         // 3. Connect to Zoho
         const zohoToken = await getAccessToken();
@@ -69,20 +82,18 @@ exports.handler = async function(event, context) {
         const baseUrl = "https://creator.zoho.com/api/v2";
 
         // 4. LOOKUP: Get Mover ID from Email
-        // We cannot query Payouts by email directly because the form doesn't have an email field.
         const moverUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_MOVERS}?criteria=(Email == "${userEmail}")`;
         const moverRes = await fetch(moverUrl, { headers: zohoHeaders });
         const moverData = await moverRes.json();
 
         if (moverData.code !== 3000 || !moverData.data || moverData.data.length === 0) {
-            // User exists in Descope but not in Zoho Movers list
+            // User exists in Descope but not in Zoho Movers list -> Return empty list (not error)
             return { statusCode: 200, headers, body: JSON.stringify({ data: [] }) };
         }
         
         const moverID = moverData.data[0].ID;
 
         // 5. FETCH PAYOUTS: Filter by MoverID
-        // Using "MoverID" as per your "Add_a_payout" form definition
         const payoutsUrl = `${baseUrl}/${APP_OWNER}/${APP_LINK}/report/${REPORT_PAYOUTS}?criteria=(MoverID == ${moverID})`;
         const payoutsRes = await fetch(payoutsUrl, { headers: zohoHeaders });
         const payoutsData = await payoutsRes.json();
@@ -90,7 +101,6 @@ exports.handler = async function(event, context) {
         // 6. Return Data
         let finalData = [];
         if (payoutsData.code === 3000 && payoutsData.data) {
-            // Sort by Date Descending (Newest first)
             finalData = payoutsData.data.sort((a, b) => new Date(b.Job_Date) - new Date(a.Job_Date));
         }
 
