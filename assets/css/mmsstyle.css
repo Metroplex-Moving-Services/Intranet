@@ -156,3 +156,74 @@ body.page-calendar { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
 .page-btn { background-color: #0C419a; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .page-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 #page-indicator { margin: 0 30px; font-weight: bold; color: #555; }
+
+/* ============================================================
+   Timesheet Table Responsive Styles
+   ============================================================ */
+
+/* Base Table Styles */
+.timesheet-table {
+    width: 100%;
+    margin-bottom: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+.timesheet-table th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+    white-space: nowrap;
+}
+
+.timesheet-table td {
+    vertical-align: middle !important;
+}
+
+/* Numeric alignment */
+.text-right {
+    text-align: right;
+}
+
+/* Week Header Row */
+.week-header-row td {
+    background-color: #e9ecef;
+    font-weight: bold;
+    color: #0C419a; /* MMS Blue */
+    padding: 10px 15px;
+}
+
+/* Summary Row */
+.week-summary-row td {
+    background-color: #f1f1f1;
+    font-weight: bold;
+    border-top: 2px solid #ccc;
+}
+
+/* --- Responsive Column Logic --- */
+
+/* Mobile View (Default) */
+.ts-col-desktop {
+    display: none;
+}
+
+.ts-col-mobile {
+    display: table-cell;
+}
+
+/* Desktop View (Min-width: 992px matches Bootstrap 'md/lg' breakpoint) */
+@media (min-width: 992px) {
+    .ts-col-mobile {
+        display: none; /* Hide mobile-optimized columns on desktop */
+    }
+    
+    .ts-col-desktop {
+        display: table-cell; /* Show detailed columns */
+    }
+    
+    /* Optional: Font adjustment for detailed table to fit width */
+    .timesheet-table {
+        font-size: 0.95rem;
+    }
+}
