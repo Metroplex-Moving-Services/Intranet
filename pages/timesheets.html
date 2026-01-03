@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Timesheets | MMS Intranet</title>
+    
+    <script src="https://unpkg.com/@descope/web-component@3.24.0/dist/index.js"></script>
+    <script src="https://unpkg.com/@descope/web-js-sdk@1.5.0/dist/index.umd.js"></script>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/css/mmsstyle.css"> 
+</head>
+<body>
+
+<div class="container timesheet-container" style="margin-top: 20px;">
+    
+    <h2 style="border-bottom: 2px solid #0C419a; padding-bottom:10px; margin-bottom:15px;">My Timesheets</h2>
+    
+    <div id="loading" style="display:block; text-align:center; padding: 20px;">
+        <div class="loader"></div>
+        <p style="color:#666; margin-top:10px;">Loading timesheets...</p>
+    </div>
+    
+    <div id="error-container"></div>
+    
+    <div class="table-responsive">
+        <table class="ts-table table table-hover" id="timesheet-table" style="display:none;">
+            <thead>
+                <tr>
+                    <th class="ts-col-mobile">Clocked In</th>
+                    <th class="ts-col-mobile">Miles</th>
+                    <th class="ts-col-mobile">Hrs</th>
+                    <th class="ts-col-mobile" style="text-align:right;">Total Pay</th>
+
+                    <th class="ts-col-desktop">Clocked In</th>
+                    <th class="ts-col-desktop">Customer Name</th>
+                    <th class="ts-col-desktop">Calc Miles</th>
+                    <th class="ts-col-desktop">Hours Worked</th>
+                    <th class="ts-col-desktop">Pay Rate</th>
+                    <th class="ts-col-desktop">Mileage Pay</th>
+                    <th class="ts-col-desktop">Labor Pay</th>
+                    <th class="ts-col-desktop">Tip</th>
+                    <th class="ts-col-desktop">Extra</th>
+                    <th class="ts-col-desktop" style="text-align:right;">Total Pay</th>
+                </tr>
+            </thead>
+            <tbody id="timesheet-body">
+                </tbody>
+        </table>
+    </div>
+    
+    <p id="no-data" style="display:none; text-align:center; color:#777; margin-top:20px;">No work history found.</p>
+
+    <div id="pagination" class="pagination-controls" style="display:none;">
+        <button id="btn-prev" class="page-btn">&laquo; Previous</button>
+        <span id="page-indicator">Page 1</span>
+        <button id="btn-next" class="page-btn">Next &raquo;</button>
+    </div>
+</div>
+
+<script src="../assets/js/timesheets.js"></script>
+
+</body>
+</html>

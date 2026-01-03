@@ -121,9 +121,9 @@ window.setiFrame = function(purpose) {
         hideLoader(500);
     }
 
-    else if (purpose == 'jobtimesheets') {
+    else if (purpose == 'timesheets') {
          // This was in your menu but missing from your snippet. Assuming standard page:
-         MMSiFrame.src = "pages/jobtimesheets.html";
+         MMSiFrame.src = "pages/timesheets.html";
          hideLoader(500);
     }
 
