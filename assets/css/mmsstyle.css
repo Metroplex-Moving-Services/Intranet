@@ -99,12 +99,10 @@ body.page-calendar { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
 /* --- 1. DEFAULT (DESKTOP) --- */
 .ts-col-desktop { 
     display: table-cell !important;
-    /* NEW: Compact styling for Desktop View */
-    white-space: normal !important; /* Allow wrapping */
-    padding: 8px 5px !important;    /* Tighter padding */
-    font-size: 0.95em;              /* Slightly smaller text */
-    vertical-align: bottom;         /* Align headers nicely when wrapped */
-    max-width: 100px;               /* Encourage wrapping for long headers */
+    white-space: nowrap; /* Default for desktop: keep one line if possible */
+    padding: 8px 5px !important;    
+    font-size: 0.95em;              
+    vertical-align: bottom;         
 }
 .ts-col-mobile  { display: none !important; }
 
@@ -118,10 +116,25 @@ body.page-calendar { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
 
 /* --- 3. MOBILE LANDSCAPE (Horizontal Phone) --- */
 @media screen and (min-width: 480px) and (max-width: 900px) and (orientation: landscape) {
+    
+    /* 3a. HIDE THE FOOTER in landscape */
+    #global-footer { display: none !important; }
+
+    /* 3b. Force Headers to Wrap */
+    .ts-table th {
+        white-space: normal !important; /* Force wrapping */
+        max-width: 60px;                /* Force breaks on small words */
+        line-height: 1.1;               /* Tighten lines */
+        vertical-align: bottom;
+    }
+
+    /* 3c. Layout & Margins */
     .ts-col-desktop { display: table-cell !important; }
     .ts-col-mobile  { display: none !important; }
+    
     .container.timesheet-container { width: 100vw !important; max-width: 100vw !important; margin: 0 !important; padding: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
     .timesheet-container { padding: 5px !important; width: 100% !important; }
+    
     .ts-table { font-size: 11px !important; }
     .ts-table th, .ts-table td { padding: 4px 2px !important; }
 }
