@@ -6,19 +6,13 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    overflow-x: hidden; /* Prevent horizontal scroll */
+    overflow-x: hidden; 
 }
 
 /* =========================================
-   INDEX.HTML (The App Shell)
+   INDEX.HTML
    ========================================= */
-body.page-index {
-    display: flex;
-    flex-direction: column; 
-    background-color: #ffffff;
-    width: 100%;
-}
-
+body.page-index { display: flex; flex-direction: column; background-color: #ffffff; width: 100%; }
 .page-index #topHeader { flex: 0 0 auto; width: 100%; z-index: 1001; position: relative; }
 .page-index #welcome-msg { text-align: right; padding: 5px 15px; font-size: 14px; color: #0C419a; font-weight: bold; background-color: #f9f9f9; border-bottom: 1px solid #ddd; }
 .page-index #main-content { flex: 1; display: block; position: relative; width: 100%; overflow: hidden; }
@@ -51,7 +45,7 @@ body.page-index {
 }
 
 /* =========================================
-   PAGE STYLES (Login, Profile, Calendar, Splash)
+   PAGE STYLES
    ========================================= */
 body.page-splash { display: flex; flex-direction: column; height: 100%; overflow: hidden; background-color: #ffffff; text-align: center; margin: 0; }
 .page-splash .content-wrapper { flex: 1; display: flex; align-items: flex-start; justify-content: center; min-height: 0; padding: 10px; padding-top: 40px; overflow: hidden; }
@@ -76,7 +70,7 @@ body.page-calendar { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
 #calendar { min-height: 600px; margin: 0 2px; }
 #loading { text-align: center; font-size: 1.2em; color: #666; margin-bottom: 10px; padding-top: 10px; }
 
-/* --- FullCalendar & Utilities --- */
+/* --- UTILITIES --- */
 .fc-header-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding-top: 10px; margin-bottom: 1.5em !important; }
 .fc-toolbar-title { font-size: 1.75em !important; color: #333; font-weight: bold; }
 .fc-button-primary { background-color: #0C419a !important; border-color: #0C419a !important; }
@@ -103,127 +97,31 @@ body.page-calendar { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
 .loader { border: 4px solid #f3f3f3; border-top: 4px solid #0C419a; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
 
 /* --- 1. DEFAULT (DESKTOP) --- */
-/* By default, we SHOW Desktop columns and HIDE Mobile columns. */
-/* We use !important to force this unless a specific media query overrides it. */
 .ts-col-desktop { display: table-cell !important; }
 .ts-col-mobile  { display: none !important; }
 
 /* --- 2. MOBILE PORTRAIT (Vertical Phone) --- */
-/* Only triggers if screen is SMALLER than 767px */
 @media screen and (max-width: 767px) {
-    .ts-col-desktop { display: none !important; }   /* HIDE Desktop */
-    .ts-col-mobile  { display: table-cell !important; } /* SHOW Mobile */
-    
+    .ts-col-desktop { display: none !important; }   
+    .ts-col-mobile  { display: table-cell !important; } 
     .ts-table { font-size: 13px; }
     .ts-table th, .ts-table td { padding: 8px 4px; }
 }
 
 /* --- 3. MOBILE LANDSCAPE (Horizontal Phone) --- */
-/* Triggers if screen is wide (rotated) but short (phone height) */
 @media screen and (min-width: 480px) and (max-width: 900px) and (orientation: landscape) {
-    
-    /* Force FULL Desktop View (Hide Mobile) */
     .ts-col-desktop { display: table-cell !important; }
     .ts-col-mobile  { display: none !important; }
-
-    /* Fix Margins: Force container to touch edges */
-    .container.timesheet-container {
-        width: 100vw !important;     /* Full Viewport Width */
-        max-width: 100vw !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-    }
-
-    /* Small internal padding so text doesn't touch the literal edge of screen */
-    .timesheet-container {
-        padding: 5px !important; 
-        width: 100% !important;
-    }
-
-    /* Smaller font to fit 8 columns */
+    .container.timesheet-container { width: 100vw !important; max-width: 100vw !important; margin: 0 !important; padding: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+    .timesheet-container { padding: 5px !important; width: 100% !important; }
     .ts-table { font-size: 11px !important; }
     .ts-table th, .ts-table td { padding: 4px 2px !important; }
 }
 
-/* Week Headers & Summary */
 .week-header-row td { background-color: #e9ecef; font-weight: 700; color: #0C419a; padding: 12px; font-size: 1.1em; border-top: 2px solid #b0b0b0; }
 .week-summary-row { background-color: #fff8e1; border-top: 2px solid #0C419a; border-bottom: 2px solid #0C419a; font-weight: 800; color: #333; font-size: 1.05em; }
 
-/* Pagination */
 .pagination-controls { display: flex; justify-content: center; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
 .page-btn { background-color: #0C419a; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .page-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 #page-indicator { margin: 0 30px; font-weight: bold; color: #555; }
-
-/* ============================================================
-   Timesheet Table Responsive Styles
-   ============================================================ */
-
-/* Base Table Styles */
-.timesheet-table {
-    width: 100%;
-    margin-bottom: 20px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-}
-
-.timesheet-table th {
-    background-color: #f8f9fa;
-    color: #333;
-    font-weight: 600;
-    border-bottom: 2px solid #ddd;
-    white-space: nowrap;
-}
-
-.timesheet-table td {
-    vertical-align: middle !important;
-}
-
-/* Numeric alignment */
-.text-right {
-    text-align: right;
-}
-
-/* Week Header Row */
-.week-header-row td {
-    background-color: #e9ecef;
-    font-weight: bold;
-    color: #0C419a; /* MMS Blue */
-    padding: 10px 15px;
-}
-
-/* Summary Row */
-.week-summary-row td {
-    background-color: #f1f1f1;
-    font-weight: bold;
-    border-top: 2px solid #ccc;
-}
-
-/* --- Responsive Column Logic --- */
-
-/* Mobile View (Default) */
-.ts-col-desktop {
-    display: none;
-}
-
-.ts-col-mobile {
-    display: table-cell;
-}
-
-/* Desktop View (Min-width: 992px matches Bootstrap 'md/lg' breakpoint) */
-@media (min-width: 992px) {
-    .ts-col-mobile {
-        display: none; /* Hide mobile-optimized columns on desktop */
-    }
-    
-    .ts-col-desktop {
-        display: table-cell; /* Show detailed columns */
-    }
-    
-    /* Optional: Font adjustment for detailed table to fit width */
-    .timesheet-table {
-        font-size: 0.95rem;
-    }
-}

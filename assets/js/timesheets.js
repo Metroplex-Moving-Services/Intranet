@@ -1,6 +1,6 @@
 /* ============================================================
    assets/js/timesheets.js
-   Description: Groups timesheets with DETAILED split for Desktop
+   Description: Groups timesheets by Mon-Sun weeks with pagination
    ============================================================ */
 
 const sdk = Descope({ projectId: 'P2qXQxJA4H4hvSu2AnDB5VjKnh1d', persistTokens: true });
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 throw new Error("Could not find your email address.");
             }
         } catch (err) {
-            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loading').style.display = 'none'; // Hide loader on error
             document.getElementById('error-container').innerHTML = `<div class="error-msg">Auth Error: ${err.message}</div>`;
         }
     }
@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function loadTimesheetsData() {
     const loader = document.getElementById('loading');
     const table = document.getElementById('timesheet-table');
+    const tableBody = document.getElementById('timesheet-body');
     const noDataMsg = document.getElementById('no-data');
     const errorContainer = document.getElementById('error-container');
     const pagination = document.getElementById('pagination');
@@ -100,14 +101,20 @@ function groupJobsByWeek(jobs) {
 
         groups[weekKey].jobs.push(job);
 
-        // Summaries for the week header
-        const worked = parseFloat(job.MoverTimeWorked) || 0;
+        // Accumulate Totals
+        // UPDATED SOURCE: Job_Duration instead of MoverTimeWorked
+        const duration = parseFloat(job.Job_Duration) || 0; 
+        
         const p = parseMoney(job.Payout).val;
+        // Tips and Extras are usually included in Payout total, but we track for total calc if needed
         const t = parseMoney(job.Tip).val;
         const e = parseMoney(job.Extra).val;
-        const totalPay = p + t + e;
+        // Note: Check if Payout field in Zoho already includes Tip/Extra. 
+        // Usually Payout = Base + Mileage + Tip + Extra. 
+        // We will use the explicit Payout field for the total.
+        const totalPay = p; 
 
-        groups[weekKey].totalHours += worked;
+        groups[weekKey].totalHours += duration;
         groups[weekKey].totalPayout += totalPay;
     });
 
@@ -140,58 +147,63 @@ function renderPage() {
         const endDate = new Date(week.startDate);
         endDate.setDate(endDate.getDate() + 6); 
         const rangeStr = `${formatDateShort(week.startDate)} - ${formatDateShort(endDate)}`;
-        // Colspan = 4 (Mobile) + 11 (Desktop) roughly, set high number to be safe
-        headerRow.innerHTML = `<td colspan="15">Week of: ${rangeStr}</td>`;
+        
+        // Colspan covers all columns (Max 10 for Desktop)
+        headerRow.innerHTML = `<td colspan="14">Week of: ${rangeStr}</td>`;
         tableBody.appendChild(headerRow);
 
         // B. Job Rows
         week.jobs.forEach(job => {
             const tr = document.createElement('tr');
             
-            // 1. Core Data
-            const workedHours = parseFloat(job.MoverTimeWorked) || 0;
-            const miles = parseFloat(job.CalculatedMiles) || 0;
-            const tipVal = parseMoney(job.Tip).val;
-            const extraVal = parseMoney(job.Extra).val;
+            // 1. Prepare Money Values
+            const totalPayout = parseMoney(job.Payout);
+            const laborPay = parseMoney(job.Base_Pay);
+            const mileagePay = parseMoney(job.MileagePay);
+            const tip = parseMoney(job.Tip);
+            const extra = parseMoney(job.Extra);
             
-            // 2. Parse Payout String to get Rates
-            // Format: "(... - 15) * 0.6 + (5.5 * 18.0)"
-            const rates = parsePayoutRates(job.PayoutCalculation);
+            // 2. Prepare Time/Duration
+            // UPDATED SOURCE: Job_Duration
+            const hoursWorked = parseFloat(job.Job_Duration) || 0; 
             
-            // 3. Calculate Visual Splits
-            const laborPay = workedHours * rates.hourlyRate;
-            const mileagePay = miles * rates.mileageRate;
-            const totalPay = laborPay + mileagePay + tipVal + extraVal;
+            // 3. Calculate Pay Rate (Labor Pay / Hours Worked)
+            let payRate = "0.00";
+            if (hoursWorked > 0 && laborPay.val > 0) {
+                payRate = (laborPay.val / hoursWorked).toFixed(2);
+            }
             
-            // 4. Formatting
+            // 4. Format Date
             const clockedInStr = `${formatDateShort(job.Job_Date)}, ${formatTime(job.MoverStartTime)}`;
-            
+
             tr.innerHTML = `
                 <td class="ts-col-mobile">
                     <strong>${formatDateShort(job.Job_Date)}</strong><br>
                     <small>${formatTime(job.MoverStartTime)}</small>
                 </td>
-                <td class="ts-col-mobile">${miles}</td>
-                <td class="ts-col-mobile">${workedHours.toFixed(2)}</td>
-                <td class="ts-col-mobile text-right money">
-                    ${formatMoney(totalPay)}
-                </td>
+                <td class="ts-col-mobile">${job.CalculatedMiles || 0}</td>
+                <td class="ts-col-mobile">${hoursWorked.toFixed(2)}</td>
+                <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(totalPayout.val)}</td>
 
                 <td class="ts-col-desktop">${clockedInStr}</td>
+                
                 <td class="ts-col-desktop">${getZohoName(job.Customer_Name)}</td>
                 
-                <td class="ts-col-desktop text-right">${workedHours.toFixed(2)}</td>
-                <td class="ts-col-desktop text-right">$${rates.hourlyRate.toFixed(2)}</td>
-                <td class="ts-col-desktop text-right money">${formatMoney(laborPay)}</td>
+                <td class="ts-col-desktop">${job.CalculatedMiles || 0}</td>
                 
-                <td class="ts-col-desktop text-right">${miles}</td>
-                <td class="ts-col-desktop text-right">$${rates.mileageRate.toFixed(2)}</td>
-                <td class="ts-col-desktop text-right money">${formatMoney(mileagePay)}</td>
+                <td class="ts-col-desktop">${hoursWorked.toFixed(2)}</td>
                 
-                <td class="ts-col-desktop text-right">${tipVal > 0 ? formatMoney(tipVal) : '-'}</td>
-                <td class="ts-col-desktop text-right">${extraVal > 0 ? formatMoney(extraVal) : '-'}</td>
+                <td class="ts-col-desktop">$${payRate}/hr</td>
                 
-                <td class="ts-col-desktop text-right money" style="font-weight:bold;">${formatMoney(totalPay)}</td>
+                <td class="ts-col-desktop">${mileagePay.text}</td>
+                
+                <td class="ts-col-desktop">${laborPay.text}</td>
+                
+                <td class="ts-col-desktop">${tip.text}</td>
+                
+                <td class="ts-col-desktop">${extra.text}</td>
+                
+                <td class="ts-col-desktop money" style="text-align:right;">${formatMoney(totalPayout.val)}</td>
             `;
             tableBody.appendChild(tr);
         });
@@ -201,14 +213,17 @@ function renderPage() {
         summaryRow.className = "week-summary-row";
         
         summaryRow.innerHTML = `
-            <td class="ts-col-mobile" colspan="2" class="text-right">Weekly Totals:</td>
+            <td class="ts-col-mobile" colspan="2" style="text-align:right;">Weekly Totals:</td>
             <td class="ts-col-mobile">${week.totalHours.toFixed(2)}</td>
-            <td class="ts-col-mobile text-right money">${formatMoney(week.totalPayout)}</td>
+            <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(week.totalPayout)}</td>
 
-            <td class="ts-col-desktop" colspan="2" class="text-right">Weekly Totals:</td>
+            <td class="ts-col-desktop" colspan="3" style="text-align:right;">Totals:</td>
             
-            <td class="ts-col-desktop text-right" style="font-weight:bold;">${week.totalHours.toFixed(2)}</td>
-            <td class="ts-col-desktop" colspan="7"></td> <td class="ts-col-desktop text-right money" style="font-weight:bold;">${formatMoney(week.totalPayout)}</td>
+            <td class="ts-col-desktop" style="font-weight:bold;">${week.totalHours.toFixed(2)}</td>
+            
+            <td class="ts-col-desktop" colspan="5"></td>
+            
+            <td class="ts-col-desktop money" style="text-align:right;">${formatMoney(week.totalPayout)}</td>
         `;
         tableBody.appendChild(summaryRow);
     });
@@ -223,37 +238,7 @@ function renderPage() {
     btnNext.onclick = () => { if(currentPage < totalPages) { currentPage++; renderPage(); }};
 }
 
-/* --- PARSING HELPERS --- */
-
-// Extracts rates from string: "(... - 15) * 0.6 + (5.5 * 18.0)"
-function parsePayoutRates(calcString) {
-    let result = { mileageRate: 0, hourlyRate: 0 };
-    if (!calcString || typeof calcString !== 'string') return result;
-
-    try {
-        // Split by " + (" to separate [Mileage Logic] from [Labor Logic]
-        const parts = calcString.split(' + (');
-
-        if (parts.length >= 2) {
-            // 1. Mileage Rate: End of first part before " + ("
-            const mileagePart = parts[0].split('*');
-            if (mileagePart.length > 1) {
-                result.mileageRate = parseFloat(mileagePart[mileagePart.length - 1]) || 0;
-            }
-
-            // 2. Hourly Rate: End of second part inside parens
-            const laborString = parts[1].replace(')', ''); 
-            const laborPart = laborString.split('*');
-            if (laborPart.length > 1) {
-                result.hourlyRate = parseFloat(laborPart[laborPart.length - 1]) || 0;
-            }
-        }
-    } catch (e) {
-        console.error("Error parsing string:", calcString, e);
-    }
-    return result;
-}
-
+/* --- HELPERS --- */
 function getZohoName(field) {
     if (!field) return "-";
     if (typeof field === 'object') return field.last_name || ""; 
@@ -272,9 +257,11 @@ function formatTime(timeStr) {
 }
 function parseMoney(val) {
     if (!val) return { val: 0, text: "$0.00" };
-    // Remove $ and commas, parse float
+    // ZoHo sometimes returns "$100.00" or just "100.00"
     const num = parseFloat(String(val).replace(/[^0-9.-]+/g,""));
-    return { val: (isNaN(num) ? 0 : num), text: val };
+    // Ensure we return the raw value for math, and a formatted text for display
+    const safeNum = isNaN(num) ? 0 : num;
+    return { val: safeNum, text: formatMoney(safeNum) };
 }
 function formatMoney(num) {
     return "$" + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
