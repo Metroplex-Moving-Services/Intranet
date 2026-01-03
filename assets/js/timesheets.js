@@ -112,4 +112,129 @@ function groupJobsByWeek(jobs) {
 
     const sortedWeeks = Object.values(groups).sort((a, b) => b.startDate - a.startDate);
     sortedWeeks.forEach(week => {
-        week.jobs.sort((a, b) => new Date(b.Job_Date)
+        week.jobs.sort((a, b) => new Date(b.Job_Date) - new Date(a.Job_Date));
+    });
+
+    return sortedWeeks;
+}
+
+/* --- RENDERING LOGIC --- */
+function renderPage() {
+    const tableBody = document.getElementById('timesheet-body');
+    const pagination = document.getElementById('pagination');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const indicator = document.getElementById('page-indicator');
+
+    tableBody.innerHTML = '';
+
+    const start = (currentPage - 1) * WEEKS_PER_PAGE;
+    const end = start + WEEKS_PER_PAGE;
+    const weeksToRender = allWeeks.slice(start, end);
+
+    weeksToRender.forEach(week => {
+        // A. Week Header
+        const headerRow = document.createElement('tr');
+        headerRow.className = "week-header-row";
+        const endDate = new Date(week.startDate);
+        endDate.setDate(endDate.getDate() + 6); 
+        const rangeStr = `${formatDateShort(week.startDate)} - ${formatDateShort(endDate)}`;
+        
+        headerRow.innerHTML = `<td colspan="14">Week of: ${rangeStr}</td>`;
+        tableBody.appendChild(headerRow);
+
+        // B. Job Rows
+        week.jobs.forEach(job => {
+            const tr = document.createElement('tr');
+            
+            const totalPayout = parseMoney(job.Payout);
+            const laborPay = parseMoney(job.Base_Pay);
+            const mileagePay = parseMoney(job.MileagePay);
+            const tip = parseMoney(job.Tip);
+            const extra = parseMoney(job.Extra);
+            const hoursWorked = parseFloat(job.Job_Duration) || 0; 
+            
+            // PAY RATE INTEGER
+            let payRate = "0";
+            if (hoursWorked > 0 && laborPay.val > 0) {
+                payRate = (laborPay.val / hoursWorked).toFixed(0);
+            }
+            
+            const clockedInStr = `${formatDateShort(job.Job_Date)}, ${formatTime(job.MoverStartTime)}`;
+
+            tr.innerHTML = `
+                <td class="ts-col-mobile">
+                    <strong>${formatDateShort(job.Job_Date)}</strong><br>
+                    <small>${formatTime(job.MoverStartTime)}</small>
+                </td>
+                <td class="ts-col-mobile">${job.CalculatedMiles || 0}</td>
+                <td class="ts-col-mobile">${hoursWorked.toFixed(2)}</td>
+                <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(totalPayout.val)}</td>
+
+                <td class="ts-col-desktop">${clockedInStr}</td>
+                <td class="ts-col-desktop">${getZohoName(job.Customer_Name)}</td>
+                <td class="ts-col-desktop">${job.CalculatedMiles || 0}</td>
+                <td class="ts-col-desktop">${hoursWorked.toFixed(2)}</td>
+                <td class="ts-col-desktop">$${payRate}/hr</td>
+                <td class="ts-col-desktop">${mileagePay.text}</td>
+                <td class="ts-col-desktop">${laborPay.text}</td>
+                <td class="ts-col-desktop">${tip.text}</td>
+                <td class="ts-col-desktop">${extra.text}</td>
+                <td class="ts-col-desktop money" style="text-align:right;">${formatMoney(totalPayout.val)}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        // C. Weekly Summary Row
+        const summaryRow = document.createElement('tr');
+        summaryRow.className = "week-summary-row";
+        
+        summaryRow.innerHTML = `
+            <td class="ts-col-mobile" colspan="2" style="text-align:right;">Weekly Totals:</td>
+            <td class="ts-col-mobile">${week.totalHours.toFixed(2)}</td>
+            <td class="ts-col-mobile money" style="text-align:right;">${formatMoney(week.totalPayout)}</td>
+
+            <td class="ts-col-desktop" colspan="3" style="text-align:right;">Totals:</td>
+            <td class="ts-col-desktop" style="font-weight:bold;">${week.totalHours.toFixed(2)}</td>
+            <td class="ts-col-desktop" colspan="5"></td>
+            <td class="ts-col-desktop money" style="text-align:right;">${formatMoney(week.totalPayout)}</td>
+        `;
+        tableBody.appendChild(summaryRow);
+    });
+
+    pagination.style.display = allWeeks.length > 0 ? 'flex' : 'none';
+    const totalPages = Math.ceil(allWeeks.length / WEEKS_PER_PAGE);
+    indicator.innerText = `Page ${currentPage} of ${totalPages}`;
+    btnPrev.disabled = currentPage === 1;
+    btnNext.disabled = currentPage >= totalPages;
+
+    btnPrev.onclick = () => { if(currentPage > 1) { currentPage--; renderPage(); }};
+    btnNext.onclick = () => { if(currentPage < totalPages) { currentPage++; renderPage(); }};
+}
+
+/* --- HELPERS --- */
+function getZohoName(field) {
+    if (!field) return "-";
+    if (typeof field === 'object') return field.last_name || ""; 
+    return field; 
+}
+function formatDateShort(dateInput) {
+    if (!dateInput) return "";
+    const d = new Date(dateInput);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function formatTime(timeStr) {
+    if (!timeStr) return "";
+    const d = new Date(timeStr);
+    if (isNaN(d.getTime())) return timeStr.split(' ')[1] || timeStr; 
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+function parseMoney(val) {
+    if (!val) return { val: 0, text: "$0.00" };
+    const num = parseFloat(String(val).replace(/[^0-9.-]+/g,""));
+    const safeNum = isNaN(num) ? 0 : num;
+    return { val: safeNum, text: formatMoney(safeNum) };
+}
+function formatMoney(num) {
+    return "$" + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
